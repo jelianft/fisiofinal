@@ -2061,46 +2061,24 @@ const MAPEO_ZONAS = {
         let _dbCols = null;
 
         async function detectarSchemaDB() {
-            // MÉTODO 1: SELECT * LIMIT 1 — funciona si la tabla tiene al menos 1 fila
-            try {
-                const { data, error } = await sb.from('pacientes').select('*').limit(1);
-                if (!error) {
-                    if (data && data.length > 0) {
-                        _dbCols = new Set(Object.keys(data[0]));
-                        console.log('[JelianFT] ✅ Columnas via SELECT:', [..._dbCols]);
-                        return;
-                    }
-                    // Tabla vacía — probar columnas candidatas para cédula
-                    for (const col of ['ci', 'cedula', 'cedula_identidad', 'documento', 'identificacion']) {
-                        const { error: e2 } = await sb.from('pacientes').select(col).limit(1);
-                        if (!e2) {
-                            _dbCols = new Set([
-                                'nombre', 'edad', 'sexo', 'deporte', 'emergencia', 'telefono',
-                                'diagnostico', 'zona', 'valoracion', 'evoluciones', 'fotos',
-                                'ejercicios_hoja', 'estado', 'rts', 'objetivos', 'foto_avatar', col
-                            ]);
-                            console.log(`[JelianFT] ✅ Columna cédula detectada: "${col}" (tabla vacía)`);
-                            return;
-                        }
-                    }
-                    // Sin columna cédula encontrada, usar base
-                    _dbCols = new Set([
-                        'nombre', 'edad', 'sexo', 'deporte', 'emergencia', 'telefono',
-                        'diagnostico', 'zona', 'valoracion', 'evoluciones', 'fotos',
-                        'ejercicios_hoja', 'estado', 'rts', 'objetivos', 'foto_avatar'
-                    ]);
-                    console.log('[JelianFT] ✅ Schema detectado (tabla vacía, sin cédula)');
-                    return;
-                }
-            } catch(e) { console.warn('[JelianFT] SELECT falló:', e); }
-
-            // Fallback: columnas mínimas seguras
-            console.warn('[JelianFT] ⚠️ Schema no detectado, usando columnas base (sin cédula).');
+            // Columnas base conocidas de la tabla
             _dbCols = new Set([
                 'nombre', 'edad', 'sexo', 'deporte', 'emergencia', 'telefono',
                 'diagnostico', 'zona', 'valoracion', 'evoluciones', 'fotos',
                 'ejercicios_hoja', 'estado', 'rts', 'objetivos', 'foto_avatar'
             ]);
+            // Si hay filas, detectar columnas reales automaticamente
+            try {
+                const { data, error } = await sb.from('pacientes').select('*').limit(1);
+                if (!error && data && data.length > 0) {
+                    _dbCols = new Set(Object.keys(data[0]));
+                    console.log('[JelianFT] Columnas detectadas:', [..._dbCols]);
+                } else {
+                    console.log('[JelianFT] Usando columnas base (tabla vacia)');
+                }
+            } catch(e) {
+                console.warn('[JelianFT] No se pudo leer la tabla, usando columnas base.');
+            }
         }
 
         // Filtra un payload para incluir solo columnas que existen en la DB
