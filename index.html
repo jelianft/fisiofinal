@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%236366f1"/><text x="50%25" y="54%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="26" fill="white">JFT</text></svg>" type="image/svg+xml">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jelian FT - Clinical Sport v135</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -2721,7 +2722,7 @@ function renderPacientes() { renderLista(); }
                 const ultimoEva = p.evoluciones[0]?.eva ?? null;
                 const dias = diasDesdeUltimaSesion(p);
                 return `
-                    <tr class="hover:bg-slate-50 cursor-pointer ${ultimoEva !== null && ultimoEva >= 7 ? 'red-flag' : ''}" onclick="verDetalle(${p.id})">
+                    <tr class="hover:bg-slate-50 cursor-pointer ${ultimoEva !== null && ultimoEva >= 7 ? 'red-flag' : ''}" onclick="verDetalle('${p.id}')">
                         <td class="px-8 py-5">
                             <div class="flex items-center gap-3">
                                 <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs flex-shrink-0">${p.nombre.charAt(0)}</div>
@@ -3481,7 +3482,7 @@ async function updateDashboard() {
                 const eva = evaActual ?? 0;
                 const pct = (eva / 10) * 100;
                 return `
-                <div class="flex items-center gap-3 cursor-pointer hover:opacity-80" onclick="verDetalle(${p.id})">
+                <div class="flex items-center gap-3 cursor-pointer hover:opacity-80" onclick="verDetalle('${p.id}')">
                     <div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs flex-shrink-0">${p.nombre.charAt(0)}</div>
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-center mb-1">
@@ -3855,7 +3856,7 @@ async function updateDashboard() {
             });
             if (resultados.length === 0) { cont.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Sin resultados para "'+q+'"</p>'; return; }
             cont.innerHTML = resultados.slice(0,8).map(r => `
-                <div class="search-result-item" onclick="closeGlobalSearch();verDetalle(${r.id})">
+                <div class="search-result-item" onclick="closeGlobalSearch();verDetalle('${r.id}')">
                     <div class="flex items-start gap-3">
                         <span class="text-xl flex-shrink-0">${r.icon}</span>
                         <div>
