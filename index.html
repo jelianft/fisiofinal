@@ -4,19 +4,33 @@
     <meta charset="UTF-8">
     <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiM2MzY2ZjEiLz48dGV4dCB4PSI1MCUiIHk9IjU0JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI5MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IndoaXRlIj5KRlQ8L3RleHQ+PC9zdmc+" type="image/svg+xml">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jelian FT - Clinical Sport v135</title>
+    <title>Jelian FT - Clinical Sport v136</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
     <script>
       const SUPABASE_URL = 'https://autdqxqlhxpibleqjvbu.supabase.co';
       const SUPABASE_KEY = 'sb_publishable_iIunAaNnuIWfNhBgd7kjJQ_ykOJxuCn';
+
+      // Bloquear BroadcastChannel: previene DataCloneError en entornos sandbox (iframes, srcdoc)
+      // donde postMessage no puede clonar el objeto Headers. Inofensivo en GitHub Pages.
+      if (typeof BroadcastChannel !== 'undefined') {
+        window.BroadcastChannel = class {
+          constructor() {} postMessage() {} close() {}
+          addEventListener() {} removeEventListener() {} dispatchEvent() {}
+        };
+      }
+
+      const _nullStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+
       const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
         auth: {
           autoRefreshToken: false,
           persistSession: false,
-          detectSessionInUrl: false
-        }
+          detectSessionInUrl: false,
+          storage: _nullStorage
+        },
+        realtime: { params: { eventsPerSecond: -1 } }
       });
     </script>
        <style>
@@ -515,25 +529,40 @@
 </head>
     <script>
         let pinBuffer = '';
-        const PIN_KEY = 'jelian_pin';
+        const PIN_KEY = 'jelian_pin_v2'; // v2 = hashed
+
+        async function _hashPin(pin) {
+            const msgBuffer = new TextEncoder().encode(pin + '_jelianft_salt');
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+        }
+
         function pinPress(d) {
             if (pinBuffer.length >= 4) return;
             pinBuffer += d;
             document.querySelectorAll('.pin-dot').forEach((dot, i) => dot.classList.toggle('filled', i < pinBuffer.length));
             if (pinBuffer.length === 4) setTimeout(checkPin, 150);
         }
-        function pinClear() { pinBuffer = pinBuffer.slice(0,-1); document.querySelectorAll('.pin-dot').forEach((dot, i) => dot.classList.toggle('filled', i < pinBuffer.length)); }
+        function pinClear() {
+            pinBuffer = pinBuffer.slice(0,-1);
+            document.querySelectorAll('.pin-dot').forEach((dot, i) => dot.classList.toggle('filled', i < pinBuffer.length));
+        }
         function pinSkip() { unlockApp(); }
-        function checkPin() {
+
+        async function checkPin() {
             const saved = localStorage.getItem(PIN_KEY);
-            if (!saved || pinBuffer === saved) { unlockApp(); }
-            else {
+            if (!saved) { unlockApp(); return; }
+            const hashed = await _hashPin(pinBuffer);
+            if (hashed === saved) {
+                unlockApp();
+            } else {
                 document.getElementById('pin-error').classList.remove('hidden');
                 pinBuffer = '';
                 document.querySelectorAll('.pin-dot').forEach(dot => dot.classList.remove('filled'));
                 setTimeout(() => document.getElementById('pin-error').classList.add('hidden'), 2000);
             }
         }
+
         function unlockApp() {
             const pinEl = document.getElementById('pin-screen');
             pinEl.style.transition = 'opacity 0.35s ease';
@@ -557,20 +586,20 @@
         </div>
         <p id="pin-error" class="text-rose-400 text-xs font-bold hidden">PIN incorrecto</p>
         <div class="grid grid-cols-3 gap-3 mt-2">
-            <button class="pin-key" onclick="pinPress('1')">1</button>
-            <button class="pin-key" onclick="pinPress('2')">2</button>
-            <button class="pin-key" onclick="pinPress('3')">3</button>
-            <button class="pin-key" onclick="pinPress('4')">4</button>
-            <button class="pin-key" onclick="pinPress('5')">5</button>
-            <button class="pin-key" onclick="pinPress('6')">6</button>
-            <button class="pin-key" onclick="pinPress('7')">7</button>
-            <button class="pin-key" onclick="pinPress('8')">8</button>
-            <button class="pin-key" onclick="pinPress('9')">9</button>
-            <button class="pin-key text-slate-500 text-sm" onclick="pinClear()">⌫</button>
-            <button class="pin-key" onclick="pinPress('0')">0</button>
-            <button class="pin-key text-slate-500 text-sm" onclick="pinSkip()">—</button>
+            <button class="pin-key" onclick="pinPress('1')" aria-label="Dígito 1">1</button>
+            <button class="pin-key" onclick="pinPress('2')" aria-label="Dígito 2">2</button>
+            <button class="pin-key" onclick="pinPress('3')" aria-label="Dígito 3">3</button>
+            <button class="pin-key" onclick="pinPress('4')" aria-label="Dígito 4">4</button>
+            <button class="pin-key" onclick="pinPress('5')" aria-label="Dígito 5">5</button>
+            <button class="pin-key" onclick="pinPress('6')" aria-label="Dígito 6">6</button>
+            <button class="pin-key" onclick="pinPress('7')" aria-label="Dígito 7">7</button>
+            <button class="pin-key" onclick="pinPress('8')" aria-label="Dígito 8">8</button>
+            <button class="pin-key" onclick="pinPress('9')" aria-label="Dígito 9">9</button>
+            <button class="pin-key text-slate-500 text-sm" onclick="pinClear()" aria-label="Borrar último dígito">⌫</button>
+            <button class="pin-key" onclick="pinPress('0')" aria-label="Dígito 0">0</button>
+            <button class="pin-key text-slate-400 text-[10px] font-black tracking-wide" onclick="pinSkip()" aria-label="Omitir PIN y entrar">Omitir</button>
         </div>
-        <p class="text-slate-600 text-[10px] mt-2">Presiona — para omitir o configurar PIN desde ajustes</p>
+        <p class="text-slate-600 text-[10px] mt-2">Presiona <strong>Omitir</strong> para entrar sin PIN o configúralo desde Ajustes</p>
     </div>
 
     <div id="app-content" class="hidden h-screen overflow-hidden flex flex-col lg:flex-row">
@@ -653,38 +682,40 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="sm:col-span-2">
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nombre Completo</label>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Nombre Completo</label>
                     <input id="edit-nombre" type="text" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
                 </div>
                 <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cédula / ID</label>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Cédula / ID</label>
                     <input id="edit-ci" type="text" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
                 </div>
                 <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Edad</label>
-                    <input id="edit-edad" type="number" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Fecha de Nacimiento</label>
+                    <input id="edit-nacimiento" type="date" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white" onchange="calcularEdadEdit(this)">
+                    <p class="text-[10px] text-indigo-500 font-bold mt-1" id="edit-edad-calculada"></p>
+                    <input type="hidden" id="edit-edad">
                 </div>
                 <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Deporte</label>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Deporte</label>
                     <input id="edit-deporte" type="text" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
                 </div>
                 <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sexo</label>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Sexo</label>
                     <select id="edit-sexo" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
                         <option value="Masculino">Masculino</option>
                         <option value="Femenino">Femenino</option>
                     </select>
                 </div>
                 <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Teléfono</label>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Teléfono</label>
                     <input id="edit-telefono" type="tel" placeholder="Ej: 0999123456" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
                 </div>
                 <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Contacto Emergencia</label>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Contacto Emergencia</label>
                     <input id="edit-emergencia" type="text" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
                 </div>
                 <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Zona Lesionada</label>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Zona Lesionada</label>
                     <select id="edit-zona" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
                         <option value="Rodilla">Rodilla</option>
                         <option value="Hombro">Hombro</option>
@@ -702,7 +733,7 @@
                     </select>
                 </div>
                 <div class="sm:col-span-2">
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Diagnóstico y Plan Clínico</label>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Diagnóstico y Plan Clínico</label>
                     <textarea id="edit-diag" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-medium mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white h-28 resize-none"></textarea>
                 </div>
             </div>
@@ -783,6 +814,10 @@
                 </svg>
                 Modo Oscuro
             </button>
+            <button onclick="activarNotificacionesCitas()" class="w-full text-left px-4 py-2 text-xs hover:text-white transition-colors flex items-center gap-3">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                Notificaciones Citas
+            </button>
             <button onclick="setupPin()" class="w-full text-left px-4 py-2 text-xs hover:text-white transition-colors flex items-center gap-3">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                 Configurar PIN
@@ -800,6 +835,8 @@
     <main class="flex-1 overflow-y-auto p-8 lg:p-12 relative custom-scrollbar main-content">
         
         <section id="dashboard" class="max-w-7xl mx-auto space-y-12">
+            <!-- Banner diagnóstico Supabase (oculto por defecto) -->
+            <div id="supabase-banner" class="hidden"></div>
             <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <span class="text-indigo-600 font-bold text-xs uppercase tracking-widest">Resumen Operativo</span>
@@ -980,8 +1017,10 @@
                         <input type="text" id="reg-deporte" class="w-full bg-slate-50 rounded-xl p-4 mt-2 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 border border-transparent focus:border-indigo-500 font-bold text-slate-700" required>
                     </div>
                     <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Edad</label>
-                        <input type="number" id="reg-edad" min="5" max="100" class="w-full bg-slate-50 rounded-xl p-4 mt-2 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 border border-transparent focus:border-indigo-500 font-bold text-slate-700" required>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Nacimiento</label>
+                        <input type="date" id="reg-nacimiento" class="w-full bg-slate-50 rounded-xl p-4 mt-2 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/10 border border-transparent focus:border-indigo-500 font-bold text-slate-700" onchange="calcularEdadReg(this)" required>
+                        <p class="text-[10px] text-indigo-500 font-bold mt-1 ml-1" id="reg-edad-calculada"></p>
+                        <input type="hidden" id="reg-edad">
                     </div>
                     <div>
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sexo</label>
@@ -1042,6 +1081,7 @@
                     <button onclick="openEditModal()" class="flex-1 bg-indigo-50 text-indigo-700 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-100 transition-colors">✏️ Editar</button>
                     <button onclick="openKiosk()" class="flex-1 bg-slate-800 text-white px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-700 transition-colors">📺 Modo Vista</button>
                     <button onclick="exportarPDF()" class="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-colors">📄 PDF</button>
+                    <button onclick="exportarCSVPaciente()" class="flex-1 bg-emerald-600 text-white px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-colors">📊 CSV</button>
                     <button onclick="window.print()" class="flex-1 bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Imprimir</button>
                     <button onclick="eliminarPaciente()" class="flex-1 bg-rose-50 text-rose-600 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-colors">Dar de Alta</button>
                 </div>
@@ -1120,7 +1160,7 @@
                         <!-- Cronómetro -->
                         <div class="flex items-center gap-4 mb-6 p-4 bg-slate-50 rounded-2xl">
                             <div>
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Duración Sesión</p>
+                                <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Duración Sesión</p>
                                 <p id="chrono-display" class="text-2xl font-black text-slate-800 mt-1">00:00:00</p>
                             </div>
                             <div class="flex gap-2 ml-auto">
@@ -1130,23 +1170,23 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <div>
-                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha</label>
+                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Fecha</label>
                                 <input type="date" id="s-fecha" class="w-full bg-slate-50 p-4 rounded-xl text-xs font-bold mt-1 border-transparent focus:border-indigo-500 focus:bg-white outline-none">
                             </div>
                             <div>
-                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">EVA (0-10)</label>
+                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">EVA (0-10)</label>
                                 <input type="number" id="s-eva" min="0" max="10" class="w-full bg-slate-50 p-4 rounded-xl text-xs font-bold mt-1 border-transparent focus:border-indigo-500 focus:bg-white outline-none transition-all" oninput="updateEvaColor(this)">
                             </div>
                             <div>
-                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Métrica Progreso</label>
+                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Métrica Progreso</label>
                                 <input type="text" id="s-fuerza" placeholder="Ej: +15° ROM" class="w-full bg-slate-50 p-4 rounded-xl text-xs font-bold mt-1 border-transparent focus:border-indigo-500 focus:bg-white outline-none">
                             </div>
                             <div>
-                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Funcionalidad PSFS (0-100%)</label>
+                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Funcionalidad PSFS (0-100%)</label>
                                 <input type="number" id="s-psfs" min="0" max="100" placeholder="Ej: 70" class="w-full bg-slate-50 p-4 rounded-xl text-xs font-bold mt-1 border-transparent focus:border-indigo-500 focus:bg-white outline-none">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Técnicas Utilizadas</label>
+                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Técnicas Utilizadas</label>
                                 <div class="flex flex-wrap gap-2 mt-2" id="tecnicas-chips">
                                     <label class="tecnica-chip"><input type="checkbox" value="Electroterapia" class="hidden"><span>⚡ Electroterapia</span></label>
                                     <label class="tecnica-chip"><input type="checkbox" value="Masaje terapéutico" class="hidden"><span>🤲 Masaje</span></label>
@@ -1166,13 +1206,13 @@
                         <!-- RPE Slider -->
                         <div class="mb-6">
                             <div class="flex justify-between items-center mb-2">
-                                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Esfuerzo Percibido (RPE)</label>
+                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Esfuerzo Percibido (RPE)</label>
                                 <span id="rpe-label" class="text-xs font-black text-indigo-600">5 — Moderado</span>
                             </div>
                             <input type="range" id="s-rpe" min="1" max="10" value="5" class="rpe-slider" oninput="updateRPELabel(this.value)">
                             <div class="flex justify-between text-[9px] text-slate-400 mt-1"><span>Muy Fácil</span><span>Máximo</span></div>
                         </div>
-                        <textarea id="s-notas" class="w-full bg-slate-50 p-6 rounded-2xl text-sm font-medium h-32 border-transparent focus:border-indigo-500 focus:bg-white outline-none mb-6" placeholder="Detalles del tratamiento..."></textarea>
+                        <textarea id="s-notas" class="w-full bg-slate-50 p-6 rounded-2xl text-sm font-medium h-32 border-transparent focus:border-indigo-500 focus:bg-white outline-none mb-6" placeholder="Detalles del tratamiento..." oninput="marcarSesionPendiente()"></textarea>
                         
                         <div class="flex flex-col md:flex-row gap-4 mb-8">
                             <button onclick="ejecutarMotorIA()" class="flex-1 bg-slate-900 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg">
@@ -1316,19 +1356,19 @@
                 <h4 class="font-extrabold text-slate-900 mb-6">Nueva Cita</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Atleta</label>
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Atleta</label>
                         <select id="cita-atleta" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white"></select>
                     </div>
                     <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Fecha</label>
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Fecha</label>
                         <input type="date" id="cita-fecha" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
                     </div>
                     <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hora</label>
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Hora</label>
                         <input type="time" id="cita-hora" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
                     </div>
                     <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tipo</label>
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Tipo</label>
                         <select id="cita-tipo" class="w-full bg-slate-50 p-3 rounded-xl text-sm font-bold mt-1 outline-none focus:border-indigo-500 border border-transparent focus:bg-white">
                             <option>Sesión de rehabilitación</option>
                             <option>Evaluación inicial</option>
@@ -3199,10 +3239,39 @@ const MAPEO_ZONAS = {
         let mainChart = null;
         let regionalChart = null;
 
+        // --- Helper: extraer mensaje legible de error Supabase (NUNCA lanza excepción) ---
+        function _sbErrMsg(error) {
+            if (!error) return '';
+            if (typeof error === 'string') return error;
+            try {
+                // Extraer propiedades serializables sin JSON.stringify (puede fallar con Headers)
+                const parts = [];
+                if (error.message) parts.push(error.message);
+                if (error.details && error.details !== error.message) parts.push(error.details);
+                if (error.hint) parts.push('Hint: ' + error.hint);
+                if (error.code) parts.push('Code: ' + error.code);
+                return parts.join(' | ') || 'Error desconocido de Supabase';
+            } catch(_) {
+                return 'Error de Supabase (no serializable)';
+            }
+        }
+
         // --- SUPABASE: cargar pacientes ---
         async function cargarPacientesDB() {
-            const { data, error } = await sb.from('pacientes').select('*').order('created_at', { ascending: false });
-            if (error) { console.error('Error cargando pacientes:', error); return; }
+            let data, error;
+            try {
+                ({ data, error } = await sb.from('pacientes').select('*').order('created_at', { ascending: false }));
+            } catch(e) {
+                console.error('[JelianFT] Excepción cargando pacientes:', e.message);
+                _mostrarBannerError(e.message || 'Error de red al conectar con Supabase');
+                return;
+            }
+            if (error) {
+                const msg = _sbErrMsg(error);
+                console.error('[JelianFT] Error cargando pacientes:', msg);
+                _mostrarBannerError(msg, error.code);
+                return;
+            }
             const colCedula = _cedulaCol(); // puede ser null si no existe la columna
             pacientes = (data || []).map(p => ({
                 id: p.id,
@@ -3241,17 +3310,20 @@ const MAPEO_ZONAS = {
                 'diagnostico', 'zona', 'valoracion', 'evoluciones', 'fotos',
                 'ejercicios_hoja', 'estado', 'rts', 'objetivos', 'foto_avatar'
             ]);
-            // Si hay filas, detectar columnas reales automaticamente
+            // Detectar columnas reales automáticamente
             try {
                 const { data, error } = await sb.from('pacientes').select('*').limit(1);
                 if (!error && data && data.length > 0) {
                     _dbCols = new Set(Object.keys(data[0]));
                     console.log('[JelianFT] Columnas detectadas:', [..._dbCols]);
+                } else if (error) {
+                    console.log('[JelianFT] Usando columnas base. Error schema:', _sbErrMsg(error));
                 } else {
-                    console.log('[JelianFT] Usando columnas base (tabla vacia)');
+                    console.log('[JelianFT] Usando columnas base (tabla vacía)');
                 }
             } catch(e) {
-                console.warn('[JelianFT] No se pudo leer la tabla, usando columnas base.');
+                // Incluye DataCloneError u otros errores internos de Supabase
+                console.warn('[JelianFT] Excepción detectando schema:', e.message, '— usando columnas base');
             }
         }
 
@@ -3281,23 +3353,31 @@ const MAPEO_ZONAS = {
         }
 
         async function save() {
-            if (currentId) {
-                const p = pacientes.find(x => x.id === currentId);
-                if (!p) return;
-                const rawPayload = {
-                    nombre: p.nombre,
-                    ..._cedulaPayload(p.ci),
-                    edad: p.edad, sexo: p.sexo,
-                    deporte: p.deporte, emergencia: p.emergencia, telefono: p.telefono,
-                    diagnostico: p.diag, zona: p.zona, valoracion: p.valoracion,
-                    evoluciones: p.evoluciones || [], fotos: p.fotosClincias || [],
-                    ejercicios_hoja: p.ejerciciosHoja || [], estado: p.estado || p.status || 'activo',
-                    rts: p.rts || null, objetivos: p.objetivos || [],
-                    foto_avatar: p.foto || null
-                };
-                const payload = _filtrarPayload(rawPayload);
+            if (!currentId) return;
+            const p = pacientes.find(x => x.id === currentId);
+            if (!p) return;
+            const rawPayload = {
+                nombre: p.nombre,
+                ..._cedulaPayload(p.ci),
+                edad: p.edad, sexo: p.sexo,
+                deporte: p.deporte, emergencia: p.emergencia, telefono: p.telefono,
+                diagnostico: p.diag, zona: p.zona, valoracion: p.valoracion,
+                evoluciones: p.evoluciones || [], fotos: p.fotosClincias || [],
+                ejercicios_hoja: p.ejerciciosHoja || [], estado: p.estado || p.status || 'activo',
+                rts: p.rts || null, objetivos: p.objetivos || [],
+                foto_avatar: p.foto || null
+            };
+            const payload = _filtrarPayload(rawPayload);
+            try {
                 const { error } = await sb.from('pacientes').update(payload).eq('id', p.id);
-                if (error) { console.error('Error en save():', error); showToast('Error guardando cambios: ' + error.message, true); }
+                if (error) {
+                    const msg = _sbErrMsg(error);
+                    console.error('[JelianFT] Error en save():', msg);
+                    showToast('Error guardando: ' + msg, true);
+                }
+            } catch(e) {
+                console.error('[JelianFT] Excepción en save():', e.message);
+                showToast('Error de red al guardar cambios', true);
             }
         }
 
@@ -3322,11 +3402,21 @@ const MAPEO_ZONAS = {
             };
             if (typeof p.id !== 'number') rawPayload.id = p.id;
             const payload = _filtrarPayload(rawPayload);
-            const { data, error } = await sb.from('pacientes').upsert(payload).select().single();
-            if (error) { console.error('Error guardando paciente:', error); showToast('Error guardando datos', true); return; }
-            if (data && typeof p.id === 'number') {
-                p.id = data.id;
-                p._supaId = data.id;
+            try {
+                const { data, error } = await sb.from('pacientes').upsert(payload).select().single();
+                if (error) {
+                    const msg = _sbErrMsg(error);
+                    console.error('[JelianFT] Error upsert paciente:', msg);
+                    showToast('Error guardando datos: ' + msg, true);
+                    return;
+                }
+                if (data && typeof p.id === 'number') {
+                    p.id = data.id;
+                    p._supaId = data.id;
+                }
+            } catch(e) {
+                console.error('[JelianFT] Excepción upsert:', e.message);
+                showToast('Error de red al sincronizar datos', true);
             }
         }
 
@@ -3449,7 +3539,7 @@ function renderPacientes() { renderLista(); }
             const container = document.getElementById('reg-eval-container');
             container.innerHTML = l.e.map(test => `
                 <div>
-                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">${test}</label>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">${test}</label>
                     <input type="text" data-test="${test}" class="eval-input w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-bold mt-1 outline-none focus:border-indigo-500 transition-all shadow-sm">
                 </div>`).join('');
             const protTexto = (l.fases||[]).length > 0
@@ -3490,12 +3580,19 @@ function renderPacientes() { renderLista(); }
     };
     const payload = _filtrarPayload(rawPayload);
 
-    const { data, error } = await sb.from('pacientes').insert(payload).select().single();
+    let data, error;
+    try {
+        ({ data, error } = await sb.from('pacientes').insert(payload).select().single());
+    } catch(e) {
+        console.error('[JelianFT] Excepción INSERT:', e.message);
+        showToast('Error de red al registrar atleta: ' + e.message, true);
+        return;
+    }
     if (error) {
-        console.error('[JelianFT] Error INSERT pacientes:', error);
-        console.error('[JelianFT] Payload enviado:', payload);
-        console.error('[JelianFT] Columnas detectadas:', _dbCols ? [..._dbCols] : 'N/A');
-        showToast('Error guardando paciente: ' + (error.message || error.details || JSON.stringify(error)), true);
+        const msg = _sbErrMsg(error);
+        console.error('[JelianFT] Error INSERT pacientes:', msg);
+        console.error('[JelianFT] Payload:', JSON.stringify(payload));
+        showToast('Error guardando paciente: ' + msg, true);
         return;
     }
 
@@ -3563,7 +3660,9 @@ function renderPacientes() { renderLista(); }
                     <tr class="hover:bg-slate-50 cursor-pointer ${ultimoEva !== null && ultimoEva >= 7 ? 'red-flag' : ''}" onclick="verDetalle('${p.id}')">
                         <td class="px-8 py-5">
                             <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs flex-shrink-0">${p.nombre.charAt(0)}</div>
+                                <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs flex-shrink-0 overflow-hidden">
+                                    ${p.foto ? `<img src="${p.foto}" class="w-full h-full object-cover" alt="${p.nombre}">` : p.nombre.charAt(0)}
+                                </div>
                                 <div>
                                     <p class="font-bold text-slate-800 text-sm">${p.nombre}</p>
                                     <p class="text-[10px] text-slate-400">ID: ${p.ci}</p>
@@ -3735,8 +3834,12 @@ function renderPacientes() { renderLista(); }
             };
             p.evoluciones.unshift(s);
             // Guardar en Supabase
-            const { error } = await sb.from('pacientes').update({ evoluciones: p.evoluciones }).eq('id', currentId);
-            if (error) { showToast('Error guardando sesión', true); return; }
+            try {
+                const { error } = await sb.from('pacientes').update({ evoluciones: p.evoluciones }).eq('id', currentId);
+                if (error) { showToast('Error guardando sesión: ' + _sbErrMsg(error), true); return; }
+            } catch(e) {
+                showToast('Error de red al guardar sesión: ' + e.message, true); return;
+            }
             verDetalle(currentId);
             ['s-eva', 's-fuerza', 's-notas', 's-psfs'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.style.borderColor = ''; el.style.color = ''; });
             document.getElementById('s-rpe').value = 5;
@@ -3745,6 +3848,7 @@ function renderPacientes() { renderLista(); }
             // uncheck all técnicas
             document.querySelectorAll('#tecnicas-chips input').forEach(cb => cb.checked = false);
             showToast("✓ Sesión guardada correctamente.");
+            limpiarSesionPendiente();
             // Scroll to sessions list smoothly
             setTimeout(() => {
                 const cont = document.getElementById('sesiones-container');
@@ -3980,7 +4084,7 @@ async function updateDashboard() {
             if (!p) return;
             document.getElementById('modal-nombre-paciente').innerText = p.nombre;
             document.getElementById('modal-confirm-btn').onclick = async function() {
-                await sb.from('pacientes').delete().eq('id', currentId);
+                try { await sb.from('pacientes').delete().eq('id', currentId); } catch(e) { console.error('[JelianFT] Error eliminando:', e.message); }
                 pacientes = pacientes.filter(x => x.id !== currentId);
                 cerrarModal();
                 showSection('lista-pacientes');
@@ -3994,6 +4098,141 @@ async function updateDashboard() {
             document.getElementById('modal-overlay').classList.add('hidden');
         }
 
+        // ============================================================
+        // FECHA DE NACIMIENTO → EDAD AUTOMÁTICA
+        // ============================================================
+        function _calcularEdad(fechaNac) {
+            if (!fechaNac) return null;
+            const hoy = new Date();
+            const nac = new Date(fechaNac);
+            let edad = hoy.getFullYear() - nac.getFullYear();
+            const m = hoy.getMonth() - nac.getMonth();
+            if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+            return edad;
+        }
+
+        function calcularEdadReg(input) {
+            const edad = _calcularEdad(input.value);
+            const lbl = document.getElementById('reg-edad-calculada');
+            const hidden = document.getElementById('reg-edad');
+            if (edad !== null && edad >= 0 && edad <= 120) {
+                lbl.textContent = `${edad} años`;
+                hidden.value = edad;
+            } else {
+                lbl.textContent = '';
+                hidden.value = '';
+            }
+        }
+
+        function calcularEdadEdit(input) {
+            const edad = _calcularEdad(input.value);
+            const lbl = document.getElementById('edit-edad-calculada');
+            const hidden = document.getElementById('edit-edad');
+            if (edad !== null && edad >= 0 && edad <= 120) {
+                lbl.textContent = `${edad} años`;
+                hidden.value = edad;
+            } else {
+                lbl.textContent = '';
+                hidden.value = '';
+            }
+        }
+
+        // ============================================================
+        // EXPORTAR CSV INDIVIDUAL (paciente)
+        // ============================================================
+        function exportarCSVPaciente() {
+            const p = pacientes.find(x => x.id === currentId);
+            if (!p) return;
+            const header = 'Fecha,EVA,Métrica,RPE,PSFS,Técnicas,Notas\n';
+            const filas = (p.evoluciones || []).map(s =>
+                [s.fecha, s.eva, s.fuerza||'', s.rpe||'', s.psfs||'',
+                 (s.tecnicas||[]).join(' | '), (s.notas||'').replace(/\n/g,' ')]
+                .map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')
+            ).join('\n');
+            const csv = '\uFEFF' + header + filas; // BOM para Excel
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${p.nombre.replace(/\s+/g,'_')}_sesiones.csv`;
+            a.click();
+            showToast('✓ CSV exportado.');
+        }
+
+        // ============================================================
+        // NOTIFICACIONES DE CITAS (Notification API)
+        // ============================================================
+        let _notifInterval = null;
+
+        async function solicitarPermisosNotificacion() {
+            if (!('Notification' in window)) return false;
+            if (Notification.permission === 'granted') return true;
+            if (Notification.permission !== 'denied') {
+                const perm = await Notification.requestPermission();
+                return perm === 'granted';
+            }
+            return false;
+        }
+
+        async function activarNotificacionesCitas() {
+            const ok = await solicitarPermisosNotificacion();
+            if (!ok) { showToast('❌ Permiso de notificaciones denegado.', true); return; }
+            if (_notifInterval) clearInterval(_notifInterval);
+            // Check on load and every 5 minutes
+            _checkNotificacionesCitas();
+            _notifInterval = setInterval(_checkNotificacionesCitas, 5 * 60 * 1000);
+            showToast('✓ Notificaciones de citas activadas.');
+            localStorage.setItem('jelian_notif', '1');
+        }
+
+        async function _checkNotificacionesCitas() {
+            if (Notification.permission !== 'granted') return;
+            const citas = await getCitas();
+            const hoy = new Date().toISOString().split('T')[0];
+            const ahora = new Date();
+            const hhmm = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
+            citas.filter(c => c.fecha === hoy).forEach(c => {
+                // Notify 15 min before appointment
+                if (c.hora) {
+                    const [h, m] = c.hora.split(':').map(Number);
+                    const citaMin = h * 60 + m;
+                    const ahoraMin = ahora.getHours() * 60 + ahora.getMinutes();
+                    const diff = citaMin - ahoraMin;
+                    if (diff > 0 && diff <= 15) {
+                        const key = `jelian_notif_sent_${c.id}_${c.hora}`;
+                        if (!sessionStorage.getItem(key)) {
+                            new Notification('⏰ Cita en 15 minutos — Jelian FT', {
+                                body: `${c.atleta} a las ${c.hora} (${c.tipo || 'Sesión'})`,
+                                icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiM2MzY2ZjEiLz48dGV4dCB4PSI1MCUiIHk9IjU0JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIEJsYWNrLHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI5MDAiIGZvbnQtc2l6ZT0iMjYiIGZpbGw9IndoaXRlIj5KRlQ8L3RleHQ+PC9zdmc+'
+                            });
+                            sessionStorage.setItem(key, '1');
+                        }
+                    }
+                }
+            });
+        }
+
+        // Auto-activate notifications if previously enabled
+        (function() {
+            if (localStorage.getItem('jelian_notif') === '1') {
+                setTimeout(activarNotificacionesCitas, 2000);
+            }
+        })();
+
+        // ============================================================
+        // BEFOREUNLOAD — advertir si hay sesión sin guardar
+        // ============================================================
+        let _sesionPendiente = false;
+
+        function marcarSesionPendiente() { _sesionPendiente = true; }
+        function limpiarSesionPendiente() { _sesionPendiente = false; }
+
+        window.addEventListener('beforeunload', function(e) {
+            if (_sesionPendiente) {
+                e.preventDefault();
+                e.returnValue = '¿Salir sin guardar la sesión actual?';
+                return e.returnValue;
+            }
+        });
 
 
         function setupApiKey() {
@@ -4026,12 +4265,23 @@ async function updateDashboard() {
         // ============================================================
         // PIN SYSTEM
 
-        function setupPin() {
+        async function setupPin() {
             const nuevo = prompt("Ingresa un PIN de 4 dígitos (deja vacío para eliminar):");
             if (nuevo === null) return;
-            if (nuevo === '') { localStorage.removeItem(PIN_KEY); showToast("PIN eliminado."); return; }
-            if (/^\d{4}$/.test(nuevo)) { localStorage.setItem(PIN_KEY, nuevo); showToast("✓ PIN guardado."); }
-            else showToast("❌ El PIN debe ser exactamente 4 dígitos.", true);
+            if (nuevo === '') {
+                localStorage.removeItem(PIN_KEY);
+                // Also clear legacy plain-text PIN if any
+                localStorage.removeItem('jelian_pin');
+                showToast("PIN eliminado.");
+                return;
+            }
+            if (/^\d{4}$/.test(nuevo)) {
+                const hashed = await _hashPin(nuevo);
+                localStorage.setItem(PIN_KEY, hashed);
+                showToast("✓ PIN guardado de forma segura.");
+            } else {
+                showToast("❌ El PIN debe ser exactamente 4 dígitos.", true);
+            }
         }
 
         async function mostrarDiagnosticoSchema() {
@@ -4269,7 +4519,7 @@ async function updateDashboard() {
                     <tbody>${evosHTML}</tbody>
                 </table>
                 <div class="footer">
-                    <span>Jelian FT - Clinical Sport v135</span>
+                    <span>Jelian FT - Clinical Sport v136</span>
                     <span>Generado el ${new Date().toLocaleDateString('es-ES')}</span>
                 </div>
                 </body></html>`);
@@ -4321,7 +4571,9 @@ async function updateDashboard() {
                 const pct = (eva / 10) * 100;
                 return `
                 <div class="flex items-center gap-3 cursor-pointer hover:opacity-80" onclick="verDetalle('${p.id}')">
-                    <div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs flex-shrink-0">${p.nombre.charAt(0)}</div>
+                    <div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs flex-shrink-0 overflow-hidden">
+                        ${p.foto ? `<img src="${p.foto}" class="w-full h-full object-cover" alt="${p.nombre}">` : p.nombre.charAt(0)}
+                    </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-center mb-1">
                             <span class="text-xs font-bold text-slate-700 truncate">${p.nombre}</span>
@@ -4369,18 +4621,31 @@ async function updateDashboard() {
         let calDiaSeleccionado = null;
         const CITAS_KEY = 'jelian_citas';
 
-        async function getCitas() { 
-            const { data, error } = await sb.from('citas').select('*, pacientes(nombre)').order('fecha').order('hora');
-            if (error) { console.error('Error citas:', error); return []; }
-            return (data || []).map(c => ({
-                id: c.id,
-                atleta: c.pacientes?.nombre || c.paciente_nombre || '',
-                paciente_id: c.paciente_id,
-                fecha: c.fecha,
-                hora: c.hora,
-                tipo: c.tipo || '',
-                estado: c.estado || 'pendiente'
-            }));
+        async function getCitas() {
+            try {
+                const { data, error } = await sb.from('citas').select('*, pacientes(nombre)').order('fecha').order('hora');
+                if (error) {
+                    const msg = _sbErrMsg(error);
+                    if (error.code === '42P01' || msg.includes('does not exist')) {
+                        console.warn('[JelianFT] Tabla "citas" no existe en Supabase. Agenda desactivada.');
+                    } else {
+                        console.error('[JelianFT] Error citas:', msg);
+                    }
+                    return [];
+                }
+                return (data || []).map(c => ({
+                    id: c.id,
+                    atleta: c.pacientes?.nombre || c.paciente_nombre || '',
+                    paciente_id: c.paciente_id,
+                    fecha: c.fecha,
+                    hora: c.hora,
+                    tipo: c.tipo || '',
+                    estado: c.estado || 'pendiente'
+                }));
+            } catch(e) {
+                console.warn('[JelianFT] Excepción en getCitas:', e.message);
+                return [];
+            }
         }
         async function saveCitas(c) { /* no usado - ahora se guarda por cita */ }
 
@@ -4454,8 +4719,12 @@ async function updateDashboard() {
             const hora = document.getElementById('cita-hora').value;
             const tipo = document.getElementById('cita-tipo').value;
             if (!pacienteId || !fecha || !hora) { showToast('❌ Completa todos los campos.', true); return; }
-            const { error } = await sb.from('citas').insert({ paciente_id: pacienteId, fecha, hora, tipo, estado: 'pendiente' });
-            if (error) { showToast('Error guardando cita: ' + error.message, true); return; }
+            try {
+                const { error } = await sb.from('citas').insert({ paciente_id: pacienteId, fecha, hora, tipo, estado: 'pendiente' });
+                if (error) { showToast('Error guardando cita: ' + _sbErrMsg(error), true); return; }
+            } catch(e) {
+                showToast('Error de red al guardar cita: ' + e.message, true); return;
+            }
             // Limpiar y cerrar formulario
             document.getElementById('cita-hora').value = '';
             document.getElementById('form-cita-container').classList.add('hidden');
@@ -4470,8 +4739,12 @@ async function updateDashboard() {
             const citasDelDia = todas.filter(c => c.fecha === fecha);
             const toDelete = citasDelDia[idx];
             if (!toDelete || !toDelete.id) return;
-            const { error } = await sb.from('citas').delete().eq('id', toDelete.id);
-            if (error) { showToast('Error eliminando cita: ' + error.message, true); return; }
+            try {
+                const { error } = await sb.from('citas').delete().eq('id', toDelete.id);
+                if (error) { showToast('Error eliminando cita: ' + _sbErrMsg(error), true); return; }
+            } catch(e) {
+                showToast('Error de red al eliminar cita: ' + e.message, true); return;
+            }
             renderCalendario();
             selDia(fecha);
             showToast('✓ Cita eliminada.');
@@ -5339,11 +5612,11 @@ async function updateDashboard() {
                     document.getElementById('btn-analizar-img').disabled = false;
                     return;
                 }
-                const response = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://api.anthropic.com/v1/messages'), {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': apiKey, 'anthropic-dangerous-direct-browser-access': 'true' },
                     body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
+                        model: 'claude-opus-4-5',
                         max_tokens: 2000,
                         system: promptSistema,
                         messages: [{ role: 'user', content: [
@@ -5449,7 +5722,7 @@ async function updateDashboard() {
             t += `\nPOSIBLES DIAGNÓSTICOS:\n`; (a.posibles_diagnosticos||[]).forEach(d=>{t+=`• ${d}\n`;});
             t += `\nRECOMENDACIONES:\n`; (a.recomendaciones_fisioterapia||[]).forEach(r=>{t+=`• ${r}\n`;});
             if ((a.banderas_rojas||[]).length>0 && a.banderas_rojas[0]!=='') { t+=`\n🚩 BANDERAS ROJAS:\n`; a.banderas_rojas.forEach(b=>{t+=`• ${b}\n`;}); }
-            t += `\n⚠️ Análisis orientativo — Jelian FT Clinical Sport v135`;
+            t += `\n⚠️ Análisis orientativo — Jelian FT Clinical Sport v136`;
             navigator.clipboard.writeText(t).then(()=>showToast('✓ Análisis copiado al portapapeles.')).catch(()=>showToast('❌ No se pudo copiar.', true));
         }
 
@@ -5513,16 +5786,52 @@ async function updateDashboard() {
         // Init PIN
         (function initPin() {
             const saved = localStorage.getItem(PIN_KEY);
-            if (!saved) { unlockApp(); }
+            // Migrate legacy plain-text PIN to hashed
+            const legacyPin = localStorage.getItem('jelian_pin');
+            if (legacyPin && !saved) {
+                // Legacy PIN exists but no hashed one yet — ask user to re-set it
+                console.log('[JelianFT] PIN legacy detectado. Se pedirá reconfiguración.');
+                localStorage.removeItem('jelian_pin');
+                unlockApp();
+                setTimeout(() => showToast('⚠️ Reconfigura tu PIN desde Ajustes (mejora de seguridad).'), 1500);
+            } else if (!saved) {
+                unlockApp();
+            }
         })();
+
+        // --- _mostrarBannerError: UI feedback de errores de Supabase ---
+        function _mostrarBannerError(msg, code) {
+            const banner = document.getElementById('supabase-banner');
+            if (!banner) return;
+            let html, cls;
+            if (code === '42P01' || (msg && msg.includes('does not exist'))) {
+                cls = 'mx-auto max-w-7xl mb-6 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs font-bold text-amber-700 flex items-center gap-2';
+                html = '⚠️ La tabla <strong>pacientes</strong> no existe en Supabase. Créala o importa un backup.';
+            } else if (code === 'PGRST301' || (msg && (msg.includes('permission') || msg.includes('policy') || msg.includes('JWT')))) {
+                cls = 'mx-auto max-w-7xl mb-6 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs font-bold text-amber-700 flex items-center gap-2';
+                html = '🔒 Sin permisos en Supabase — Revisa las <strong>RLS Policies</strong> y activa acceso anónimo en la tabla <code>pacientes</code>.';
+            } else {
+                cls = 'mx-auto max-w-7xl mb-6 px-4 py-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-bold text-rose-700 flex items-center gap-2';
+                html = '❌ Error Supabase: ' + (msg || 'Error desconocido') + ' <button onclick="this.parentElement.classList.add(&quot;hidden&quot;)" class="ml-auto text-rose-400 hover:text-rose-600 font-black text-sm">✕</button>';
+            }
+            banner.className = cls;
+            banner.innerHTML = html;
+            banner.classList.remove('hidden');
+        }
 
         // --- INIT SUPABASE ---
         (async function initApp() {
-            await detectarSchemaDB();
-            await cargarPacientesDB();
-            renderCalendario();
+            try {
+                await detectarSchemaDB();
+                await cargarPacientesDB();
+            } catch(e) {
+                console.error('[JelianFT] Error en init:', e.message);
+                _mostrarBannerError(e.message);
+            }
+            try { renderCalendario(); } catch(e) { console.warn('[JelianFT] renderCalendario:', e.message); }
             renderBiblioteca();
             updateDashboard();
+            loadNotes();
         })();
 
     </script>
