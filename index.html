@@ -571,6 +571,9 @@
     <div class="lg:hidden p-4 bg-slate-900 flex justify-between items-center no-print z-[60]">
         <h1 class="text-white text-xl font-extrabold italic">JELIAN <span class="text-indigo-400">FT</span></h1>
         <div class="flex gap-2">
+            <button onclick="location.reload()" title="Recargar" class="text-white p-2 bg-slate-700 rounded-xl active:scale-90 transition-transform">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </button>
             <button onclick="openGlobalSearch()" class="text-white p-2 bg-slate-700 rounded-xl active:scale-90 transition-transform">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </button>
@@ -1797,196 +1800,509 @@ const MAPEO_ZONAS = {
 };
         // --- 2. LISTA MAESTRA DE LESIONES (Diagnósticos y Pruebas) ---
        const bibliotecaLesiones = [
-    // 🦶 PIE Y TOBILLO
-    { n: "Fascitis plantar", e: ["Dolor matutino talón", "Palpación fascia plantar", "Windlass Test"], z: "Tobillo", p: "Descarga, estiramientos de cadena posterior, crioterapia y fortalecimiento intrínseco." },
-    { n: "Espolón calcáneo", e: ["Rx lateral de calcáneo", "Dolor puntual a la presión"], z: "Tobillo", p: "Ondas de choque, descarga mediante ortesis, plantillas de descarga posterior." },
-    { n: "Esguince de tobillo grado I", e: ["Test de cajón anterior", "Bostezo lateral", "Palpación LFA"], z: "Tobillo", p: "Protocolo RICE inicial + movilidad temprana controlada en plano sagital." },
-    { n: "Esguince grado II", e: ["Cajón anterior positivo", "Equimosis", "Prueba de esfuerzo en varo"], z: "Tobillo", p: "Inmovilización funcional parcial, terapia manual y fortalecimiento de peroneos." },
-    { n: "Esguince grado III", e: ["Inestabilidad grosera", "RMN", "Bostezo articular severo"], z: "Tobillo", p: "Evaluación quirúrgica, inmovilización total y rehabilitación propioceptiva intensa." },
-    { n: "Tendinitis aquilea", e: ["Dolor a la dorsiflexión pasiva", "Engrosamiento del cuerpo del tendón"], z: "Tobillo", p: "Carga progresiva, isométricos pesados y protocolo excéntrico de Alfredson." },
-    { n: "Rotura parcial del Aquiles", e: ["Test de Thompson", "Brecha palpable", "Ecografía"], z: "Tobillo", p: "Inmovilización en equino, progresión a carga según cicatrización." },
-    { n: "Fractura metatarsiana", e: ["Rx", "Edema localizado", "Dolor a la percusión distal"], z: "Tobillo", p: "Inmovilización con bota Walker, descarga total y posterior movilización de dedos." },
-    { n: "Neuroma de Morton", e: ["Test de Mulder (compresión lateral)", "Dolor interdigital"], z: "Tobillo", p: "Plantillas con barra metatarsal, fisioterapia descompresiva y calzado ancho." },
-    { n: "Sesamoiditis", e: ["Dolor a la presión sobre sesamoideos", "Extensión pasiva del hallux"], z: "Tobillo", p: "Descarga del primer radio, antiinflamatorios locales y control de zancada." },
+    // ===== 🦶 PIE Y TOBILLO =====
+    { n:"Fascitis plantar", z:"Tobillo",
+      e:["Windlass Test","Dolor matutino en talón (EVA)","Palpación inserción fascia plantar","Test de dorsiflexión de tobillo"],
+      p:"F1(0-2sem): Descarga, crioterapia, estiramientos fascia y pantorrilla, férula nocturna.\nF2(2-6sem): Fortalecimiento intrínseco (short foot, towel curls), excéntricos, vendaje.\nF3(6-12sem): Carrera progresiva, pliometría, corrección biomecánica.",
+      fases:[
+        {f:"Fase 1 — Aguda (0-2 sem)",ejs:["Estiramiento pasivo fascia plantar: tirar dedos hacia dorso, 3x30seg","Estiramiento pantorrilla en escalón (Gastro+Soleus), 3x45seg","Crioterapia 15min x3/día","Férula nocturna en dorsiflexión 5°"]},
+        {f:"Fase 2 — Subaguda (2-6 sem)",ejs:["Short foot: contraer arco sin doblar dedos, 3x15","Towel curls con dedos del pie, 3x20","Elevaciones de talón excéntricas en escalón, 3x15","Ondas de choque si persiste (6 sesiones)"]},
+        {f:"Fase 3 — Funcional (6-12 sem)",ejs:["Saltos monopodales con aterrizaje suave, 3x10","Carrera progresiva (caminar-trotar-correr)","Equilibrio en superficie inestable, 3x30seg","Corrección de cadena posterior completa"]}
+      ],
+      rts:"Sin dolor matutino · Windlass negativo · Trote 20min sin dolor · Fuerza plantar flexora simétrica"},
 
-    // 🦵 RODILLA
-    { n: "Condromalacia rotuliana", e: ["Test de Clarke", "Dolor retropatelar", "Cepillo rotuliano"], z: "Rodilla", p: "Fortalecimiento selectivo de VMO y control de rotación interna de cadera." },
-    { n: "Síndrome patelofemoral", e: ["Dolor en escaleras/sentadilla", "Tracking rotuliano"], z: "Rodilla", p: "Reeducación biomecánica, taping rotuliano y fortalecimiento de abductores de cadera." },
-    { n: "Tendinitis rotuliana", e: ["Dolor polo inferior rotuliano", "Decline Squat Test"], z: "Rodilla", p: "Protocolo HSR (Heavy Slow Resistance), isométricos a 60° de flexión." },
-    { n: "Lesión LCA", e: ["Lachman Test", "Pivot Shift", "Cajón Anterior"], z: "Rodilla", p: "Pre-hab o Post-op 6-9 meses. Foco en fuerza máxima de cuádriceps." },
-    { n: "Lesión LCP", e: ["Cajón posterior", "Sag sign (escalón tibial)"], z: "Rodilla", p: "Fortalecimiento agresivo de cuádriceps para compensar la traslación posterior." },
-    { n: "Meniscopatía medial", e: ["Test de McMurray (rotación externa)", "Test de Appley"], z: "Rodilla", p: "Manejo de cargas, control de pivote y fortalecimiento de la pata de ganso." },
-    { n: "Meniscopatía lateral", e: ["Test de McMurray (rotación interna)", "Dolor interlínea externa"], z: "Rodilla", p: "Fisioterapia antiinflamatoria y control de valgo dinámico." },
-    { n: "Bursitis prerrotuliana", e: ["Inspección visual (edema)", "Palpación fluctuante"], z: "Rodilla", p: "Crioterapia, compresión local, descarga de presión directa y movilidad pasiva." },
-    { n: "Síndrome de banda iliotibial", e: ["Test de Ober", "Test de Noble", "Palpación epicóndilo lateral"], z: "Rodilla", p: "Liberación de TFL, fortalecimiento de glúteo medio y corrección de la marcha." },
-    { n: "Artrosis temprana de rodilla", e: ["Rx (espacio articular)", "Rigidez matutina"], z: "Rodilla", p: "Fuerza de bajo impacto, natación, ciclismo y control de peso." },
+    { n:"Espolón calcáneo", z:"Tobillo",
+      e:["Rx lateral calcáneo","Dolor puntual bajo el talón","Windlass Test"],
+      p:"F1: Ondas de choque, ortesis de descarga posterior.\nF2: Fortalecimiento intrínseco, estiramientos.\nF3: Calzado adecuado, retorno progresivo.",
+      fases:[
+        {f:"Fase 1 — Descarga (0-3 sem)",ejs:["Plantilla con descarga del talón","Crioterapia 15min x3/día","Ondas de choque (6 sesiones)","Evitar caminar descalzo"]},
+        {f:"Fase 2 — Fortalecimiento (3-8 sem)",ejs:["Short foot exercise 3x15","Elevaciones de talón con descarga 3x20","Estiramiento de fascia plantar 3x30seg","Caminar con calzado con absorción"]},
+        {f:"Fase 3 — Retorno (8-12 sem)",ejs:["Carrera progresiva en superficie blanda","Pliometría de bajo impacto","Control de calzado deportivo","Revisión biomecánica de la marcha"]}
+      ],
+      rts:"Sin dolor en bipedestación prolongada · Rx estable · Marcha sin cojera"},
 
-    // 🍑 CADERA Y MUSLO
-    { n: "Pubalgia", e: ["Dolor aductor a la resistencia", "Palpación sínfisis"], z: "Cadera", p: "Core stability, fortalecimiento de transverso y equilibrio aductor/abductor." },
-    { n: "Desgarro aductores", e: ["Squeeze Test", "Dolor localizado"], z: "Cadera", p: "Fisioterapia invasiva, isométricos en aducción y progresión excéntrica." },
-    { n: "Desgarro isquiotibial", e: ["Prueba de Askling", "Palpación de rotura"], z: "Cadera", p: "Excéntricos (Nordic hamstring), control de zancada y fuerza en estiramiento." },
-    { n: "Contractura cuádriceps", e: ["Test de Ely", "Palpación de banda tensa"], z: "Rodilla", p: "Punción seca, termoterapia profunda y estiramiento dinámico." },
-    { n: "Síndrome piriforme", e: ["Test de FAIR", "Palpación glútea profunda"], z: "Cadera", p: "Estiramiento específico, neurodinamia del ciático y activación de glúteo mayor." },
-    { n: "Bursitis trocantérica", e: ["Dolor a la presión lateral", "Abducción resistida"], z: "Cadera", p: "Fortalecimiento de glúteo medio y corrección de trendelenburg." },
-    { n: "Lesión labrum acetabular", e: ["Test FADIR", "Test FABER"], z: "Cadera", p: "Control motor lumbopélvico, evitar rangos extremos de flexión/rotación." },
-    { n: "Síndrome cadera en resorte", e: ["Maniobra de circunducción", "Palpación banda IT"], z: "Cadera", p: "Reeducación motora y estiramiento activo de flexores de cadera." },
-    { n: "Fractura por estrés fémur", e: ["Fulcrum Test", "RMN"], z: "Rodilla", p: "Descarga total, control de metabolismo óseo y retorno gradual al impacto." },
-    { n: "Contusión muscular profunda", e: ["Evaluación de ROM", "Equimosis"], z: "Rodilla", p: "Protocolo PEACE & LOVE, drenaje linfático y evitar masajes profundos tempranos." },
+    { n:"Esguince de tobillo grado I", z:"Tobillo",
+      e:["Test de cajón anterior","Bostezo lateral","Palpación LFA/LFC","Ottawa Ankle Rules","Balance Star Excursion Test"],
+      p:"F1(0-72h): PEACE & LOVE, movilidad sagital activa.\nF2(3-14d): Isométricos peroneos, propiocepción básica.\nF3(2-4sem): Pliometría, cambios de dirección.",
+      fases:[
+        {f:"Fase 1 — Aguda (0-72h)",ejs:["Bombeos tobillo: flexo-extensión activa 3x20","Compresión y elevación del miembro","Movilidad en plano sagital sin dolor","Marcha con apoyo total si tolera"]},
+        {f:"Fase 2 — Subaguda (3-14 días)",ejs:["Isométrico peroneos contra pared, 5x10seg","Propiocepción monopodal ojos abiertos 3x30seg","Fortalecimiento tibial anterior y posterior","Marcha en terreno irregular controlado"]},
+        {f:"Fase 3 — Funcional (2-4 sem)",ejs:["Saltos laterales con aterrizaje controlado 3x10","Cambios de dirección a 45° y 90°","Sprint progresivo 50-75-100%","Equilibrio reactivo con perturbaciones"]}
+      ],
+      rts:"Balance monopodal ≥90% · CAIT>24 · Sprint sin dolor · Cambios de dirección sin restricción"},
 
-    // 🦴 COLUMNA
-    { n: "Lumbalgia mecánica", e: ["Test de movilidad lumbar", "Evaluación postural"], z: "Espalda", p: "Higiene postural, ejercicios de McGill y fortalecimiento de Core." },
-    { n: "Hernia discal lumbar", e: ["RMN", "Déficit neurológico focal"], z: "Espalda", p: "Método McKenzie, estabilización segmentaria y control de cargas." },
-    { n: "Ciatalgia", e: ["Test de Lasègue", "Bragard"], z: "Espalda", p: "Neurodinamia del nervio ciático y apertura foraminal lumbar." },
-    { n: "Cervicalgia mecánica", e: ["ROM cervical", "Test de flexión craneocervical"], z: "Espalda", p: "Movilidad, fuerza de flexores profundos y ergonomía laboral." },
-    { n: "Dorsalgia postural", e: ["Evaluación de hipercifosis", "Palpación trapecio"], z: "Espalda", p: "Movilidad torácica, extensión dorsal y fortalecimiento de romboides." },
-    { n: "Escoliosis funcional", e: ["Test de Adams", "Plomada postural"], z: "Espalda", p: "Reeducación postural global (RPG) y asimetría controlada de cargas." },
-    { n: "Espondilolistesis", e: ["Rx lateral", "Signo del escalón palpable"], z: "Espalda", p: "Evitar hiperextensión lumbar, fortalecer Core anterior masivamente." },
-    { n: "Pinzamiento lumbar", e: ["Movimientos repetidos de extensión", "Clínica"], z: "Espalda", p: "Descompresión manual, tracción lumbar y movilidad segmental." },
-    { n: "Latigazo cervical", e: ["Canadian C-Spine Rule", "Dolor suboccipital"], z: "Espalda", p: "Movilización precoz, control motor cervical y educación sobre el dolor." },
-    { n: "Contractura paravertebral", e: ["Palpación", "Trigger Points"], z: "Espalda", p: "Termoterapia, liberación miofascial y estiramientos globales." },
+    { n:"Esguince grado II", z:"Tobillo",
+      e:["Cajón anterior positivo","Equimosis","Prueba de esfuerzo en varo","Ottawa Ankle Rules","Ecografía ligamentosa"],
+      p:"F1(0-1sem): Bota walker o vendaje rígido.\nF2(1-3sem): Movilidad progresiva, fortalecimiento peroneos.\nF3(3-6sem): Propiocepción avanzada, pliometría, retorno.",
+      fases:[
+        {f:"Fase 1 — Inmovilización (0-1 sem)",ejs:["Bota walker o vendaje rígido","Bombeos circulatorios distales","Ejercicios cadera y rodilla (SLR)","Crioterapia 15min x4/día"]},
+        {f:"Fase 2 — Fortalecimiento (1-3 sem)",ejs:["Movilidad activa tobillo en todas direcciones","Isométricos peroneos multiángulo 5x10seg","Propiocepción en tabla wobble","Marcha normal progresiva"]},
+        {f:"Fase 3 — Funcional (3-6 sem)",ejs:["Pliometría bilateral a unilateral","Agilidad en escalera de coordinación","Sprint con cambios de dirección","Entrenamiento reactivo con estímulo externo"]}
+      ],
+      rts:"Laxitud simétrica · Balance ≥90% · Hop test >85% · Sprint y COD sin dolor"},
 
-    // 💪 HOMBRO, BRAZO Y CODO
-    { n: "Manguito rotador", e: ["Test de Jobe", "Full Can Test"], z: "Hombro", p: "Fortalecimiento de rotadores externos y control escapular." },
-    { n: "Tendinitis supraespinoso", e: ["Prueba de Neer", "Prueba de Kennedy-Hawkins"], z: "Hombro", p: "Isométricos en plano escapular y progresión isotónica excéntrica." },
-    { n: "Bursitis subacromial", e: ["Arco doloroso (60°-120°)", "Inyección diagnóstica"], z: "Hombro", p: "Terapia manual descompresiva, evitar movimientos overhead iniciales." },
-    { n: "Luxación hombro", e: ["Signo de la charretera", "Rx"], z: "Hombro", p: "Inmovilización, estabilización dinámica y propiocepción de articulación GH." },
-    { n: "Inestabilidad glenohumeral", e: ["Apprehension Test", "Relocation Test"], z: "Hombro", p: "Fortalecimiento masivo de manguito rotador y serrato anterior." },
-    { n: "Epicondilitis (codo tenista)", e: ["Test de Cozen", "Test de Maudsley"], z: "Hombro", p: "Carga excéntrica de extensores de muñeca y estiramiento de fascia braquial." },
-    { n: "Epitrocleitis (codo golfista)", e: ["Dolor medial resistido", "Flexión de muñeca"], z: "Hombro", p: "Fortalecimiento progresivo de flexores y pronador redondo." },
-    { n: "Síndrome túnel carpiano", e: ["Signo de Phalen", "Signo de Tinel"], z: "Muñeca/Mano", p: "Férula nocturna, neurodinamia del mediano y liberación del retináculo." },
-    { n: "Tendinitis bíceps", e: ["Speed Test", "Yergason Test"], z: "Hombro", p: "Control de carga en cabeza larga del bíceps, isométricos en supinación." },
-    { n: "Lesión tríceps", e: ["Extensión resistida", "Palpación olécranon"], z: "Hombro", p: "Progresión de carga excéntrica en empuje." },
+    { n:"Esguince grado III", z:"Tobillo",
+      e:["Inestabilidad grosera","Cajón anterior >10mm","RMN","Ottawa Ankle Rules"],
+      p:"F1(0-2sem): Evaluación quirúrgica, inmovilización rígida.\nF2(2-6sem): Carga progresiva con bota.\nF3(6-16sem): Rehabilitación propioceptiva intensa.",
+      fases:[
+        {f:"Fase 1 — Aguda (0-2 sem)",ejs:["Yeso o bota walker rígida","Ejercicios cadera y rodilla no cargados","Electroanalgesia TENS","Circulación con bombas distales"]},
+        {f:"Fase 2 — Subaguda (2-6 sem)",ejs:["Carga progresiva con bota","Movilidad activa del tobillo sin dolor","Fortalecimiento peroneos, tibiales y tríceps","Propiocepción fase inicial"]},
+        {f:"Fase 3 — Funcional (6-16 sem)",ejs:["Propiocepción dinámica avanzada","Pliometría progresiva","Carrera y cambios de dirección","Entrenamiento específico del deporte"]}
+      ],
+      rts:"CAIT≥27 · Fuerza peroneal >90% · Balance ≥90% · Hop test >85% · Sin dolor en gesto deportivo"},
 
-    // 🧠 SOBREUSO Y GENERALES
-    { n: "Síndrome sobreentrenamiento", e: ["Variabilidad frecuencia cardiaca", "Fatiga"], z: "Espalda", p: "Periodización del descanso, nutrición y recuperación activa." },
-    { n: "Calambres musculares", e: ["Analítica electrolitos", "Historia clínica"], z: "Rodilla", p: "Hidratación, estiramiento estático prolongado y suplementación." },
-    { n: "DOMS", e: ["Dolor tardío (24-48h)", "Escala visual"], z: "Rodilla", p: "Movilidad suave, inmersión en agua fría y recuperación activa." },
-    { n: "Fatiga neuromuscular", e: ["Pérdida de potencia en CMJ", "Clínica"], z: "Espalda", p: "Higiene del sueño, descarga mecánica y periodización." },
-    { n: "Contractura generalizada", e: ["Palpación fascial", "Tensión"], z: "Espalda", p: "Liberación miofascial sistémica y baños de contraste." },
-    { n: "Periostitis tibial", e: ["Dolor cresta tibial", "Palpación"], z: "Tobillo", p: "Cambio de calzado, fortalecimiento tibial anterior/posterior y descarga." },
-    { n: "Fractura por estrés tibial", e: ["Test de percusión", "RMN"], z: "Tobillo", p: "Descarga total inicial, magnetoterapia y retorno gradual al impacto." },
-    { n: "Tendinitis extensores muñeca", e: ["Dolor dorsal muñeca", "Extensión resistida"], z: "Muñeca/Mano", p: "Fortalecimiento excéntrico y ergonomía del agarre." },
-    { n: "Síndrome compartimental crónico", e: ["Presión intracompartimental", "Parestesias"], z: "Tobillo", p: "Fisioterapia descompresiva, técnica de carrera o fasciotomía." },
-    { n: "Edema óseo", e: ["RMN", "Dolor profundo persistente"], z: "Rodilla", p: "Magnetoterapia de alta intensidad y descarga de peso controlada." },
+    { n:"Tendinitis aquilea", z:"Tobillo",
+      e:["Dolor a la dorsiflexión pasiva","Engrosamiento del tendón","VISA-A cuestionario","Arc sign","Ecografía Doppler"],
+      p:"F1(0-2sem): Isométricos pesados 5x45seg 2x/día.\nF2(2-8sem): HSR decline 4x15→4x6.\nF3(8-16sem): Excéntricos, pliometría, carrera.",
+      fases:[
+        {f:"Fase 1 — Control dolor (0-2 sem)",ejs:["Isométrico leg press 70%RM, 5x45seg, 2x/día","Crioterapia post-ejercicio","Sin carrera ni saltos","Heel lift si dolor insertional"]},
+        {f:"Fase 2 — Carga progresiva (2-8 sem)",ejs:["Elevaciones de talón en máquina: 4x15→4x8 (añadir peso)","Sentadilla con talones elevados 4x15","Peso muerto rumano 3x12","Ciclismo o natación como cardio"]},
+        {f:"Fase 3 — Retorno (8-16 sem)",ejs:["Excéntricos en decline board unilateral 3x15","Saltos en caja (drop jumps) progresivos","Carrera: 5-10-20min progresivo","Triple hop test para medir simetría"]}
+      ],
+      rts:"VISA-A≥90 · Salto monopodal >90% simetría · Trote 5km sin dolor · Fuerza plantar >90%"},
 
-    // ⚽ DEPORTES ESPECÍFICOS (Mapeo por biomecánica dominante)
-    { n: "Pubalgia futbolista", e: ["Cross-over test", "Squeeze test"], z: "Cadera", p: "Fortalecimiento lumbopélvico y aductor excéntrico." },
-    { n: "Rodilla del saltador", e: ["Dolor polo inferior", "Salto monopododal"], z: "Rodilla", p: "Protocolo de carga tendinosa de Cook & Purdam." },
-    { n: "Hombro del nadador", e: ["Prueba de impingement", "GIRD"], z: "Hombro", p: "Movilidad posterior de cápsula y fortalecimiento de retractores." },
-    { n: "Codo del lanzador", e: ["Estrés en valgo", "Dolor medial"], z: "Hombro", p: "Estabilización de codo y fortalecimiento de cadena cinética." },
-    { n: "Espalda del remero", e: ["Flexión lumbar repetida", "Clínica"], z: "Espalda", p: "Movilidad torácica y control de bisagra de cadera." },
-    { n: "Rodilla del corredor", e: ["Dolor banda IT", "Tracking patelar"], z: "Rodilla", p: "Control de cadera y técnica de aterrizaje." },
-    { n: "Síndrome del ciclista", e: ["Neuropatía pudenda", "Compresión"], z: "Espalda", p: "Ajuste biomecánico (Bike fit) y fortalecimiento de Core." },
-    { n: "Tobillo del basquetbolista", e: ["Inestabilidad crónica", "Propiocepción"], z: "Tobillo", p: "Entrenamiento de equilibrio reactivo y pliometría controlada." },
-    { n: "Muñeca del gimnasta", e: ["Hiperextensión dolorosa", "Impacto dorsal"], z: "Muñeca/Mano", p: "Fortalecimiento de flexores y soporte de carga en mano." },
-    { n: "Lumbar del levantador", e: ["Dolor en extensión/carga axial"], z: "Espalda", p: "Técnica de Bracing y fortalecimiento de multífidos." },
+    { n:"Rotura parcial del Aquiles", z:"Tobillo",
+      e:["Test de Thompson","Brecha palpable","Ecografía","Dolor agudo en pantorrilla"],
+      p:"F1: Inmovilización en equino.\nF2: Carga progresiva según cicatrización.\nF3: Excéntricos, retorno deportivo.",
+      fases:[
+        {f:"Fase 1 — Inmovilización (0-4 sem)",ejs:["Bota en equino 20°","Movilidad dedos y rodilla","Isométrico glúteo y cuádriceps","Crioterapia y elevación"]},
+        {f:"Fase 2 — Carga progresiva (4-10 sem)",ejs:["Bota plana con carga progresiva","Elevaciones de talón bilaterales suaves","Bicicleta estática","Fortalecimiento de cadera y rodilla"]},
+        {f:"Fase 3 — Funcional (10-20 sem)",ejs:["Excéntricos en decline board 3x15","Carrera progresiva","Pliometría controlada","Gestos deportivos específicos"]}
+      ],
+      rts:"Thompson negativo · VISA-A≥80 · Salto bilateral simétrico · Carrera 5km sin dolor"},
 
-    // 🩹 OTRAS FRECUENTES
-    { n: "Contusión ósea", e: ["RMN", "Dolor óseo directo"], z: "Rodilla", p: "Magnetoterapia y evitación de impacto directo." },
-    { n: "Contusión muscular", e: ["Equimosis", "ROM limitado"], z: "Rodilla", p: "Compresión y movilidad temprana indolora." },
-    { n: "Desgarro grado I", e: ["Dolor puntual", "Resistencia leve"], z: "Rodilla", p: "Isométricos tempranos y cicatrización dirigida." },
-    { n: "Desgarro grado II", e: ["Hachazo palpable", "Hematoma"], z: "Rodilla", p: "Protocolo de fases: Isometría -> Isotónica -> Excéntrica." },
-    { n: "Desgarro grado III", e: ["Pérdida funcional total", "RMN"], z: "Rodilla", p: "Posible cirugía y rehabilitación a largo plazo." },
-    { n: "Microtraumatismos repetitivos", e: ["Historia clínica", "Dolor insidioso"], z: "Espalda", p: "Gestión de carga y análisis ergonómico." },
-    { n: "Síndrome de impacto", e: ["Dolor en rangos finales", "Bloqueo"], z: "Hombro", p: "Movilización articular y recuperación de espacio subacromial." },
-    { n: "Pinzamiento articular", e: ["Dolor agudo en pinza", "ROM"], z: "Rodilla", p: "Terapia manual y control de estabilidad dinámica." },
-    { n: "Inflamación tendinosa crónica", e: ["Ecografía", "Dolor al inicio"], z: "Tobillo", p: "Carga pesada lenta (HSR) y ondas de choque." },
-    { n: "Inflamación bursátil", e: ["Signos inflamatorios", "Palpación"], z: "Hombro", p: "Reposo relativo, hielo y terapia física analgésica." },
+    { n:"Inestabilidad crónica de tobillo (CAI)", z:"Tobillo",
+      e:["Cumberland CAIT (<24 puntos)","Balance Star Excursion Test","Historia de esguinces repetidos (≥2)","Test de cajón anterior"],
+      p:"F1(0-3sem): Fortalecimiento peroneal, propiocepción básica.\nF2(3-8sem): Superficie inestable, entrenamiento reactivo.\nF3(8-16sem): Agilidad, pliometría, retorno.",
+      fases:[
+        {f:"Fase 1 — Base (0-3 sem)",ejs:["Isométricos de eversión con banda 3x15","Fortalecimiento glúteo medio (clamshell) 3x20","Propiocepción monopodal ojos abiertos 3x30seg","Marcha en superficies variadas"]},
+        {f:"Fase 2 — Reactivo (3-8 sem)",ejs:["Balance en BOSU unilateral con perturbaciones 3x30seg","Saltos laterales con control 3x10","Mini-vallas de agilidad lateral","Fortalecimiento cadera: abducción resistida 3x15"]},
+        {f:"Fase 3 — Específico (8-16 sem)",ejs:["Pliometría unipodal con cambios de dirección","Sprint con stops y arranques","Gestos específicos del deporte","Tobillera funcional si persiste aprensión"]}
+      ],
+      rts:"CAIT≥27 · Balance SEBT≥90% · Hop test >85% · Sprint y giro sin aprensión"},
 
-    // 🏋️ LESIONES POR CARGA Y FUERZA
-    { n: "Sobrecarga lumbar", e: ["Fatiga muscular", "ROM"], z: "Espalda", p: "Descarga manual y ejercicios de movilidad." },
-    { n: "Sobrecarga cervical", e: ["Tensión trapecio superior", "Cefalea"], z: "Espalda", p: "Movilidad escapular y fortalecimiento de trapecio inferior." },
-    { n: "Sobrecarga de gemelos", e: ["Tensión en tríceps sural", "Palpación"], z: "Tobillo", p: "Masaje de descarga y estiramientos dinámicos." },
-    { n: "Sobrecarga cuádriceps", e: ["Fatiga muscular localizada", "ROM"], z: "Rodilla", p: "Foam roller y movilidad activa." },
-    { n: "Sobrecarga isquios", e: ["Tensión posterior", "Asking test"], z: "Cadera", p: "Excéntricos suaves y movilidad de cadera." },
-    { n: "Sobrecarga deltoidea", e: ["Fatiga en hombro", "ROM"], z: "Hombro", p: "Descarga manual y control escapular." },
-    { n: "Sobrecarga trapecial", e: ["Puntos gatillo en trapecio", "Cefalea"], z: "Espalda", p: "Control postural y fortalecimiento de fijadores de escápula." },
-    { n: "Fatiga del core", e: ["Pérdida de técnica en ejercicios", "Clínica"], z: "Espalda", p: "Ejercicios de estabilidad de baja intensidad." },
-    { n: "Fatiga escapular", e: ["Discinesia escapular por fatiga"], z: "Hombro", p: "Fortalecimiento de serrato y trapecio medio/inferior." },
-    { n: "Fatiga glútea", e: ["Valgo dinámico en fatiga", "Clínica"], z: "Cadera", p: "Activación de glúteo medio y mayor." },
+    { n:"Periostitis tibial", z:"Tobillo",
+      e:["Dolor cresta tibial en carrera","Palpación difusa cresta tibial medial","Test de percusión tibial","RMN"],
+      p:"F1(0-2sem): Pausa de carrera, crioterapia, cambio calzado.\nF2(2-6sem): Fortalecimiento tibial y peroneal.\nF3(6-12sem): Retorno carrera +10%/sem.",
+      fases:[
+        {f:"Fase 1 — Descarga (0-2 sem)",ejs:["Pausa de carrera completa","Crioterapia tibial 15min x3/día","Bicicleta o natación alternativo","Análisis de calzado"]},
+        {f:"Fase 2 — Fortalecimiento (2-6 sem)",ejs:["Inversión con banda elástica 3x15","Eversión con banda 3x15","Elevaciones de talón 3x20","Técnica de carrera: aumento de cadencia"]},
+        {f:"Fase 3 — Retorno (6-12 sem)",ejs:["Walk-run progressions: caminar-trotar alternado","Carrera +10% km por semana","Superficies blandas (hierba, tierra)","Control de km con GPS"]}
+      ],
+      rts:"Palpación tibial sin dolor · Carrera 5km sin dolor · Cadencia >170"},
 
-    // 🧬 CASOS ESPECIALES
-    { n: "Desequilibrios musculares", e: ["FMS (Functional Movement Screen)", "Dinamometría"], z: "Rodilla", p: "Entrenamiento correctivo unilateral y compensatorio." },
-    { n: "Desalineación biomecánica", e: ["Análisis de la marcha", "Plomada"], z: "Rodilla", p: "Propiocepción y ortesis si es necesario." },
-    { n: "Inestabilidad articular", e: ["Pruebas de laxitud", "Clínica"], z: "Hombro", p: "Fortalecimiento de estabilizadores dinámicos." },
-    { n: "Hipermovilidad", e: ["Criterios de Beighton"], z: "Espalda", p: "Entrenamiento de fuerza y estabilidad, evitar estiramientos pasivos." },
-    { n: "Hipomovilidad", e: ["Goniometría", "Sensación final de tope"], z: "Espalda", p: "Movilizaciones articulares grado III/IV y estiramientos." },
-    { n: "Rigidez miofascial", e: ["Palpación", "Test de extensibilidad"], z: "Espalda", p: "Inducción miofascial y liberación con foam roller." },
-    { n: "Bloqueo articular", e: ["Incapacidad de ROM pasivo", "Click"], z: "Rodilla", p: "Manipulación articular u osteopatía dirigida." },
-    { n: "Síndrome miofascial", e: ["Presencia de puntos gatillo", "Dolor referido"], z: "Espalda", p: "Punción seca, técnica de Jones o compresión isquémica." },
-    { n: "Dolor crónico deportivo", e: ["Cuestionario de sensibilización central"], z: "Espalda", p: "Educación en neurociencia del dolor y exposición gradual." },
-    { n: "Recaída muscular", e: ["Historia clínica", "Ecografía de control"], z: "Rodilla", p: "Análisis de la causa de fallo y retorno a fase anterior de rehab." },
+    { n:"Fractura por estrés tibial", z:"Tobillo",
+      e:["Test de percusión tibial positivo","RMN (edema óseo)","Dolor focal en punto específico","DEXA si baja densidad"],
+      p:"F1(0-4sem): Descarga TOTAL, evaluar DEXA y nutrición.\nF2(4-8sem): Carga progresiva con bota.\nF3(8-16sem): Carrera progresiva con control radiológico.",
+      fases:[
+        {f:"Fase 1 — Descarga total (0-4 sem)",ejs:["Muletas o descarga completa","Ejercicio en agua (acuaeróbics, natación)","DEXA ósea + suplemento Ca 1200mg + Vit D3 2000UI","Sin impacto"]},
+        {f:"Fase 2 — Carga progresiva (4-8 sem)",ejs:["Bota walker con carga progresiva","Bicicleta estática sin impacto","Fortalecimiento muscular sin impacto","Control radiológico"]},
+        {f:"Fase 3 — Retorno (8-16 sem)",ejs:["Walk-run con monitor de dolor","Carrera progresiva previa RMN","Calzado con absorción de impacto","Seguimiento médico"]}
+      ],
+      rts:"RMN: curación completa · Sin dolor focal · Carrera 5km sin dolor · DEXA normal"},
 
-    // 🤜 MUÑECA Y MANO
-    { n: "Esguince de muñeca", e: ["Palpación ligamento escafolunar", "Test de Watson", "Compresión axial"], z: "Muñeca/Mano", p: "Fase 1: inmovilización funcional. Fase 2: movilidad activa y fortalecimiento de flexores/extensores. Fase 3: carga progresiva y deporte específico." },
-    { n: "Tendinitis de De Quervain", e: ["Test de Finkelstein", "Palpación estiloide radial", "Resistencia en extensión pulgar"], z: "Muñeca/Mano", p: "Fase 1: ortesis de pulgar, isométricos en neutro. Fase 2: excéntricos de abductor largo y extensor corto del pulgar. Fase 3: ejercicios funcionales de agarre y pellizco." },
-    { n: "Fractura de escafoides", e: ["Rx (puede ser negativa)", "Palpación tabaquera anatómica", "RMN si sospecha"], z: "Muñeca/Mano", p: "Fase 1: inmovilización 6-8 semanas, movilidad digital. Fase 2: movilidad muñeca, fortalecimiento intrínseco. Fase 3: carga progresiva y retorno funcional." },
-    { n: "Síndrome del canal de Guyon", e: ["Signo de Tinel en canal de Guyon", "Debilidad interóseos", "Test de Froment"], z: "Muñeca/Mano", p: "Fase 1: descompresión con ortesis nocturna, neurodinamia del cubital. Fase 2: fortalecimiento hipotenar, movilidad cubital. Fase 3: ergonomía del agarre." },
-    { n: "Dedo en gatillo (tenosinovitis flexora)", e: ["Palpación nódulo A1", "Bloqueo activo en flexión", "Historia de chasquido"], z: "Muñeca/Mano", p: "Fase 1: fisioterapia analgésica, isométricos de flexores en neutro. Fase 2: estiramientos de poleas digitales, movilidad activa. Fase 3: ejercicios resistidos y retorno funcional." },
-    { n: "Rotura del ligamento colateral cubital pulgar", e: ["Valgus stress test en 30°", "Signo de Stener", "Ecografía"], z: "Muñeca/Mano", p: "Fase 1: inmovilización 4-6 semanas. Fase 2: movilidad activa, fortalecimiento interóseos. Fase 3: pinza lateral y deportes de contacto." },
-    { n: "Artritis de la base del pulgar (rizartrosis)", e: ["Test del cuadrado", "Palpación articulación trapeciometacarpiana", "Rx"], z: "Muñeca/Mano", p: "Fase 1: ortesis de reposo, termoterapia local. Fase 2: fortalecimiento intrínseco y de abductores del pulgar. Fase 3: ergonomía adaptada y actividades funcionales." },
-    { n: "Síndrome del nervio interóseo posterior", e: ["Debilidad extensores sin parestesias", "Test de compresión supinador", "Electromiografía"], z: "Muñeca/Mano", p: "Fase 1: descanso, AINE, ortesis extensora. Fase 2: fortalecimiento progresivo extensores. Fase 3: ejercicios funcionales de muñeca." },
+    // ===== 🦵 RODILLA =====
+    { n:"Lesión LCA", z:"Rodilla",
+      e:["Lachman Test","Pivot Shift Test","Cajón Anterior","RMN","IKDC cuestionario","Limb Symmetry Index (LSI)"],
+      p:"Pre-op: Prehab 4-6sem.\nF1(0-6sem): Control dolor/edema, extensión completa.\nF2(6-12sem): Fuerza cuádriceps, bicicleta.\nF3(3-6mes): Fuerza máxima, carrera.\nF4(6-9mes): Pliometría, agilidad, retorno.",
+      fases:[
+        {f:"Fase 1 — Control inflamatorio (0-6 sem)",ejs:["SLR (straight leg raise) 3x20","Isométrico cuádriceps en extensión","Movilidad pasiva: extensión completa desde día 1","Bicicleta sin resistencia desde sem 2","Crioterapia post-sesión"]},
+        {f:"Fase 2 — Fortalecimiento (6-12 sem)",ejs:["Prensa 0-60° 4x12 con carga progresiva","Sentadilla búlgara bilateral a unilateral 3x10","Step up frontal y lateral con carga 3x12","Leg curl acostado 3x12","Propiocepción en balance board"]},
+        {f:"Fase 3 — Potencia (3-6 mes)",ejs:["Sentadilla con salto bilateral 3x8","Peso muerto unilateral 4x8","Carrera progresiva plana","Cambios de dirección a 45°","Box jump bilateral"]},
+        {f:"Fase 4 — Retorno deportivo (6-9 mes)",ejs:["Pliometría unipodal: drop jump 3x8","Sprint 100% con cambios de dirección","Gestos específicos del deporte","Triple hop test para LSI"]}
+      ],
+      rts:"LSI cuádriceps ≥90% · Triple hop ≥90% · Pivot shift negativo · IKDC>85 · Mínimo 9 meses post-op"},
 
-    // 🏊 CUELLO / CERVICAL (específico deportivo)
-    { n: "Contractura cervical aguda (tortícolis)", e: ["Lateroflexión dolorosa activa", "Palpación espasmo esternocleidomastoideo", "ROM cervical"], z: "Cuello/Cervical", p: "Fase 1: termoterapia, isométricos suaves en neutro. Fase 2: movilidad activa asistida, fortalecimiento flexores profundos. Fase 3: reentrenamiento funcional y control postural." },
-    { n: "Radiculopatía cervical", e: ["Test de Spurling", "Test de distracción cervical", "Déficit neurológico", "RMN"], z: "Cuello/Cervical", p: "Fase 1: tracción manual, neurodinamia del nervio afectado. Fase 2: fortalecimiento de flexores profundos y estabilizadores escapulares. Fase 3: control motor cervical bajo carga." },
-    { n: "Síndrome de salida torácica", e: ["Test de Adson", "Test de Roos", "Test de Wright", "Pulso radial"], z: "Cuello/Cervical", p: "Fase 1: postura en elongación, movilidad costal. Fase 2: fortalecimiento trapecio inferior y serrato anterior. Fase 3: ejercicios overhead progresivos." },
-    { n: "Cefalea cervicogénica", e: ["Flexión craneocervical CCFT", "Palpación suboccipital", "Test SNAG C1-C2"], z: "Cuello/Cervical", p: "Fase 1: movilizaciones C0-C1, ejercicios de flexores craneocervicales. Fase 2: fortalecimiento de flexores cervicales profundos. Fase 3: control postural dinámico en deporte." },
-    { n: "Lesión de disco cervical C5-C6", e: ["Test de compresión foraminal", "Reflejos braquiorradial y bíceps", "RMN"], z: "Cuello/Cervical", p: "Fase 1: tracción axial, flexión activa segmentaria. Fase 2: McKenzie cervical, fortalecimiento en descarga. Fase 3: carga axial progresiva." },
-    { n: "Miositis cervical del nadador", e: ["Palpación multífidos cervicales", "Asimetría rotacional activa", "Historial de nado"], z: "Cuello/Cervical", p: "Fase 1: liberación miofascial local, isométricos. Fase 2: fortalecimiento rotadores profundos y estabilidad escapular. Fase 3: técnica de nado y corrección biomecánica." },
+    { n:"Lesión LCP", z:"Rodilla",
+      e:["Cajón posterior","Sag Sign","RMN","Dial Test (30° y 90°)"],
+      p:"F1(0-4sem): Inmovilización en extensión, cuádriceps máximo.\nF2(4-10sem): Fortalecimiento agresivo cuádriceps.\nF3(10-20sem): Fuerza máxima, pliometría.",
+      fases:[
+        {f:"Fase 1 — Inmovilización (0-4 sem)",ejs:["Cuádriceps isométrico en extensión 5x10x10seg","SLR con peso en tobillo 3x20","Movilidad cadera y tobillo","Crioterapia frecuente"]},
+        {f:"Fase 2 — Cuádriceps (4-10 sem)",ejs:["Prensa bilateral 0-70° 4x15 alta carga","Terminal knee extension (TKE) con banda 3x20","Step down excéntrico 3x12","Ciclismo con resistencia moderada"]},
+        {f:"Fase 3 — Funcional (10-20 sem)",ejs:["Sentadilla con barra 4x6","Pliometría bilateral progresiva","Carrera progresiva","Gestos específicos del deporte"]}
+      ],
+      rts:"Cuádriceps ≥90% · Cajón posterior <5mm · Triple hop ≥90% · Sin dolor en actividad"},
 
-    // 🦵 INGLE / PUBIS
-    { n: "Tendinopatía del psoas-ilíaco", e: ["Test de Thomas", "Dolor en flexión resistida de cadera", "Palpación trocánter menor"], z: "Ingle/Pubis", p: "Fase 1: isométricos de psoas en elongación. Fase 2: fortalecimiento excéntrico en rango completo. Fase 3: gestos funcionales específicos del deporte." },
-    { n: "Osteítis de pubis", e: ["Dolor sínfisis pubiana bilateral", "Squeeze test", "Rx en bipedestación (esclerosis sínfisis)"], z: "Ingle/Pubis", p: "Fase 1: descarga relativa, isométricos de aductores suaves. Fase 2: fortalecimiento Core anterior y aductor excéntrico. Fase 3: retorno gradual con cargas de impacto." },
-    { n: "Hernia inguinal deportiva (Gilmore Groin)", e: ["Dolor en anillo inguinal externo", "Test de Valsalva", "Clínica sin hernia verdadera"], z: "Ingle/Pubis", p: "Fase 1: Core profundo y descarga de aductores. Fase 2: sentadilla y ejercicios lumbopélvicos. Fase 3: retorno deportivo o valoración quirúrgica." },
-    { n: "Contractura del aductor largo", e: ["Squeeze test con flexión de 45°", "Estiramiento en abducción doloroso", "Palpación origen en pubis"], z: "Ingle/Pubis", p: "Fase 1: isométricos de aducción suaves, liberación miofascial. Fase 2: fortalecimiento excéntrico progresivo en aducción. Fase 3: gestos explosivos de cambio de dirección." },
-    { n: "Neuropatía del nervio femoral", e: ["Déficit sensorial cara anterior muslo", "Test de Thomas invertido", "EMG"], z: "Ingle/Pubis", p: "Fase 1: neurodinamia del femoral, isométricos de cuádriceps. Fase 2: fortalecimiento progresivo de cuádriceps y psoas. Fase 3: control motor funcional." },
-    { n: "Bursitis iliopectínea", e: ["Dolor anterior de cadera en flexión", "Ecografía de bursa", "Test FADIR"], z: "Ingle/Pubis", p: "Fase 1: crioterapia, reposo de flexión, antiinflamatorios locales. Fase 2: movilidad pasiva y fortalecimiento de estabilizadores. Fase 3: control de flexión bajo carga." },
+    { n:"Meniscopatía medial", z:"Rodilla",
+      e:["Test de McMurray (rotación externa)","Test de Appley","Test de Thessaly 20°","RMN","Dolor en interlínea medial"],
+      p:"F1(0-2sem): Descarga, control de edema.\nF2(2-6sem): Fortalecimiento cuádriceps e isquios.\nF3(6-12sem): Sentadilla profunda, carrera, pivotes.",
+      fases:[
+        {f:"Fase 1 — Descarga (0-2 sem)",ejs:["Cuádriceps isométrico multiángulo 5x10seg","Extensión rodilla OKC 0-60°","Crioterapia y TENS analgésico","Movilidad pasiva sin forzar flexión"]},
+        {f:"Fase 2 — Fortalecimiento (2-6 sem)",ejs:["Prensa 0-90° con carga progresiva 4x12","Leg curl acostado 3x15","Fortalecimiento aductores con banda 3x15","Ciclismo estático sin dolor"]},
+        {f:"Fase 3 — Funcional (6-12 sem)",ejs:["Sentadilla profunda progresiva","Lunges con rotación de tronco","Carrera progresiva en pista","Cambios de dirección y pivotes controlados"]}
+      ],
+      rts:"McMurray negativo · Sentadilla profunda sin dolor · Rotación sin bloqueo · Carrera 5km sin dolor"},
 
-    // 🏃 ISQUIOTIBIALES (zona específica)
-    { n: "Desgarro proximal de isquiotibiales", e: ["Prueba de Askling H1", "Palpación tuberosidad isquiática", "RMN para estadificación"], z: "Isquiotibiales", p: "Fase 1: isométricos de larga longitud. Fase 2: protocolo de Askling L, deslizamientos de pierna. Fase 3: Nordic Hamstring, sprints controlados." },
-    { n: "Síndrome del ángulo isquio-femoral", e: ["Test de impacto isquio-femoral", "Dolor en marcha", "RMN"], z: "Isquiotibiales", p: "Fase 1: evitar extensión con aducción, isométricos. Fase 2: fortalecimiento rotadores externos y abductores. Fase 3: biomecánica de carrera corregida." },
-    { n: "Tendinopatía proximal de isquiotibiales", e: ["Prueba de Puranen-Orava", "Decline Sit and Reach", "Dolor en sedestación prolongada"], z: "Isquiotibiales", p: "Fase 1: isométricos de larga longitud (hip thrust excéntrico). Fase 2: peso muerto rumano progresivo. Fase 3: Nordic Curls, sprint con control." },
-    { n: "Avulsión apofisaria isquiática (adolescente)", e: ["Rx pelvis (fragmento avulsionado)", "Historia de sprint/kick", "Dolor brusco en isquion"], z: "Isquiotibiales", p: "Fase 1: reposo relativo 4-6 semanas, movilidad sin tensión. Fase 2: fortalecimiento isquiotibial progresivo. Fase 3: retorno al gesto deportivo." },
-    { n: "Síndrome de fricción ciático-isquiática", e: ["Dolor distal al isquion", "Palpación isquio-femoral", "Electromiografía"], z: "Isquiotibiales", p: "Fase 1: descarga neural, neurodinamia. Fase 2: estiramiento activo en larga longitud. Fase 3: fortalecimiento integrado." },
+    { n:"Meniscopatía lateral", z:"Rodilla",
+      e:["Test de McMurray (rotación interna)","Test de Appley","Dolor en interlínea lateral","RMN"],
+      p:"F1: Antiinflamatorio, descarga.\nF2: Fortalecimiento de cuádriceps y control de valgo.\nF3: Carrera y pivotes controlados.",
+      fases:[
+        {f:"Fase 1 — Aguda (0-2 sem)",ejs:["Cuádriceps isométrico en extensión 5x10seg","Crioterapia y reposo relativo","Evitar rotación interna forzada","TENS analgésico"]},
+        {f:"Fase 2 — Fortalecimiento (2-6 sem)",ejs:["Prensa unilateral 4x12","Leg curl 3x15","Fortalecimiento glúteo medio (valgo control) 3x20","Bicicleta sin dolor"]},
+        {f:"Fase 3 — Funcional (6-12 sem)",ejs:["Sentadilla profunda sin valgo","Carrera progresiva","Pivotes controlados con espejo","Pliometría bilateral progresiva"]}
+      ],
+      rts:"McMurray negativo (RI) · Sentadilla profunda sin dolor · Sprint y pivote sin restricción"},
 
-    // 🏋️ LESIONES ESPECÍFICAS ADICIONALES
-    { n: "Síndrome de Osgood-Schlatter", e: ["Dolor tubérculo tibial", "Prominencia ósea palpable", "Rx lateral rodilla"], z: "Rodilla", p: "Fase 1: reducción de carga al salto, isométricos cuádriceps en corto. Fase 2: estiramientos de cuádriceps, fortalecimiento progresivo. Fase 3: retorno progresivo a impacto." },
-    { n: "Síndrome de Sinding-Larsen-Johansson", e: ["Dolor polo inferior rotuliano en adolescente", "Palpación polo inferior", "Rx"], z: "Rodilla", p: "Fase 1: control de actividad, isométricos. Fase 2: fortalecimiento cuádriceps. Fase 3: retorno gradual al salto." },
-    { n: "Condropatía femoral", e: ["Dolor difuso femoropatelar", "Rx y RMN", "Crepitación al movimiento"], z: "Rodilla", p: "Fase 1: descarga de impacto, movilidad sin dolor. Fase 2: VMO y control patelofemoral. Fase 3: actividades de bajo impacto." },
-    { n: "Fractura por estrés de cadera (cuello femoral)", e: ["Fulcrum Test", "Dolor profundo ingle en carrera", "RMN urgente"], z: "Cadera", p: "Fase 1: descarga total obligatoria, valoración quirúrgica. Fase 2: movilidad no cargada. Fase 3: carga progresiva con control de imagen." },
-    { n: "Lesión condral de tobillo (OCD talar)", e: ["Dolor profundo en tobillo", "RMN o artroTC", "Historia de esguinces repetitivos"], z: "Tobillo", p: "Fase 1: descarga según tamaño de lesión. Fase 2: movilidad y fortalecimiento muscular. Fase 3: impacto progresivo y gesto deportivo." },
-    { n: "Tendinitis del tibial posterior", e: ["Dolor maleolar interno", "Disfunción del arco plantar", "Test del talón unipodal"], z: "Tobillo", p: "Fase 1: ortesis de soporte de arco, isométricos en inversión. Fase 2: fortalecimiento excéntrico de tibial posterior. Fase 3: control de pronación en marcha y carrera." },
-    { n: "Tendinopatía peroneal", e: ["Palpación de peroneos", "Test de compresión del peroneo", "Dolor en eversión resistida"], z: "Tobillo", p: "Fase 1: reducción de carga, isométricos de eversión. Fase 2: excéntricos peroneales. Fase 3: propiocepción y gestos deportivos." },
-    { n: "Pinzamiento posterior de tobillo (FHL)", e: ["Dolor en flexión plantar forzada", "Test de compresión posterior", "Rx oblicua (os trigonum)"], z: "Tobillo", p: "Fase 1: evitar flexión plantar máxima, movilidad en rango medio. Fase 2: fortalecimiento flexores. Fase 3: valoración de os trigonum si persiste." },
-    { n: "Síndrome del tendón del tibial anterior", e: ["Dolor en dorso del pie en carrera cuesta abajo", "Palpación tendón tibial anterior"], z: "Tobillo", p: "Fase 1: descarga de dorsiflexión activa, isométricos. Fase 2: fortalecimiento excéntrico. Fase 3: retorno a cuestas progresivo." },
-    { n: "Esguince de la articulación de Lisfranc", e: ["Prueba de estabilidad tarsometatarsal", "Rx en carga", "Dolor dorso del pie"], z: "Tobillo", p: "Fase 1: inmovilización estricta, descarga total. Fase 2: movilidad progresiva, fortalecimiento intrínseco. Fase 3: ortesis de Lisfranc y retorno deportivo." },
-    { n: "Fractura de Jones (5º metatarsiano)", e: ["Palpación base 5º metatarsiano", "Rx", "Historia de carga repetida"], z: "Tobillo", p: "Fase 1: descarga total 6-8 semanas, movilidad dedos. Fase 2: movilidad del pie y fortalecimiento intrínseco. Fase 3: retorno al impacto con monitorización." },
-    { n: "Inestabilidad crónica de tobillo (CAI)", e: ["Cumberland CAIT", "Equilibrio Star Excursion", "Historia de esguinces repetidos"], z: "Tobillo", p: "Fase 1: propiocepción básica, fortalecimiento peroneal. Fase 2: entrenamiento reactivo y superficie inestable. Fase 3: agilidad deportiva específica." },
-    { n: "Síndrome de Achilles insertional", e: ["Dolor inserción aquílea en calcáneo", "Test de Haglund", "Ecografía"], z: "Tobillo", p: "Fase 1: elevación de talón (heel lift), evitar estiramiento en dorsiflexión. Fase 2: isométricos y carga pesada lenta. Fase 3: excéntricos desde neutro (no decline)." },
-    { n: "Rotura total del Aquiles (post-quirúrgico)", e: ["Test de Thompson positivo previo", "Sutura/reparación quirúrgica"], z: "Tobillo", p: "Fase 1: protocolo de carga temprana con bota, bombeos de tobillo. Fase 2: carga progresiva sin bota, excéntricos suaves. Fase 3: carrera, saltos y retorno deportivo a 9-12 meses." },
-    { n: "Lesión del cartílago de crecimiento (fisis) en tobillo", e: ["Rx (ensanchamiento fisis)", "Dolor en adolescente", "Sin trauma evidente"], z: "Tobillo", p: "Fase 1: descarga 3-6 semanas. Fase 2: movilidad y fortalecimiento ligero. Fase 3: retorno progresivo." },
+    { n:"Tendinitis rotuliana", z:"Rodilla",
+      e:["Dolor polo inferior rotuliano","Decline Squat Test","VISA-P cuestionario","Palpación polo inferior en extensión"],
+      p:"F1(0-2sem): Isométricos 5x45seg 2x/día.\nF2(2-8sem): HSR decline 4x15→4x6.\nF3(8-16sem): Pliometría, carrera, retorno.",
+      fases:[
+        {f:"Fase 1 — Analgesia (0-2 sem)",ejs:["Isométrico prensa 70%RM 5x45seg x2/día","Crioterapia post-sesión","Reducción de saltos/sprint","TENS si dolor >4 EVA"]},
+        {f:"Fase 2 — Carga lenta pesada (2-8 sem)",ejs:["Sentadilla decline bilateral 4x15 a 4x6 con carga","Sentadilla unilateral decline progresiva","Prensa unilateral 4x8","Sin impacto (bicicleta, natación)"]},
+        {f:"Fase 3 — Pliometría y retorno (8-16 sem)",ejs:["Drop jumps bilaterales a unilaterales 3x8","Saltos horizontales con aterrizaje controlado","Carrera progresiva con velocidad incremental","Gestos específicos del deporte"]}
+      ],
+      rts:"VISA-P≥80 · Decline squat sin dolor · Salto unipodal ≥90% simetría"},
 
-    // 🦾 HOMBRO Y CODO ADICIONALES
-    { n: "Rotura del manguito rotador (parcial)", e: ["RMN", "Test de Jobe positivo", "Debilidad en abducción"], z: "Hombro", p: "Fase 1: isométricos rotadores externos, control escapular. Fase 2: fortalecimiento concéntrico en plano escapular. Fase 3: ejercicios overhead progresivos con control." },
-    { n: "Rotura del manguito rotador (total, post-quirúrgico)", e: ["RMN preoperatoria", "Historia post-quirúrgica"], z: "Hombro", p: "Fase 1: péndulos, movilidad pasiva asistida (0-6 semanas). Fase 2: activa-asistida y fortalecimiento inicial (6-12 semanas). Fase 3: fortalecimiento funcional completo (12-24 semanas)." },
-    { n: "Síndrome SLAP", e: ["Test de O'Brien", "Speed Test", "Crank Test", "RMN artroRM"], z: "Hombro", p: "Fase 1: evitar carga en supinación forzada, isométricos. Fase 2: fortalecimiento de rotadores y bíceps. Fase 3: overhead progresivo y gestos deportivos." },
-    { n: "Capsulitis adhesiva (hombro congelado)", e: ["Pérdida ROM en todas las direcciones", "Patrón capsular", "Rx normal"], z: "Hombro", p: "Fase 1: analgesia y movilidad pasiva suave. Fase 2: movilizaciones grado III/IV, fortalecimiento en rango ganado. Fase 3: fortalecimiento global y recuperación funcional." },
-    { n: "Fractura de clavícula", e: ["Rx", "Deformidad visible", "Historia de caída sobre hombro"], z: "Hombro", p: "Fase 1: cabestrillo 3-6 semanas, péndulos suaves. Fase 2: movilidad activa y fortalecimiento. Fase 3: retorno al deporte con imagen de control." },
-    { n: "Luxación acromioclavicular", e: ["Palpación articulación AC", "Rx bajo carga", "Piano key sign"], z: "Hombro", p: "Fase 1: cabestrillo, hielo, isométricos. Fase 2: estabilización de la cintura escapular. Fase 3: retorno deportivo según grado de luxación." },
-    { n: "Discinesia escapular", e: ["Test de pared push up", "Kibler SICK scale", "Inspección dinámica"], z: "Hombro", p: "Fase 1: movilidad torácica, activación de serrato. Fase 2: fortalecimiento trapecio medio/inferior y serrato anterior. Fase 3: control en gestos deportivos overhead." },
-    { n: "Neuropatía del supraescapular", e: ["Atrofia fosa espinosa/infraespinosa", "Test de arco doloroso", "EMG"], z: "Hombro", p: "Fase 1: neurodinamia del supraescapular, descarga. Fase 2: fortalecimiento infraespinoso y supraespinoso. Fase 3: rotación externa en carga." },
-    { n: "Fractura de olécranon", e: ["Rx codo", "Dolor en extensión", "Deformidad palpable"], z: "Hombro", p: "Fase 1: inmovilización, movilidad pasiva de hombro y muñeca. Fase 2: movilidad de codo y fortalecimiento. Fase 3: extensión bajo carga progresiva." },
-    { n: "Síndrome del nervio ulnar en codo (cubital tardío)", e: ["Signo de Tinel en canal cubital", "Garra cubital", "Entumecimiento 4º-5º dedo"], z: "Hombro", p: "Fase 1: ortesis antiflesión, neurodinamia del cubital. Fase 2: fortalecimiento de interóseos y lumbricales. Fase 3: ergonomía y retorno funcional." },
-    { n: "Rotura del ligamento colateral medial del codo (UCL)", e: ["Valgus stress test 30°", "Moving valgus stress test", "RMN", "Historia lanzador"], z: "Hombro", p: "Fase 1: inmovilización/reducción de carga, fortalecimiento de pronadores y flexores. Fase 2: estabilización dinámica del codo. Fase 3: programa de retorno al lanzamiento (interval throwing)." },
+    { n:"Condromalacia rotuliana", z:"Rodilla",
+      e:["Test de Clarke","Dolor retropatelar en escaleras","Cepillo rotuliano","RMN (grado I-IV)","Tracking rotuliano"],
+      p:"F1(0-3sem): Evitar dolor PF, VMO en rangos cortos.\nF2(3-8sem): Cuádriceps completo + abductores cadera, taping.\nF3(8-16sem): Reeducación biomecánica.",
+      fases:[
+        {f:"Fase 1 — Descarga PF (0-3 sem)",ejs:["Isométrico cuádriceps en extensión 5x10seg","Extensión terminal 0-30° con banda 3x15","Abducción cadera lateral con banda 3x20","Taping rotuliano McConnell"]},
+        {f:"Fase 2 — Fortalecimiento (3-8 sem)",ejs:["Sentadilla parcial 0-60° control valgo 4x12","Step up frontal con carga 3x12","Prensa unilateral rango completo 4x10","Fortalecimiento glúteo medio: clamshell y puente"]},
+        {f:"Fase 3 — Reeducación (8-16 sem)",ejs:["Sentadilla completa con espejo (control rodilla)","Carrera con cadencia alta (>170 pasos/min)","Saltos con aterrizaje en triple flexión","Escaleras con control de postura"]}
+      ],
+      rts:"Escaleras sin dolor · Clarke negativo · Tracking rotuliano normal · Carrera 5km sin molestia"},
 
-    // 🧠 NEUROLÓGICO DEPORTIVO
-    { n: "Conmoción cerebral", e: ["SCAT5 score", "HIT-6 cuestionario", "Pruebas de equilibrio BESS"], z: "Cuello/Cervical", p: "Fase 1: reposo cognitivo y físico (24-48h). Fase 2: ejercicio aeróbico suave sin síntomas. Fase 3: ejercicio específico del deporte → contacto controlado → retorno completo (protocolo 5 pasos)." },
-    { n: "Neuropatía del ciático poplíteo externo (CPE)", e: ["Pie caído", "Tinel a nivel cabeza del peroné", "Electromiografía"], z: "Rodilla", p: "Fase 1: órtesis antiequino, neurodinamia. Fase 2: fortalecimiento tibial anterior y extensores del pie. Fase 3: marcha y gestos deportivos." },
-    { n: "Meralgia parestésica", e: ["Entumecimiento cara lateral muslo", "Palpación espina ilíaca anterior superior", "Neuropatía cutáneo femoral lateral"], z: "Cadera", p: "Fase 1: descarga de zona de compresión (cinturón), neurodinamia. Fase 2: fortalecimiento de cuádriceps y abductores. Fase 3: control de carga y ergonomía." }
-];
+    { n:"Síndrome de banda iliotibial", z:"Rodilla",
+      e:["Test de Ober","Test de Noble","Palpación epicóndilo lateral","Test de Renne (sentadilla a 30°)"],
+      p:"F1(0-2sem): Reducción km carrera, liberación TFL.\nF2(2-6sem): Fortalecimiento glúteo medio, corrección marcha.\nF3(6-12sem): Retorno carrera progresivo.",
+      fases:[
+        {f:"Fase 1 — Control (0-2 sem)",ejs:["Foam roller TFL y glúteo menor 5min/día","Reducción volumen carrera 50%","Crioterapia post-carrera","Estiramiento TFL en posición Thomas"]},
+        {f:"Fase 2 — Fortalecimiento cadera (2-6 sem)",ejs:["Clamshell con banda 3x20","Abducción lateral con cable 3x15","Hip thrust unilateral 4x10","Sentadilla monopodal con control valgo 3x10"]},
+        {f:"Fase 3 — Retorno a carrera (6-12 sem)",ejs:["Walk-run progressions","Análisis de cadencia y zancada","Carrera en cinta con inclinación variable","Control valgo en salto con drop landing"]}
+      ],
+      rts:"Noble negativo · Ober sin restricción · Cadencia >170 · Carrera 10km sin dolor"},
 
-        // --- 3. MOTOR AUTOMÁTICO DE DECISIÓN (The Engine) ---
+    { n:"Síndrome patelofemoral", z:"Rodilla",
+      e:["Dolor en escaleras/sentadilla","Tracking rotuliano","Test J-sign","Clarke Test"],
+      p:"F1: VMO + abductores cadera, taping.\nF2: Sentadilla controlada, cadera.\nF3: Biomecánica carrera, retorno.",
+      fases:[
+        {f:"Fase 1 — Descarga PF (0-3 sem)",ejs:["Isométrico VMO 0-30° 3x15","Taping McConnell rotuliano","Abducción cadera con banda 3x20","Evitar escaleras y sentadilla profunda"]},
+        {f:"Fase 2 — Fortalecimiento (3-8 sem)",ejs:["Sentadilla parcial con control valgo 4x12","Hip thrust 4x10","Step up con carga 3x12","Propiocepción monopodal 3x30seg"]},
+        {f:"Fase 3 — Funcional (8-16 sem)",ejs:["Carrera con cadencia corregida","Saltos con control de aterrizaje","Escaleras sin dolor","Gestos deportivos específicos"]}
+      ],
+      rts:"Escaleras sin dolor · Sentadilla profunda sin dolor · Carrera 5km sin molestia"},
+
+    { n:"Artrosis temprana de rodilla", z:"Rodilla",
+      e:["Rx Kellgren-Lawrence I-II","Rigidez matutina <30min","Crepitación","KOOS cuestionario"],
+      p:"F1: Educación en dolor, aeróbico bajo impacto.\nF2: Fuerza cuádriceps e isquios.\nF3: Mantenimiento con ejercicio crónico.",
+      fases:[
+        {f:"Fase 1 — Educación y base (0-4 sem)",ejs:["Educación en biología del dolor articular","Ciclismo estático 20-30min/día","Cuádriceps isométrico multiángulo 3x10x10seg","Hidroterapia si disponible"]},
+        {f:"Fase 2 — Fortalecimiento (1-3 mes)",ejs:["Prensa bilateral baja carga 4x15","Sentadilla parcial 0-60° 3x15","Natación estilo libre 30min","Fortalecimiento cadera: puente, clamshell"]},
+        {f:"Fase 3 — Mantenimiento (3-6 mes)",ejs:["Programa ejercicio supervisado 3x/sem","Marcha nórdica o caminata 45min/día","Flexibilidad general diaria","Control IMC y nutrición antiinflamatoria"]}
+      ],
+      rts:"KOOS≥70 · Sin exacerbaciones con actividad moderada · Fuerza cuádriceps adecuada"},
+
+    { n:"Rodilla del saltador", z:"Rodilla",
+      e:["Dolor polo inferior rotuliano","VISA-P cuestionario","Decline Squat Test","Salto monopodal"],
+      p:"F1: Isométricos pesados analgesia.\nF2: HSR decline 4x15→4x6.\nF3: Pliometría progresiva, retorno al salto.",
+      fases:[
+        {f:"Fase 1 — Analgesia (sem 1-2)",ejs:["Isométrico decline 70%RM 5x45seg 2x/día","Crioterapia post-sesión","Reducción volumen saltos 70%","TENS analgésico"]},
+        {f:"Fase 2 — HSR (sem 2-8)",ejs:["Decline squat bilateral con mochila 4x15 a 4x6","Prensa unilateral 0-90° 4x10","Leg curl 3x15","Bicicleta como aeróbico bajo impacto"]},
+        {f:"Fase 3 — Pliometría (sem 8-16)",ejs:["Drop jump bilateral a unilateral 3x8","Salto vertical máximo progresivo","CMJ (salto con contraataque)","Gestos de remate y salto del deporte"]}
+      ],
+      rts:"VISA-P≥80 · Decline squat sin dolor · Salto unipodal ≥90% · Gesto de remate sin dolor"},
+
+    { n:"Rodilla del corredor", z:"Rodilla",
+      e:["Test de Noble","Test de Ober","Palpación epicóndilo lateral","Km semanales previos"],
+      p:"F1: Reducción km 50%, liberación TFL.\nF2: Fortalecimiento cadera, corrección técnica.\nF3: Retorno carrera +10%/semana.",
+      fases:[
+        {f:"Fase 1 — Reducción de carga (0-2 sem)",ejs:["Foam roller TFL 5min/día","Reducción km 50%","Análisis cadencia (objetivo >170 pasos/min)","Crioterapia post-carrera"]},
+        {f:"Fase 2 — Fortalecimiento cadera (2-6 sem)",ejs:["Clamshell con banda 3x20","Single-leg hip thrust 4x10","Sentadilla unilateral control valgo 3x10","Corrección técnica aterrizaje"]},
+        {f:"Fase 3 — Retorno (6-12 sem)",ejs:["Programa 10%: aumentar km 10% cada semana","Carrera plana a irregular a cuestas","Monitor cadencia en reloj deportivo","Análisis de carrera (gait analysis)"]}
+      ],
+      rts:"Noble negativo · Cadencia >170 · Carrera 10km sin dolor · Control valgo en aterrizaje"},
+
+    // ===== 💪 HOMBRO =====
+    { n:"Manguito rotador", z:"Hombro",
+      e:["Test de Jobe","Full Can Test","Test de Patte","Test de Gerber","RMN","Ecografía"],
+      p:"F1(0-4sem): Isométricos plano escapular, control escapular.\nF2(4-10sem): Fortalecimiento concéntrico, rotadores externos.\nF3(10-20sem): Overhead progresivo, retorno.",
+      fases:[
+        {f:"Fase 1 — Control dolor (0-4 sem)",ejs:["Isométrico rotación externa en neutro 5x10seg","Péndulos de Codman 2x5min","Retracción escapular con banda 3x15","Crioterapia post-sesión"]},
+        {f:"Fase 2 — Fortalecimiento (4-10 sem)",ejs:["Rotación externa con banda plano escapular 3x15","Full can plano escapular 3x15","Remo con cable 3x15","Push up plus (serrato) 3x15"]},
+        {f:"Fase 3 — Overhead (10-20 sem)",ejs:["Press militar con control escapular 4x10","Pulldown plano escapular 4x10","Ejercicios bola medicinal overhead","Gestos deportivos (lanzamiento progresivo)"]}
+      ],
+      rts:"Fuerza RE/RI >66% · Empty can negativo · Overhead sin dolor · Lanzamiento sin restricción"},
+
+    { n:"Tendinitis supraespinoso", z:"Hombro",
+      e:["Test de Neer","Test de Kennedy-Hawkins","Test de Jobe","Ecografía","Arco doloroso 60-120°"],
+      p:"F1: Isométricos en plano escapular, analgesia.\nF2: Excéntricos, control escapular.\nF3: Overhead progresivo.",
+      fases:[
+        {f:"Fase 1 — Analgesia (0-2 sem)",ejs:["Isométrico abducción en plano escapular 5x10seg","Péndulos Codman 3x3min","TENS y ultrasonido terapéutico","Evitar abducción sobre 90°"]},
+        {f:"Fase 2 — Excéntrico (2-6 sem)",ejs:["Full can excéntrico con mancuerna 3x15","Rotación externa con banda 3x15","Remo alto 3x12","Control escapular: retracción y depresión"]},
+        {f:"Fase 3 — Overhead (6-12 sem)",ejs:["Press overhead progresivo 4x10","Pulldown en V 4x10","Ejercicios funcionales overhead","Retorno deportivo progresivo"]}
+      ],
+      rts:"Neer y Hawkins negativos · Abducción completa sin dolor · Fuerza ≥90%"},
+
+    { n:"Bursitis subacromial", z:"Hombro",
+      e:["Arco doloroso 60°-120°","Test de Neer","Test de Kennedy-Hawkins","Test de Yocum","Ecografía"],
+      p:"F1(0-2sem): Fisioterapia analgésica, isométricos en neutro.\nF2(2-6sem): Movilización subacromial, rotadores externos.\nF3(6-12sem): Overhead progresivo.",
+      fases:[
+        {f:"Fase 1 — Analgesia (0-2 sem)",ejs:["Ultrasonido terapéutico en bursa","Isométrico RE en 0° 5x10seg","Evitar abducción sobre 60°","Péndulos Codman suaves"]},
+        {f:"Fase 2 — Descompresión (2-6 sem)",ejs:["Movilización GH posteroinferior grado III/IV","Fortalecimiento depresores cabeza humeral","Rotación externa con banda 3x15","Control escapular: retracción y depresión"]},
+        {f:"Fase 3 — Overhead (6-12 sem)",ejs:["Press overhead progresivo 4x10","Ejercicios hombro en polea alta","Lanzamiento progresivo si deporte","Estabilización dinámica con perturbaciones"]}
+      ],
+      rts:"Neer y Hawkins negativos · Arco doloroso negativo · Overhead sin dolor · RE≥90%"},
+
+    { n:"Luxación hombro", z:"Hombro",
+      e:["Signo de la charretera","Rx AP+axial","Test de aprensión anterior","Test de recolocación"],
+      p:"F1(0-3sem): Cabestrillo, isométricos en neutro.\nF2(3-8sem): Movilidad progresiva, manguito y serrato.\nF3(8-16sem): Estabilización dinámica, overhead.",
+      fases:[
+        {f:"Fase 1 — Inmovilización (0-3 sem)",ejs:["Cabestrillo 0-30° RI","Movilidad activa codo, muñeca y mano","Isométrico RE en neutro 5x10seg","Crioterapia 3x/día"]},
+        {f:"Fase 2 — Movilidad (3-8 sem)",ejs:["ROM GH progresivo (Codman a activo-asistido a activo)","Fortalecimiento RE 3x15","Press up sentado (serrato)","Estabilizadores escapulares"]},
+        {f:"Fase 3 — Estabilización (8-16 sem)",ejs:["Ejercicios estabilización en plano inestable","Overhead progresivo con control","Lanzamiento progresivo si deporte","Pliometría de hombro con balón medicinal"]}
+      ],
+      rts:"Aprensión negativa · RE/RI ≥90% · Overhead sin restricción · Gesto deportivo sin aprensión"},
+
+    { n:"Síndrome SLAP", z:"Hombro",
+      e:["Test de OBrien","Speed Test","Crank Test","RMN artro-RM"],
+      p:"F1: Evitar carga supinación forzada, isométricos.\nF2: Fortalecimiento rotadores y bíceps.\nF3: Overhead progresivo y gestos deportivos.",
+      fases:[
+        {f:"Fase 1 — Protección (0-4 sem)",ejs:["Isométrico hombro multiángulo sin provocar dolor","Evitar carga en supinación forzada","Péndulos Codman 2x5min","Control escapular básico"]},
+        {f:"Fase 2 — Fortalecimiento (4-10 sem)",ejs:["Rotación externa con banda 3x15","Fortalecimiento bíceps con supinación 3x12","Remo 3x12","Fortalecimiento serrato anterior"]},
+        {f:"Fase 3 — Overhead (10-20 sem)",ejs:["Overhead progresivo con control","Lanzamiento progresivo","Pliometría de hombro","Gestos deportivos específicos"]}
+      ],
+      rts:"OBrien negativo · Overhead sin dolor · Lanzamiento sin restricción · Sin aprensión"},
+
+    { n:"Capsulitis adhesiva (hombro congelado)", z:"Hombro",
+      e:["Pérdida ROM todas las direcciones","RE limitada 50%","Abducción limitada 50%","Rx normal","Duración >3 meses"],
+      p:"F1(0-3mes): Analgesia, movilidad pasiva suave.\nF2(3-9mes): Movilizaciones grado III/IV, estiramientos cápsula.\nF3(9-18mes): Fortalecimiento progresivo.",
+      fases:[
+        {f:"Fase 1 — Dolor (0-3 mes)",ejs:["Movilizaciones pasivas grado I-II sin dolor","Péndulos Codman 3x5min/día","Termoterapia previa 15min","TENS analgésico"]},
+        {f:"Fase 2 — Rigidez (3-9 mes)",ejs:["Movilizaciones articulares grado III/IV","Sleeper stretch cápsula posterior 3x30seg","Pulley overhead activo-asistido","Hidrodistensión si persiste"]},
+        {f:"Fase 3 — Resolución (9-18 mes)",ejs:["Fortalecimiento manguito en rango ganado","Press de hombro progresivo","Ejercicios funcionales AVD","Retorno deportivo gradual"]}
+      ],
+      rts:"ROM ≥80% contralateral · AVD sin restricción · Fuerza manguito ≥80%"},
+
+    { n:"Epicondilitis (codo tenista)", z:"Hombro",
+      e:["Test de Cozen","Test de Maudsley","Palpación epicóndilo lateral","PRTEE cuestionario","Ecografía"],
+      p:"F1(0-2sem): Descarga, isométricos extensores muñeca.\nF2(2-6sem): Tyler Twist o excéntrico con mancuerna.\nF3(6-12sem): Fortalecimiento agarre, retorno.",
+      fases:[
+        {f:"Fase 1 — Descarga (0-2 sem)",ejs:["Isométrico extensores muñeca en neutro 5x45seg","Evitar gesto provocador","Crioterapia post-trabajo 10min","Codadera (epicondyle strap)"]},
+        {f:"Fase 2 — Excéntrico (2-6 sem)",ejs:["Tyler Twist con Theraband Flexbar: 3x15/día","Extensión muñeca con mancuerna excéntrica 3x15","Fortalecimiento supinador y pronador 3x15","Masaje transverso profundo (Cyriax)"]},
+        {f:"Fase 3 — Funcional (6-12 sem)",ejs:["Fortalecimiento agarre progresivo","Cadena cinética miembro superior","Retorno al gesto deportivo (raqueta)","Análisis biomecánico del gesto"]}
+      ],
+      rts:"PRTEE<10 · Cozen negativo · Agarre sin dolor · 3 meses sin recaída"},
+
+    { n:"Hombro del nadador", z:"Hombro",
+      e:["Test de Neer","Test de Hawkins-Kennedy","GIRD (déficit rotación interna)","Test de aprensión","Análisis de la brazada"],
+      p:"F1(0-2sem): Reducción volumen nado, movilidad cápsula posterior.\nF2(2-6sem): Retractores escapulares y RE, corrección GIRD.\nF3(6-12sem): Retorno progresivo al nado.",
+      fases:[
+        {f:"Fase 1 — Reducción carga (0-2 sem)",ejs:["Sleeper stretch cápsula posterior 3x30seg","Reducción volumen 50%","Crioterapia post-entreno","Cross-body stretch 3x30seg"]},
+        {f:"Fase 2 — Fortalecimiento (2-6 sem)",ejs:["Rotación externa con banda plano escapular 3x15","Remo en T 3x12","Face pull con cable 3x15","Push up plus (serrato) 3x15"]},
+        {f:"Fase 3 — Retorno nado (6-12 sem)",ejs:["Análisis de brazada con coach","Nado con palas de mano","Retorno progresivo de metros +10%/semana","Ejercicios movilidad específicos de la brazada"]}
+      ],
+      rts:"GIRD<15° · Neer y Hawkins negativos · Nado completo sin dolor · Técnica corregida"},
+
+    // ===== 🦴 COLUMNA =====
+    { n:"Lumbalgia mecánica", z:"Espalda",
+      e:["Test de movilidad lumbar (Schober)","Test de flexión anterior","Evaluación postural","STarT Back Tool","Oswestry Disability Index"],
+      p:"F1(0-2sem): Educación, marcha suave, cat-camel.\nF2(2-6sem): McGill Big 3, glúteos, cadera.\nF3(6-12sem): Carga funcional, retorno deportivo.",
+      fases:[
+        {f:"Fase 1 — Educación y movilidad (0-2 sem)",ejs:["Marcha suave 20-30min/día","Movilidad lumbar: cat-camel 3x10","Bird-dog isométrico 3x10x10seg","Educación en neurociencia del dolor"]},
+        {f:"Fase 2 — Estabilización (2-6 sem)",ejs:["McGill Big 3: curl-up, side plank, bird-dog","Puente glúteo bilateral a unilateral 3x15","Peso muerto desde rodillas 4x8","Fortalecimiento rotadores cadera"]},
+        {f:"Fase 3 — Carga funcional (6-12 sem)",ejs:["Sentadilla con barra 4x8","Peso muerto completo 4x6","Paloff press (anti-rotación) 3x10","Gestos deportivos específicos bajo carga"]}
+      ],
+      rts:"Oswestry<20% · Carga axial sin dolor · Core simétrico · Deporte sin restricción"},
+
+    { n:"Hernia discal lumbar", z:"Espalda",
+      e:["RMN (nivel y grado)","Test de Lasègue (SLR)","Test de Bragard","Déficit neurológico focal","Oswestry Index"],
+      p:"F1(0-4sem): McKenzie si centraliza, evitar flexión lumbar.\nF2(4-10sem): Estabilización segmentaria, extensión progresiva.\nF3(10-20sem): Fortalecimiento global, retorno.",
+      fases:[
+        {f:"Fase 1 — Centralización (0-4 sem)",ejs:["McKenzie extensiones en prono 3x10 si centraliza","Marcha suave 20min/día","Postura sedente correcta con lordosis","Neurodinamia suave (SLR activo) si tolera"]},
+        {f:"Fase 2 — Estabilización (4-10 sem)",ejs:["Activación transverso abdominal 3x10x10seg","Bird-dog progresivo 3x10","Extensión lumbar en máquina 3x15","Puente glúteo progresivo 3x15"]},
+        {f:"Fase 3 — Carga (10-20 sem)",ejs:["Peso muerto con barra desde bloques 4x8","Sentadilla con carga 4x8","Rotación controlada con resistencia","Retorno deportivo progresivo"]}
+      ],
+      rts:"Lasègue negativo · Déficit neurológico resuelto · Oswestry<20% · Carga axial sin irradiación"},
+
+    { n:"Ciatalgia", z:"Espalda",
+      e:["Test de Lasègue (SLR)","Test de Bragard","Test de Slump","Evaluación neurológica L4-S1","RMN"],
+      p:"F1(0-3sem): Neurodinamia del nervio ciático, educación.\nF2(3-8sem): Estabilización lumbar, movilidad cadera.\nF3(8-16sem): Fortalecimiento integrado, retorno.",
+      fases:[
+        {f:"Fase 1 — Neurodinamia (0-3 sem)",ejs:["SLR activo: deslizamiento neuromeníngeo 3x10","Slump stretch suave sentado 3x10","Movilidad lumbar en decúbito (cat-camel)","Educación en sensibilización central"]},
+        {f:"Fase 2 — Estabilización (3-8 sem)",ejs:["Apertura foraminal lateral en flexión","Core: bird-dog, puente, side plank","Estiramiento piriforme (FAIR) 3x30seg","Fortalecimiento glúteo mayor y medio"]},
+        {f:"Fase 3 — Carga (8-16 sem)",ejs:["Peso muerto progresivo","Sentadilla con control lumbar","Cadena posterior integrada","Retorno deportivo gradual"]}
+      ],
+      rts:"SLR y Slump negativos · Fuerza neurológica recuperada · Marcha sin déficit"},
+
+    { n:"Cervicalgia mecánica", z:"Espalda",
+      e:["ROM cervical (goniometría)","Test flexión craneocervical","Palpación paravertebral","Evaluación postural"],
+      p:"F1: Movilidad cervical, isométricos flexores profundos.\nF2: Fortalecimiento flexores profundos y trapecio.\nF3: Ergonomía y retorno funcional.",
+      fases:[
+        {f:"Fase 1 — Movilidad (0-2 sem)",ejs:["Movilidad cervical activa en todos los planos 3x10","Retracciones cervicales suaves 3x15","TENS cervical si dolor agudo","Termoterapia local"]},
+        {f:"Fase 2 — Fortalecimiento (2-6 sem)",ejs:["Test y ejercicio CCFT (craniocervical flexion) 3x10","Fortalecimiento trapecio inferior 3x15","Estiramiento angular suboccipital 3x30seg","Ergonomía de pantalla y escritorio"]},
+        {f:"Fase 3 — Funcional (6-12 sem)",ejs:["Control motor cervical bajo carga","Fortalecimiento de hombro integrado","Gestos deportivos específicos","Pausas activas en trabajo"]]}
+      ],
+      rts:"ROM cervical completo · CCFT normalizado · Sin dolor en actividad laboral/deportiva"},
+
+    // ===== 🍑 CADERA Y MUSLO =====
+    { n:"Pubalgia", z:"Cadera",
+      e:["Squeeze Test (0°, 45°, 90°)","Dolor aductor a resistencia","Palpación sínfisis","Test de Valsalva","Rx pelvis en carga"],
+      p:"F1(0-3sem): Isométricos aductores, Core profundo.\nF2(3-8sem): Copenhagen Protocol, estabilidad lumbopélvica.\nF3(8-16sem): Gestos deportivos, carrera, pivotes.",
+      fases:[
+        {f:"Fase 1 — Descarga (0-3 sem)",ejs:["Isométrico aductores en neutro con pelota 5x10seg","Activación transverso 3x10x10seg","Movilidad cadera sin dolor","Crioterapia local"]},
+        {f:"Fase 2 — Copenhagen Protocol (3-8 sem)",ejs:["Copenhagen adduction nivel 1 a 3 progresivo 3x10","Hip thrust unilateral 4x10","Side plank con abducción 3x10","Sentadilla lateral con banda 3x15"]},
+        {f:"Fase 3 — Funcional (8-16 sem)",ejs:["Cambios de dirección con sprint","Gestos de patada y regate","Carrera curva y en zigzag","Equilibrio dinámico"]}
+      ],
+      rts:"Squeeze sin dolor · Copenhagen sin dolor · Carrera sin restricción · Patada sin dolor"},
+
+    { n:"Pubalgia futbolista", z:"Cadera",
+      e:["Cross-over test","Squeeze test","Dolor en sprint y cambio dirección","Rx pelvis","Ecografía sínfisis"],
+      p:"F1: Descarga, isométricos aductores y Core.\nF2: Copenhagen Protocol, estabilidad lumbopélvica.\nF3: Retorno fútbol: carrera a sprint a COD a partido.",
+      fases:[
+        {f:"Fase 1 — Descarga (0-3 sem)",ejs:["Isométrico aductores con pelota 5x10seg","Transverso abdominal 3x10","Movilidad cadera sin dolor","Natación o bicicleta"]},
+        {f:"Fase 2 — Copenhagen (3-8 sem)",ejs:["Copenhagen Adduction progresivo 3x10","Side plank abducción 3x10","Hip thrust bilateral a unilateral 4x10","Sentadilla lateral con banda 3x15"]},
+        {f:"Fase 3 — Retorno al fútbol (8-16 sem)",ejs:["Carrera línea recta progresiva","Sprint 50-75-100%","Cambios de dirección con balón","Situaciones de partido con contacto"]}
+      ],
+      rts:"Squeeze sin dolor · Sprint y regate sin dolor · Sesión completa sin dolor · 2 semanas entrenando normal"},
+
+    { n:"Desgarro aductores", z:"Cadera",
+      e:["Squeeze Test","Dolor localizado","Palpación de rotura","Ecografía (grado)"],
+      p:"F1(0-72h): PEACE & LOVE, sin estiramiento.\nF2(3días-3sem): Isométricos de aducción.\nF3(3-8sem): Copenhagen Protocol.\nF4(8-16sem): Retorno deportivo.",
+      fases:[
+        {f:"Fase 1 — Aguda (0-72h)",ejs:["Crioterapia 15min x4/día","Compresión y elevación","Movilidad activa rodilla sin estirar aductor","Sin masaje en zona de rotura"]},
+        {f:"Fase 2 — Isometría (3 días - 3 sem)",ejs:["Isométrico aducción en neutro 5x10seg","Marcha normal progresiva","Bicicleta suave si tolera","Fortalecimiento glúteo y cuádriceps"]},
+        {f:"Fase 3-4 — Funcional (3-16 sem)",ejs:["Copenhagen Adduction progresivo","Sentadilla lateral y lunges","Sprint progresivo 50-100%","Gestos deportivos específicos"]}
+      ],
+      rts:"Squeeze sin dolor · Copenhagen sin dolor · Sprint 100% sin dolor"},
+
+    { n:"Desgarro isquiotibial", z:"Cadera",
+      e:["Prueba de Askling (H1,H2,H3)","Palpación de rotura","Ecografía/RMN (grado)","Active Knee Extension Test"],
+      p:"F1(0-72h): PEACE & LOVE, sin estirar.\nF2(3días-3sem): Isométricos larga longitud.\nF3(3-8sem): Askling L Protocol, Nordic.\nF4(8-16sem): Sprint, gesto deportivo.",
+      fases:[
+        {f:"Fase 1 — Aguda (0-72h)",ejs:["Crioterapia 15min x4/día","Compresión con venda","Elevación del miembro","Sin estiramiento pasivo"]},
+        {f:"Fase 2 — Isometría larga longitud (3 días-3 sem)",ejs:["Isométrico isquios cadera flexionada 90° 5x10seg","RDL parcial sin dolor","Marcha normal progresiva","Bicicleta suave si tolera"]},
+        {f:"Fase 3 — Protocolo Askling (3-8 sem)",ejs:["Leg slide supino 3x10","Askling extensor: kick back controlado 3x10","Nordic Hamstring excéntrico 3x6 a 3x10","Peso muerto rumano con barra 4x8"]},
+        {f:"Fase 4 — Sprint y retorno (8-16 sem)",ejs:["Sprint progresivo: 50%-75%-90%-100%","COD con sprint","Gestos deportivos (regate, salto, patada)","Field-based RTS criteria"]}
+      ],
+      rts:"AKE simétrico · Sprint 100% sin dolor · Nordic >90% contralateral · Askling negativo"},
+
+    { n:"Síndrome piriforme", z:"Cadera",
+      e:["Test de FAIR","Palpación glútea profunda","Signo de Lasègue modificado","Test de Pace"],
+      p:"F1(0-2sem): Estiramiento piriforme, neurodinamia ciático.\nF2(2-6sem): Fortalecimiento glúteo y abductores.\nF3(6-12sem): Integración funcional.",
+      fases:[
+        {f:"Fase 1 — Estiramiento (0-2 sem)",ejs:["Estiramiento piriforme FAIR position 3x30seg","Neurodinamia ciático: SLR con dorsiflexión 3x10","Foam roller glúteo 5min","Punción seca si hipertonía"]},
+        {f:"Fase 2 — Fortalecimiento glúteo (2-6 sem)",ejs:["Hip thrust bilateral a unilateral 4x10","Clamshell con banda 3x20","Abducción lateral en polea 3x15","Sentadilla unilateral con control rotación 3x10"]},
+        {f:"Fase 3 — Funcional (6-12 sem)",ejs:["Carrera con técnica de rotación cadera","Ejercicios de pivote sin dolor","Gestos deportivos específicos","Fortalecimiento excéntrico glúteo mayor"]}
+      ],
+      rts:"FAIR negativo · Palpación glútea sin dolor · Carrera sin irradiación · Gesto sin restricción"},
+
+    { n:"Bursitis trocantérica", z:"Cadera",
+      e:["Dolor a presión lateral trocánter","Abducción resistida dolorosa","FABER positivo","Test de Ober","Ecografía de bursa"],
+      p:"F1(0-2sem): Evitar decúbito lateral, crioterapia.\nF2(2-6sem): Fortalecimiento glúteo medio.\nF3(6-12sem): Corrección biomecánica.",
+      fases:[
+        {f:"Fase 1 — Control inflamatorio (0-2 sem)",ejs:["Evitar decúbito lateral y cruzar piernas","Crioterapia 15min x3/día","Foam roller lateral muslo (NO sobre trocánter)","Isométrico glúteo medio en neutro 5x10seg"]},
+        {f:"Fase 2 — Glúteo medio (2-6 sem)",ejs:["Clamshell bilateral 3x20","Abducción lateral cadera en polea 3x15","Side-lying hip abduction 3x15","Single-leg stance control pelvis 3x30seg"]},
+        {f:"Fase 3 — Biomecánica (6-12 sem)",ejs:["Carrera con control de caída pélvica","Sentadilla unilateral con espejo 3x10","Análisis de marcha y carrera","Fortalecimiento integrado glúteo mayor"]}
+      ],
+      rts:"Dolor lateral negativo · Abducción sin dolor · Marcha sin Trendelenburg · Carrera sin molestia"},
+
+    { n:"Lesión labrum acetabular", z:"Cadera",
+      e:["Test FADIR","Test FABER","Test FAIR","RMN artro-RM","VAS en rotación"],
+      p:"F1(0-4sem): Evitar rangos extremos, isométricos en posición media.\nF2(4-10sem): Control motor lumbopélvico, rotadores externos.\nF3(10-20sem): Fortalecimiento funcional.",
+      fases:[
+        {f:"Fase 1 — Protección (0-4 sem)",ejs:["Isométrico cadera multiángulo sin dolor 5x10seg","Evitar flexión >90° y RI forzada","Control motor: activación glúteo en neutro","Marcha normal con cadencia controlada"]},
+        {f:"Fase 2 — Control motor (4-10 sem)",ejs:["Clamshell con banda 3x20","Hip thrust unilateral 4x10","Sentadilla parcial con control cadera 3x12","Puente glúteo con extensión rodilla 3x10"]},
+        {f:"Fase 3 — Funcional (10-20 sem)",ejs:["Sentadilla completa progresiva","Rotación controlada de cadera","Saltos con aterrizaje en triple flexión","Gestos deportivos graduales"]}
+      ],
+      rts:"FADIR negativo · Sentadilla profunda sin dolor · Gesto sin restricción"},
+
+    // ===== 🤜 MUÑECA Y MANO =====
+    { n:"Esguince de muñeca", z:"Muñeca/Mano",
+      e:["Palpación ligamento escafolunar","Test de Watson","Compresión axial","Rx","ROM activo y pasivo"],
+      p:"F1(0-2sem): Inmovilización, movilidad digital.\nF2(2-6sem): Movilidad activa, fortalecimiento.\nF3(6-12sem): Carga progresiva, gestos deportivos.",
+      fases:[
+        {f:"Fase 1 — Inmovilización (0-2 sem)",ejs:["Ortesis muñeca en posición neutra","Movilidad activa dedos y pulgares 3x15","Crioterapia 10min x3/día","Ejercicios hombro y codo sin cargar muñeca"]},
+        {f:"Fase 2 — Movilidad (2-6 sem)",ejs:["Flexo-extensión activa muñeca 3x15","Fortalecimiento con putty o pelota blanda 3x20","Pronación-supinación mancuerna ligera 3x15","Extensión muñeca excéntrica 3x15"]},
+        {f:"Fase 3 — Carga (6-12 sem)",ejs:["Agarre progresivo con dinamómetro","Flexión muñeca con mancuerna 4x12","Ejercicios de apoyo (plancha)","Gestos deportivos progresivos"]}
+      ],
+      rts:"ROM ≥80% · Watson negativo · Agarre sin dolor · Apoyo sin dolor"},
+
+    { n:"Síndrome túnel carpiano", z:"Muñeca/Mano",
+      e:["Signo de Phalen (60seg)","Signo de Tinel","Monofilamento Semmes-Weinstein","Electroneurografía","BCTQ cuestionario"],
+      p:"F1(0-4sem): Férula nocturna, neurodinamia del mediano.\nF2(4-8sem): Fortalecimiento tenar e interóseos.\nF3(8-16sem): Ergonomía avanzada, retorno.",
+      fases:[
+        {f:"Fase 1 — Conservador (0-4 sem)",ejs:["Férula nocturna en posición neutra","Neurodinamia mediano: deslizamiento neuromeníngeo 3x10","Evitar flexión prolongada de muñeca","Ergonomía del puesto"]},
+        {f:"Fase 2 — Fortalecimiento (4-8 sem)",ejs:["Fortalecimiento tenar (abductor corto pulgar) 3x15","Interóseos con putty","Extensión muñeca resistida 3x15","Masaje cicatriz si post-quirúrgico"]},
+        {f:"Fase 3 — Funcional (8-16 sem)",ejs:["Agarre dinamómetro progresivo","Destreza fina (pinza, pellizco)","Ergonomía avanzada y pausas activas","Retorno laboral/deportivo"]}
+      ],
+      rts:"Phalen y Tinel negativos · Velocidad conducción normal · Agarre ≥90% · BCTQ<20"},
+
+    { n:"Tendinitis de De Quervain", z:"Muñeca/Mano",
+      e:["Test de Finkelstein","Palpación estiloide radial","Resistencia en extensión pulgar","Ecografía"],
+      p:"F1: Ortesis de pulgar, isométricos en neutro.\nF2: Excéntricos abductor largo y extensor corto pulgar.\nF3: Ejercicios funcionales de agarre.",
+      fases:[
+        {f:"Fase 1 — Descarga (0-3 sem)",ejs:["Ortesis de pulgar en posición funcional","Isométrico abducción pulgar en neutro 5x10seg","Crioterapia local 10min x3/día","Evitar pinza y gestos repetitivos"]},
+        {f:"Fase 2 — Excéntrico (3-6 sem)",ejs:["Excéntrico abductor largo del pulgar con banda 3x15","Extensión corta del pulgar excéntrica 3x15","Movilidad activa del pulgar en rango indoloro","Masaje transverso del tendón"]},
+        {f:"Fase 3 — Funcional (6-10 sem)",ejs:["Agarre y pinza con objetos de tamaño variable","Ejercicios de destreza fina","Retorno laboral/deportivo gradual","Análisis ergonómico del gesto"]}
+      ],
+      rts:"Finkelstein negativo · Pinza sin dolor · Agarre sin restricción"},
+
+    // ===== 🧠 NEUROLÓGICO DEPORTIVO =====
+    { n:"Conmoción cerebral", z:"Cuello/Cervical",
+      e:["SCAT6 completo","HIT-6 cuestionario","Pruebas equilibrio BESS","King-Devick Test","Prueba de esfuerzo Buffalo"],
+      p:"F1(24-48h): Reposo cognitivo y físico relativo.\nF2: Aeróbico suave sin síntomas.\nF3: Ejercicio específico sin contacto.\nF4: Entrenamiento completo sin contacto.\nF5: Contacto controlado.\nF6: Retorno completo.",
+      fases:[
+        {f:"Fases 1-2 — Reposo y aeróbico suave",ejs:["Reposo cognitivo relativo 24-48h","Caminar suave sin síntomas 15-20min","Bicicleta estática sin resistencia","Evitar pantallas brillantes y ruido"]},
+        {f:"Fases 3-4 — Ejercicio específico",ejs:["Aeróbico moderado sin contacto","Ejercicios técnicos sin contacto","Coordinación y equilibrio","Fuerza moderada"]},
+        {f:"Fases 5-6 — Retorno completo",ejs:["Entrenamiento completo con equipo","Sesión de contacto controlado","Partido de práctica","Competencia completa"]}
+      ],
+      rts:"SCAT6 en valores normativos · BESS normal · King-Devick sin deterioro · Buffalo sin síntomas · Aprobación médico especialista"},
+
+    // ===== 🩹 LESIONES GENERALES =====
+    { n:"Desgarro grado I", z:"Rodilla",
+      e:["Dolor puntual","Resistencia levemente disminuida","Ecografía"],
+      p:"F1: Isométricos tempranos.\nF2: Isotónica controlada.\nF3: Excéntrica y retorno.",
+      fases:[
+        {f:"Fase 1 — Aguda (0-72h)",ejs:["Crioterapia 15min x4/día","Compresión","Isométrico suave sin dolor 5x10seg","Marcha normal si tolera"]},
+        {f:"Fase 2 — Subaguda (3 días-2 sem)",ejs:["Isotónica concéntrica en rango indoloro 3x15","Fortalecimiento proximal y distal","Bicicleta o marcha progresiva","Propiocepción básica"]},
+        {f:"Fase 3 — Funcional (2-4 sem)",ejs:["Excéntrico específico del músculo afectado 3x15","Pliometría baja intensidad","Carrera progresiva","Gestos deportivos"]}
+      ],
+      rts:"Fuerza ≥90% contralateral · Sin dolor en gesto deportivo · 3 semanas sin recaída"},
+
+    { n:"Desgarro grado II", z:"Rodilla",
+      e:["Hachazo palpable","Hematoma visible","Ecografía (grado de rotura)","ROM limitado"],
+      p:"F1: PEACE & LOVE, isometría.\nF2: Isotónica concéntrica.\nF3: Excéntrica.\nF4: Retorno deportivo.",
+      fases:[
+        {f:"Fase 1 — Aguda (0-5 días)",ejs:["Crioterapia y compresión inmediata","Isométrico suave en posición acortada 5x10seg","Sin masaje ni calor","Movilidad activa sin dolor"]},
+        {f:"Fase 2 — Concéntrico (5 días-3 sem)",ejs:["Isotónica concéntrica rango indoloro 3x15","Fortalecimiento muscular proximal y distal","Marcha progresiva a trote","Propiocepción básica"]},
+        {f:"Fase 3 — Excéntrico (3-6 sem)",ejs:["Excéntrico específico progresivo 3x15","Pliometría progresiva","Sprint al 50-75%","Gestos deportivos sin dolor"]},
+        {f:"Fase 4 — Retorno (6-12 sem)",ejs:["Sprint al 100%","Cambios de dirección","Gestos específicos del deporte","Test funcional de retorno"]}
+      ],
+      rts:"Fuerza ≥90% · Sprint sin dolor · Gesto deportivo sin restricción"},
+
+    { n:"Desgarro grado III", z:"Rodilla",
+      e:["Pérdida funcional total","Defecto palpable","RMN","Evaluación quirúrgica"],
+      p:"F1: Evaluación quirúrgica urgente.\nF2: Inmovilización.\nF3: Rehabilitación fase a fase según protocolo post-quirúrgico.",
+      fases:[
+        {f:"Fase 1 — Aguda/Quirúrgica (0-4 sem)",ejs:["Evaluación quirúrgica urgente","Inmovilización o bota walker","Crioterapia frecuente","Ejercicios musculatura no afectada"]},
+        {f:"Fase 2 — Subaguda (4-10 sem)",ejs:["Movilidad progresiva del segmento","Fortalecimiento isométrico e isotónico","Marcha normal progresiva","Propiocepción inicial"]},
+        {f:"Fase 3 — Funcional (10-24 sem)",ejs:["Fortalecimiento excéntrico progresivo","Pliometría bilateral a unilateral","Carrera progresiva","Retorno deportivo según LSI"]}
+      ],
+      rts:"Fuerza ≥90% · LSI ≥90% · Gesto deportivo sin restricción · Mínimo 6 meses"},
+
+    { n:"Contusión muscular", z:"Rodilla",
+      e:["Equimosis","ROM limitado","Dolor a la palpación directa","Ecografía (hematoma)"],
+      p:"F1: PEACE & LOVE, compresión y movilidad temprana indolora.\nF2: Movilidad progresiva, fortalecimiento.\nF3: Funcional y retorno.",
+      fases:[
+        {f:"Fase 1 — Aguda (0-72h)",ejs:["Crioterapia y compresión inmediata","Elevación del miembro","Movilidad activa suave en rango indoloro","Sin masaje profundo ni calor"]},
+        {f:"Fase 2 — Subaguda (3 días-2 sem)",ejs:["Movilidad activa progresiva","Isotónica concéntrica en rango indoloro 3x15","Termoterapia superficial desde sem 2","Marcha normal"]}  ,
+        {f:"Fase 3 — Funcional (2-4 sem)",ejs:["Fortalecimiento excéntrico","Pliometría progresiva","Carrera progresiva","Gestos deportivos"]}
+      ],
+      rts:"ROM completo sin dolor · Fuerza ≥90% · Marcha sin cojera · Sprint sin dolor"},
+
+    { n:"Síndrome de sobreentrenamiento", z:"Espalda",
+      e:["HRV reducida","Fatiga persistente >2 semanas","Rendimiento disminuido","RESTQ-Sport cuestionario","Cortisol/testosterona ratio"],
+      p:"F1(1-3sem): Reposo activo, nutrición y sueño.\nF2(3-6sem): Entrenamiento bajo volumen con HRV.\nF3(6-12sem): Periodización progresiva.",
+      fases:[
+        {f:"Fase 1 — Recuperación activa (1-3 sem)",ejs:["Actividad muy ligera 30min/día (caminar, estiramientos)","Sueño ≥8-9 horas","Nutrición: surplus calórico, proteína 2g/kg","Evaluación psicológica si necesario"]},
+        {f:"Fase 2 — Reintroducción (3-6 sem)",ejs:["Aeróbico suave 40-60% VO2max","Sesiones cortas 30-40min con HRV monitoring","Técnica sin intensidad máxima","Registro de sueño y recuperación"]},
+        {f:"Fase 3 — Periodización (6-12 sem)",ejs:["Plan periodizado con descansos estructurados","Monitorización constante HRV y RPE","Técnicas recuperación: crioterapia, masaje","Planificación de competiciones"]}
+      ],
+      rts:"HRV normalizada · Rendimiento deportivo basal · RESTQ normal · Bienestar subjetivo recuperado"}
+]
+
+        // --- 3. MOTOROR AUTOMÁTICO DE DECISIÓN (The Engine) ---
         const MotorClinico = {
             configuracionCarga: {
                 aguda: { enfoque: "Analgesia y Control de Inflamación", contraccion: "Isometría Sub-máxima" },
@@ -2234,20 +2550,58 @@ function renderPacientes() { renderLista(); }
 
         function cargarProtocolo(nombre) {
             const l = bibliotecaLesiones.find(x => x.n === nombre);
+            if (!l) return;
+            const colores = ['border-rose-400','border-amber-400','border-emerald-400','border-indigo-400'];
+            const fasesHtml = (l.fases||[]).length > 0
+                ? l.fases.map((fase,i) => `
+                    <div class="rounded-2xl p-4 border-l-4 ${colores[i%4]} bg-slate-50">
+                      <p class="text-xs font-black text-slate-700 mb-2">${fase.f}</p>
+                      <ul class="space-y-1">${(fase.ejs||[]).map(ej=>`<li class="text-xs text-slate-600 flex gap-2"><span class="text-indigo-400 font-black flex-shrink-0">→</span>${ej}</li>`).join('')}</ul>
+                    </div>`).join('')
+                : `<div class="bg-slate-50 rounded-2xl p-4"><p class="text-xs text-slate-600 leading-relaxed">${l.p}</p></div>`;
+            const rtsHtml = l.rts
+                ? `<div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4">
+                    <p class="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-2">🏆 Criterios RTS</p>
+                    <div class="flex flex-wrap gap-2">${l.rts.split('·').map(c=>c.trim()).filter(Boolean).map(c=>`<span class="bg-white border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">${c}</span>`).join('')}</div>
+                   </div>` : '';
+            const evalHtml = `<div class="mb-4"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">🔬 Evaluaciones</p><div class="flex flex-wrap gap-2">${l.e.map(ev=>`<span class="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">${ev}</span>`).join('')}</div></div>`;
+            document.body.insertAdjacentHTML('beforeend', `
+              <div id="modal-protocolo" class="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onclick="if(event.target===this)this.remove()">
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+                  <div class="flex items-start justify-between mb-4">
+                    <div><span class="text-[8px] font-black text-indigo-500 uppercase bg-indigo-50 px-3 py-1 rounded-full tracking-widest">${l.z}</span>
+                    <h2 class="text-lg font-extrabold text-slate-800 mt-2 uppercase italic">${l.n}</h2></div>
+                    <button onclick="document.getElementById('modal-protocolo').remove()" class="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none ml-4">✕</button>
+                  </div>
+                  ${evalHtml}
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">📋 Protocolo por Fases</p>
+                  <div class="space-y-3 mb-4">${fasesHtml}</div>
+                  ${rtsHtml}
+                  <div class="flex gap-3">
+                    <button onclick="cargarEnFormulario('${l.n.replace(/'/g,"\'")}');document.getElementById('modal-protocolo').remove()" class="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-2xl text-sm hover:bg-indigo-700 transition-all">+ Crear Paciente con este Diagnóstico</button>
+                    <button onclick="document.getElementById('modal-protocolo').remove()" class="px-5 bg-slate-100 text-slate-600 font-bold py-3 rounded-2xl text-sm">Cerrar</button>
+                  </div>
+                </div>
+              </div>`);
+        }
+
+        function cargarEnFormulario(nombre) {
+            const l = bibliotecaLesiones.find(x => x.n === nombre);
+            if (!l) return;
             const container = document.getElementById('reg-eval-container');
             container.innerHTML = l.e.map(test => `
                 <div>
                     <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">${test}</label>
                     <input type="text" data-test="${test}" class="eval-input w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-bold mt-1 outline-none focus:border-indigo-500 transition-all shadow-sm">
-                </div>
-            `).join('');
-            document.getElementById('reg-diag').value = `DIAGNÓSTICO: ${l.n}\nZONA: ${l.z}\n\nTRATAMIENTO:\n${l.p}`;
-            // Auto-set the zona select
+                </div>`).join('');
+            const protTexto = (l.fases||[]).length > 0
+                ? 'DIAGNÓSTICO: '+l.n+'\nZONA: '+l.z+'\n\n'+l.fases.map(f=>f.f+':\n'+(f.ejs||[]).map(e=>'  • '+e).join('\n')).join('\n\n')+(l.rts?'\n\nRTS: '+l.rts:'')
+                : 'DIAGNÓSTICO: '+l.n+'\nZONA: '+l.z+'\n\nTRATAMIENTO:\n'+l.p;
+            document.getElementById('reg-diag').value = protTexto;
             const zonaSelect = document.getElementById('reg-zona');
             if (zonaSelect) {
                 const opts = Array.from(zonaSelect.options).map(o => o.value);
-                if (opts.includes(l.z)) zonaSelect.value = l.z;
-                else zonaSelect.value = '';
+                zonaSelect.value = opts.includes(l.z) ? l.z : '';
             }
             showSection('nuevo-paciente');
         }
