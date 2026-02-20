@@ -2026,11 +2026,10 @@ const MAPEO_ZONAS = {
         async function cargarPacientesDB() {
             const { data, error } = await sb.from('pacientes').select('*').order('created_at', { ascending: false });
             if (error) { console.error('Error cargando pacientes:', error); return; }
-            // Adaptar formato Supabase al formato local de la app
             pacientes = (data || []).map(p => ({
                 id: p.id,
-                nombre: p.nombre,
-                ci: p.ci || '',
+                nombre: p.nombre || '',
+                ci: p[_cedulaColName] || '',
                 edad: p.edad || '',
                 sexo: p.sexo || '',
                 deporte: p.deporte || '',
@@ -2053,12 +2052,40 @@ const MAPEO_ZONAS = {
             updateDashboard();
         }
 
+        // Detectar nombre de columna cédula al iniciar
+        let _cedulaColName = 'cedula'; // valor por defecto
+        async function detectarColumnasCedula() {
+            // Intentamos leer 1 registro; si no hay datos, probamos insertar y capturar el error
+            // Alternativa segura: hacer una query de introspección via Supabase
+            try {
+                const { data } = await sb.from('pacientes').select('*').limit(1);
+                if (data && data.length > 0) {
+                    const row = data[0];
+                    if (row.hasOwnProperty('ci')) _cedulaColName = 'ci';
+                    else if (row.hasOwnProperty('cedula')) _cedulaColName = 'cedula';
+                    else if (row.hasOwnProperty('documento')) _cedulaColName = 'documento';
+                    else if (row.hasOwnProperty('identificacion')) _cedulaColName = 'identificacion';
+                    // Si no hay ninguna, dejamos 'cedula' como default
+                }
+                // Si no hay filas, intentamos detectar por error en un insert nulo (dry-run)
+                // No hacemos esto para no crear registros. Usamos 'cedula' como default.
+            } catch(e) { /* usar default */ }
+        }
+
+        // Helper: devuelve el nombre correcto de la columna cédula según el schema detectado
+        function _cedulaCol() { return _cedulaColName; }
+        function _cedulaPayload(ci) {
+            return { [_cedulaColName]: ci || '' };
+        }
+
         async function save() {
             if (currentId) {
                 const p = pacientes.find(x => x.id === currentId);
                 if (!p) return;
                 const payload = {
-                    nombre: p.nombre, ci: p.ci, edad: p.edad, sexo: p.sexo,
+                    nombre: p.nombre,
+                    ..._cedulaPayload(p.ci),
+                    edad: p.edad, sexo: p.sexo,
                     deporte: p.deporte, emergencia: p.emergencia, telefono: p.telefono,
                     diagnostico: p.diag, zona: p.zona, valoracion: p.valoracion,
                     evoluciones: p.evoluciones || [], fotos: p.fotosClincias || [],
@@ -2067,7 +2094,7 @@ const MAPEO_ZONAS = {
                     foto_avatar: p.foto || null
                 };
                 const { error } = await sb.from('pacientes').update(payload).eq('id', p.id);
-                if (error) { console.error('Error en save():', error); showToast('Error guardando cambios', true); }
+                if (error) { console.error('Error en save():', error); showToast('Error guardando cambios: ' + error.message, true); }
             }
         }
 
@@ -2075,7 +2102,7 @@ const MAPEO_ZONAS = {
             const payload = {
                 id: typeof p.id === 'number' ? undefined : p.id,
                 nombre: p.nombre,
-                ci: p.ci,
+                ..._cedulaPayload(p.ci),
                 edad: p.edad,
                 sexo: p.sexo,
                 deporte: p.deporte,
@@ -2206,9 +2233,10 @@ function renderPacientes() { renderLista(); }
     const zonaManual = document.getElementById('reg-zona').value;
     const detectZona = zonaManual || (lesionEncontrada ? lesionEncontrada.z : "Rodilla");
 
+    const ciVal = document.getElementById('reg-ci').value;
     const payload = {
         nombre: document.getElementById('reg-nombre').value,
-        ci: document.getElementById('reg-ci').value,
+        ..._cedulaPayload(ciVal),
         edad: document.getElementById('reg-edad').value,
         sexo: document.getElementById('reg-sexo').value,
         deporte: document.getElementById('reg-deporte').value,
@@ -2225,7 +2253,7 @@ function renderPacientes() { renderLista(); }
 
     const newP = {
         id: data.id,
-        nombre: payload.nombre, ci: payload.ci, edad: payload.edad,
+        nombre: payload.nombre, ci: ciVal, edad: payload.edad,
         sexo: payload.sexo, deporte: payload.deporte, emergencia: payload.emergencia,
         telefono: payload.telefono, diag: payload.diagnostico, zona: payload.zona,
         valoracion: payload.valoracion, evoluciones: [], rts: null,
@@ -4212,6 +4240,7 @@ async function updateDashboard() {
 
         // --- INIT SUPABASE ---
         (async function initApp() {
+            await detectarColumnasCedula();
             await cargarPacientesDB();
             renderCalendario();
             renderBiblioteca();
