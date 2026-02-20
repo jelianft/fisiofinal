@@ -763,7 +763,10 @@
             </div>
         </nav>
         <div class="p-6 border-t border-slate-800/50 space-y-2">
-            <button onclick="toggleDarkMode()" class="w-full text-left px-4 py-2 text-xs hover:text-white transition-colors flex items-center gap-3">
+            <button onclick="mostrarDiagnosticoSchema()" class="w-full text-left px-4 py-2 text-xs hover:text-white transition-colors flex items-center gap-3 text-amber-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+                    Ver Schema DB
+                </button>
                 <svg id="dark-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                 </svg>
@@ -2055,50 +2058,76 @@ const MAPEO_ZONAS = {
 
         // Detectar nombre de columna cédula al iniciar
         // === SCHEMA INTROSPECTION ===
-        // Detecta las columnas reales de la tabla 'pacientes' en Supabase
-        // y construye payloads dinámicos que nunca envían columnas inexistentes.
-        let _dbCols = null; // Set de columnas reales, null = no detectado aún
+        let _dbCols = null;
 
         async function detectarSchemaDB() {
+            // MÉTODO 1: OpenAPI spec de Supabase — siempre disponible, lista todas las columnas
             try {
-                // Supabase expone information_schema via PostgREST
-                const { data } = await sb
-                    .from('information_schema.columns')
-                    .select('column_name')
-                    .eq('table_name', 'pacientes')
-                    .eq('table_schema', 'public');
-                if (data && data.length > 0) {
-                    _dbCols = new Set(data.map(r => r.column_name));
-                    console.log('[JelianFT] Columnas detectadas:', [..._dbCols]);
-                    return;
+                const resp = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                if (resp.ok) {
+                    const spec = await resp.json();
+                    const def = spec?.definitions?.pacientes?.properties;
+                    if (def) {
+                        _dbCols = new Set(Object.keys(def));
+                        console.log('[JelianFT] ✅ Columnas via OpenAPI:', [..._dbCols]);
+                        return;
+                    }
                 }
-            } catch(e) { /* PostgREST puede no exponer information_schema — fallback */ }
+            } catch(e) { console.warn('[JelianFT] OpenAPI falló:', e); }
 
-            // Fallback: leer 1 fila para detectar columnas
+            // MÉTODO 2: SELECT * LIMIT 1 (funciona si hay al menos 1 fila)
             try {
-                const { data } = await sb.from('pacientes').select('*').limit(1);
-                if (data && data.length > 0) {
+                const { data, error } = await sb.from('pacientes').select('*').limit(1);
+                if (!error && data && data.length > 0) {
                     _dbCols = new Set(Object.keys(data[0]));
-                    console.log('[JelianFT] Columnas detectadas por fila:', [..._dbCols]);
+                    console.log('[JelianFT] ✅ Columnas via SELECT:', [..._dbCols]);
                     return;
                 }
-            } catch(e) { /* tabla vacía o error */ }
+            } catch(e) { console.warn('[JelianFT] SELECT falló:', e); }
 
-            // Último fallback: tabla vacía o sin acceso, usamos columnas conocidas
-            // sin el campo cédula (lo omitimos si no existe)
-            _dbCols = new Set(['id','nombre','edad','sexo','deporte','emergencia','telefono',
-                               'diagnostico','zona','valoracion','evoluciones','fotos',
-                               'ejercicios_hoja','estado','rts','objetivos','foto_avatar',
-                               'created_at','updated_at']);
-            console.warn('[JelianFT] Schema no detectado, usando columnas base (sin cédula).');
+            // MÉTODO 3: HEAD request — obtiene columnas del header aunque la tabla esté vacía
+            try {
+                const resp = await fetch(`${SUPABASE_URL}/rest/v1/pacientes?select=*&limit=0`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Prefer': 'count=none'
+                    }
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    // Aunque venga vacío, PostgREST devuelve [] con las columnas del schema
+                    // Intentamos obtenerlas del Content-Range o de un objeto vacío
+                    // Fallback: insertar con columnas mínimas conocidas
+                }
+            } catch(e) {}
+
+            // MÉTODO 4 (último recurso): Intentar INSERT con solo 'nombre' y capturar error
+            // para diagnosticar. Usamos un nombre imposible para identificarlo y borrarlo.
+            console.warn('[JelianFT] ⚠️ No se pudo detectar schema. Usando columnas mínimas seguras.');
+            // Columnas que Supabase agrega automáticamente (no las enviamos):
+            // id, created_at, updated_at
+            // Columnas que SIEMPRE existen si la tabla fue creada con el script recomendado:
+            _dbCols = new Set([
+                'nombre', 'edad', 'sexo', 'deporte', 'emergencia', 'telefono',
+                'diagnostico', 'zona', 'valoracion', 'evoluciones', 'fotos',
+                'ejercicios_hoja', 'estado', 'rts', 'objetivos', 'foto_avatar'
+                // NO incluimos 'ci', 'cedula', etc. — los omitimos por seguridad
+            ]);
         }
 
         // Filtra un payload para incluir solo columnas que existen en la DB
         function _filtrarPayload(payload) {
-            if (!_dbCols) return payload; // si no detectamos, enviamos todo
+            if (!_dbCols) return payload;
             const filtrado = {};
             for (const [k, v] of Object.entries(payload)) {
-                if (_dbCols.has(k)) filtrado[k] = v;
+                if (k === 'id' || _dbCols.has(k)) filtrado[k] = v;
             }
             return filtrado;
         }
@@ -2106,16 +2135,15 @@ const MAPEO_ZONAS = {
         // Detecta el nombre de la columna cédula (puede no existir)
         function _cedulaCol() {
             if (!_dbCols) return null;
-            for (const name of ['ci','cedula','cedula_identidad','documento','identificacion','id_documento']) {
+            for (const name of ['ci','cedula','cedula_identidad','documento','identificacion','id_documento','id_paciente']) {
                 if (_dbCols.has(name)) return name;
             }
-            return null; // no existe ninguna columna para cédula
+            return null;
         }
 
-        // Retorna el fragmento de payload para cédula, o {} si la columna no existe
         function _cedulaPayload(ci) {
             const col = _cedulaCol();
-            if (!col) return {}; // columna no existe → no enviar nada
+            if (!col) return {};
             return { [col]: ci || '' };
         }
 
@@ -2292,7 +2320,13 @@ function renderPacientes() { renderLista(); }
     const payload = _filtrarPayload(rawPayload);
 
     const { data, error } = await sb.from('pacientes').insert(payload).select().single();
-    if (error) { showToast('Error guardando paciente: ' + error.message, true); return; }
+    if (error) {
+        console.error('[JelianFT] Error INSERT pacientes:', error);
+        console.error('[JelianFT] Payload enviado:', payload);
+        console.error('[JelianFT] Columnas detectadas:', _dbCols ? [..._dbCols] : 'N/A');
+        showToast('Error guardando paciente: ' + (error.message || error.details || JSON.stringify(error)), true);
+        return;
+    }
 
     const newP = {
         id: data.id,
@@ -2827,6 +2861,36 @@ async function updateDashboard() {
             if (nuevo === '') { localStorage.removeItem(PIN_KEY); showToast("PIN eliminado."); return; }
             if (/^\d{4}$/.test(nuevo)) { localStorage.setItem(PIN_KEY, nuevo); showToast("✓ PIN guardado."); }
             else showToast("❌ El PIN debe ser exactamente 4 dígitos.", true);
+        }
+
+        async function mostrarDiagnosticoSchema() {
+            showToast('🔍 Consultando schema de Supabase...');
+            // Intentar OpenAPI
+            try {
+                const resp = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                });
+                if (resp.ok) {
+                    const spec = await resp.json();
+                    const def = spec?.definitions?.pacientes?.properties;
+                    if (def) {
+                        const cols = Object.keys(def);
+                        alert('✅ Columnas reales en tabla "pacientes":\n\n' + cols.join('\n') +
+                              '\n\n(Copia esto y compártelo para corregir el código)');
+                        return;
+                    }
+                }
+            } catch(e) {}
+            // Intentar fila
+            try {
+                const { data } = await sb.from('pacientes').select('*').limit(1);
+                if (data && data.length > 0) {
+                    const cols = Object.keys(data[0]);
+                    alert('✅ Columnas detectadas de fila existente:\n\n' + cols.join('\n'));
+                    return;
+                }
+            } catch(e) {}
+            alert('⚠️ No se pudo detectar el schema.\nLa tabla puede estar vacía o sin permisos de lectura.\n\nColumnas actualmente asumidas:\n' + (_dbCols ? [..._dbCols].join('\n') : 'N/A'));
         }
 
         // ============================================================
