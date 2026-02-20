@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jelian FT - Clinical Sport v134</title>
+    <title>Jelian FT - Clinical Sport v135</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -605,7 +605,7 @@
             <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
                 <div class="flex items-center gap-3 p-4 border-b border-slate-100">
                     <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input id="global-search-input" type="text" placeholder="Buscar atletas, diagnósticos, sesiones..." class="flex-1 outline-none text-sm font-medium text-slate-700 placeholder-slate-400" oninput="(debounce(runGlobalSearch,200))(this.value)">
+                    <input id="global-search-input" type="text" placeholder="Buscar atletas, diagnósticos, sesiones..." class="flex-1 outline-none text-sm font-medium text-slate-700 placeholder-slate-400" oninput="_debouncedGlobalSearch(this.value)">
                     
                 </div>
                 <div id="global-search-results" class="p-3 max-h-80 overflow-y-auto">
@@ -2044,6 +2044,9 @@ const MAPEO_ZONAS = {
                 fotosClincias: p.fotos || [],
                 ejerciciosHoja: p.ejercicios_hoja || [],
                 estado: p.estado || 'activo',
+                status: p.estado || 'activo',
+                foto: p.foto_avatar || null,
+                objetivos: p.objetivos || [],
                 _supaId: p.id
             }));
             renderPacientes();
@@ -2060,7 +2063,8 @@ const MAPEO_ZONAS = {
                     diagnostico: p.diag, zona: p.zona, valoracion: p.valoracion,
                     evoluciones: p.evoluciones || [], fotos: p.fotosClincias || [],
                     ejercicios_hoja: p.ejerciciosHoja || [], estado: p.estado || p.status || 'activo',
-                    rts: p.rts || null, objetivos: p.objetivos || []
+                    rts: p.rts || null, objetivos: p.objetivos || [],
+                    foto_avatar: p.foto || null
                 };
                 const { error } = await sb.from('pacientes').update(payload).eq('id', p.id);
                 if (error) { console.error('Error en save():', error); showToast('Error guardando cambios', true); }
@@ -2146,6 +2150,7 @@ function renderPacientes() { renderLista(); }
             return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), delay); };
         }
         const _debouncedSearch = debounce(renderLista, 180);
+        const _debouncedGlobalSearch = debounce(runGlobalSearch, 200);
         const _debouncedBiblioteca = debounce(() => {
             const q = document.getElementById('busqueda-biblioteca')?.value || '';
             const cont = document.getElementById('contenedor-biblioteca');
@@ -2191,21 +2196,17 @@ function renderPacientes() { renderLista(); }
             showSection('nuevo-paciente');
         }
 
-        document.getElementById('formRegistro').onsubmit = function(e) {
+        document.getElementById('formRegistro').onsubmit = async function(e) {
     e.preventDefault();
+    const form = this;
     const diagText = document.getElementById('reg-diag').value;
     
-    // --- ESTE ES EL AJUSTE DE DETECCIÓN INTELIGENTE ---
-    // Buscamos en la biblioteca de 100 lesiones si el nombre de la lesión está en el diagnóstico
     const lesionEncontrada = bibliotecaLesiones.find(l => diagText.includes(l.n));
     
-    // Usar zona seleccionada manualmente primero, luego auto-detectar, luego fallback
     const zonaManual = document.getElementById('reg-zona').value;
     const detectZona = zonaManual || (lesionEncontrada ? lesionEncontrada.z : "Rodilla");
-    // -------------------------------------------------
 
-    const p = {
-        id: Date.now(),
+    const payload = {
         nombre: document.getElementById('reg-nombre').value,
         ci: document.getElementById('reg-ci').value,
         edad: document.getElementById('reg-edad').value,
@@ -2213,34 +2214,30 @@ function renderPacientes() { renderLista(); }
         deporte: document.getElementById('reg-deporte').value,
         emergencia: document.getElementById('reg-emergencia').value,
         telefono: document.getElementById('reg-telefono').value,
-        diag: diagText,
+        diagnostico: diagText,
         zona: detectZona,
-        valoracion: Array.from(document.querySelectorAll('.eval-input')).map(i => ({ 
-            p: i.dataset.test, 
-            r: i.value 
-        })),
-        evoluciones: [],
-        rts: null,
-        fotosClincias: [],
-        ejerciciosHoja: []
-    };
-
-    // Guardar en Supabase directamente
-    const payload = {
-        nombre: p.nombre, ci: p.ci, edad: p.edad, sexo: p.sexo,
-        deporte: p.deporte, emergencia: p.emergencia, telefono: p.telefono,
-        diagnostico: p.diag, zona: p.zona, valoracion: p.valoracion,
+        valoracion: Array.from(document.querySelectorAll('.eval-input')).map(i => ({ p: i.dataset.test, r: i.value })),
         evoluciones: [], fotos: [], ejercicios_hoja: [], estado: 'activo'
     };
-    sb.from('pacientes').insert(payload).select().single().then(({ data, error }) => {
-        if (error) { showToast('Error guardando paciente: ' + error.message, true); return; }
-        p.id = data.id;
-        pacientes.unshift(p);
-        renderPacientes();
-        updateDashboard();
-    });
-    this.reset();
+
+    const { data, error } = await sb.from('pacientes').insert(payload).select().single();
+    if (error) { showToast('Error guardando paciente: ' + error.message, true); return; }
+
+    const newP = {
+        id: data.id,
+        nombre: payload.nombre, ci: payload.ci, edad: payload.edad,
+        sexo: payload.sexo, deporte: payload.deporte, emergencia: payload.emergencia,
+        telefono: payload.telefono, diag: payload.diagnostico, zona: payload.zona,
+        valoracion: payload.valoracion, evoluciones: [], rts: null,
+        fotosClincias: [], ejerciciosHoja: [], estado: 'activo', status: 'activo',
+        foto: null, objetivos: [], _supaId: data.id
+    };
+    pacientes.unshift(newP);
+    renderPacientes();
+    updateDashboard();
+    form.reset();
     showSection('lista-pacientes');
+    showToast('✓ Atleta registrado correctamente.');
 };
         function renderLista() {
             const t = document.getElementById('tabla-pacientes');
@@ -2259,7 +2256,7 @@ function renderPacientes() { renderLista(); }
                 if (fechaInicio) coincideFecha = coincideFecha && (fechaAtleta >= fechaInicio);
                 if (fechaFin) coincideFecha = coincideFecha && (fechaAtleta <= fechaFin);
                 const coincideZona = !filtroZona || p.zona === filtroZona;
-                const coincideStatus = !filtroStatus || (p.status || 'activo') === filtroStatus;
+                const coincideStatus = !filtroStatus || (p.status || p.estado || 'activo') === filtroStatus;
                 const ultimoEva = p.evoluciones[0]?.eva ?? null;
                 let coincideEva = true;
                 if (filtroEva === 'alto') coincideEva = ultimoEva !== null && ultimoEva >= 7;
@@ -2303,7 +2300,7 @@ function renderPacientes() { renderLista(); }
                         <td class="px-8 py-5">
                             <span class="text-base font-black ${ultimoEva !== null && ultimoEva > 6 ? 'text-rose-500' : 'text-emerald-500'}">${ultimoEva !== null ? ultimoEva : '--'}</span>
                         </td>
-                        <td class="px-8 py-5 hidden md:table-cell">${statusHTML(p.status)}
+                        <td class="px-8 py-5 hidden md:table-cell">${statusHTML(p.status || p.estado)}
                             <div class="mt-1">${diasBadgeHTML(dias)}</div>
                         </td>
                         <td class="px-8 py-5 text-right">
@@ -2342,7 +2339,7 @@ function renderPacientes() { renderLista(); }
 
             // Status
             const statusEl = document.getElementById('p-status-badge');
-            statusEl.innerHTML = statusHTML(p.status);
+            statusEl.innerHTML = statusHTML(p.status || p.estado);
             statusEl.onclick = () => cambiarStatus(id);
 
             // Foto
@@ -2416,7 +2413,7 @@ function renderPacientes() { renderLista(); }
             window._lastIAPlan = plan;
         }
 
-        function exportarPlanIAaHoja() {
+        async function exportarPlanIAaHoja() {
             const plan = window._lastIAPlan;
             if (!plan) return;
             const p = pacientes.find(x => x.id === currentId);
@@ -2432,12 +2429,12 @@ function renderPacientes() { renderLista(); }
                     descripcion: ej.d
                 });
             });
-            save();
+            await save();
             renderHojaEjercicios();
             showToast(`✓ ${plan.ejercicios.length} ejercicios agregados a la hoja.`);
         }
 
-        function agregarSesion() {
+        async function agregarSesion() {
             const p = pacientes.find(x => x.id === currentId);
             const evaVal = parseInt(document.getElementById('s-eva').value);
             if (isNaN(evaVal) || evaVal < 0 || evaVal > 10) {
@@ -2462,9 +2459,8 @@ function renderPacientes() { renderLista(); }
             };
             p.evoluciones.unshift(s);
             // Guardar en Supabase
-            sb.from('pacientes').update({ evoluciones: p.evoluciones }).eq('id', currentId).then(({ error }) => {
-                if (error) showToast('Error guardando sesión', true);
-            });
+            const { error } = await sb.from('pacientes').update({ evoluciones: p.evoluciones }).eq('id', currentId);
+            if (error) { showToast('Error guardando sesión', true); return; }
             verDetalle(currentId);
             ['s-eva', 's-fuerza', 's-notas', 's-psfs'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.style.borderColor = ''; el.style.color = ''; });
             document.getElementById('s-rpe').value = 5;
@@ -2524,12 +2520,12 @@ function renderPacientes() { renderLista(); }
             `).join('');
         }
 
-        function eliminarSesion(idx) {
+        async function eliminarSesion(idx) {
             const p = pacientes.find(x => x.id === currentId);
             if (!p) return;
             if (!confirm(`¿Eliminar la sesión del ${p.evoluciones[idx].fecha}?`)) return;
             p.evoluciones.splice(idx, 1);
-            save();
+            await save();
             renderSesiones();
             updateChartEvolucion();
             showToast('✓ Sesión eliminada.');
@@ -2685,13 +2681,16 @@ async function updateDashboard() {
 
         function importarBackup(event) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const datos = JSON.parse(e.target.result);
                     if (!Array.isArray(datos)) throw new Error("Formato inválido");
-                    pacientes = datos;
-                    save();
-                    location.reload();
+                    // Upsert all patients to Supabase
+                    for (const p of datos) {
+                        await upsertPaciente(p);
+                    }
+                    await cargarPacientesDB();
+                    showToast('✓ Backup importado correctamente.');
                 } catch(err) {
                     showToast("❌ El archivo no es válido. Verifica que sea un backup de Jelian FT.", true);
                     document.getElementById('importFile').value = "";
@@ -2791,13 +2790,16 @@ async function updateDashboard() {
             const s = status || 'activo';
             return `<span class="status-badge status-${s}">${STATUS_LABELS[s] || s}</span>`;
         }
-        function cambiarStatus(id) {
+        async function cambiarStatus(id) {
             const p = pacientes.find(x => x.id === id);
             if (!p) return;
             const opts = Object.keys(STATUS_LABELS);
-            const idx = opts.indexOf(p.status || 'activo');
-            p.status = opts[(idx + 1) % opts.length];
-            save();
+            const currentStatus = p.status || p.estado || 'activo';
+            const idx = opts.indexOf(currentStatus);
+            const newStatus = opts[(idx + 1) % opts.length];
+            p.status = newStatus;
+            p.estado = newStatus;
+            await save();
             verDetalle(id);
         }
 
@@ -2811,11 +2813,11 @@ async function updateDashboard() {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 const p = pacientes.find(x => x.id === currentId);
                 if (!p) return;
                 p.foto = e.target.result;
-                save();
+                await save();
                 renderAvatarDetalle(p);
             };
             reader.readAsDataURL(file);
@@ -2834,7 +2836,7 @@ async function updateDashboard() {
         // ============================================================
         // OBJECTIVES
         // ============================================================
-        function addObjetivo() {
+        async function addObjetivo() {
             const p = pacientes.find(x => x.id === currentId);
             if (!p) return;
             const texto = document.getElementById('obj-texto').value.trim();
@@ -2843,18 +2845,18 @@ async function updateDashboard() {
             if (!texto || isNaN(evaObj) || isNaN(semanas)) { showToast("❌ Completa todos los campos del objetivo.", true); return; }
             if (!p.objetivos) p.objetivos = [];
             p.objetivos.push({ texto, evaObj, semanas, fechaCreacion: new Date().toISOString().split('T')[0], completado: false });
-            save();
+            await save();
             renderObjetivos();
             document.getElementById('obj-texto').value = '';
             document.getElementById('obj-eva').value = '';
             document.getElementById('obj-semanas').value = '';
             showToast("✓ Objetivo guardado.");
         }
-        function toggleObjetivo(idx) {
+        async function toggleObjetivo(idx) {
             const p = pacientes.find(x => x.id === currentId);
             if (!p || !p.objetivos) return;
             p.objetivos[idx].completado = !p.objetivos[idx].completado;
-            save();
+            await save();
             renderObjetivos();
         }
         function renderObjetivos() {
@@ -2961,7 +2963,7 @@ async function updateDashboard() {
                     <tbody>${evosHTML}</tbody>
                 </table>
                 <div class="footer">
-                    <span>Jelian FT - Clinical Sport v134</span>
+                    <span>Jelian FT - Clinical Sport v135</span>
                     <span>Generado el ${new Date().toLocaleDateString('es-ES')}</span>
                 </div>
                 </body></html>`);
@@ -3157,12 +3159,13 @@ async function updateDashboard() {
             showToast('✓ Cita guardada.');
         }
 
-        function eliminarCita(fecha, idx) {
-            const todas = getCitas();
+        async function eliminarCita(fecha, idx) {
+            const todas = await getCitas();
             const citasDelDia = todas.filter(c => c.fecha === fecha);
             const toDelete = citasDelDia[idx];
-            if (!toDelete) return;
-            saveCitas(todas.filter(c => !(c.fecha===toDelete.fecha && c.hora===toDelete.hora && c.atleta===toDelete.atleta)));
+            if (!toDelete || !toDelete.id) return;
+            const { error } = await sb.from('citas').delete().eq('id', toDelete.id);
+            if (error) { showToast('Error eliminando cita: ' + error.message, true); return; }
             renderCalendario();
             selDia(fecha);
             showToast('✓ Cita eliminada.');
@@ -3260,7 +3263,7 @@ async function updateDashboard() {
                     <td class="py-3 px-4 text-xs font-bold">${sesMes}</td>
                     <td class="py-3 px-4 text-xs font-black ${(evaActual>6)?'text-rose-500':'text-emerald-600'}">${evaActual}/10</td>
                     <td class="py-3 px-4 text-xs font-black ${color}">${tendencia}</td>
-                    <td class="py-3 px-4">${statusHTML(p.status)}</td>
+                    <td class="py-3 px-4">${statusHTML(p.status || p.estado)}</td>
                 </tr>`;
             }).join('');
             cont.innerHTML = `<table class="w-full">
@@ -3342,7 +3345,7 @@ async function updateDashboard() {
                 const evaActual = p.evoluciones[0]?.eva ?? '—';
                 const evaInicial = p.evoluciones.length>0 ? p.evoluciones[p.evoluciones.length-1].eva : '—';
                 const tendencia = (typeof evaActual==='number' && typeof evaInicial==='number') ? (evaActual<evaInicial?'▼ Mejora':evaActual>evaInicial?'▲ Empeora':'→ Estable') : '—';
-                return `<tr><td>${p.nombre}</td><td>${p.deporte}</td><td>${sesMes}</td><td>${evaActual}/10</td><td>${tendencia}</td><td>${STATUS_LABELS[p.status]||'Activo'}</td></tr>`;
+                return `<tr><td>${p.nombre}</td><td>${p.deporte}</td><td>${sesMes}</td><td>${evaActual}/10</td><td>${tendencia}</td><td>${STATUS_LABELS[p.status || p.estado]||'Activo'}</td></tr>`;
             }).join('');
             const win = window.open('','_blank');
             const mes = new Date().toLocaleDateString('es-ES',{month:'long',year:'numeric'});
@@ -3352,7 +3355,7 @@ async function updateDashboard() {
             td{padding:12px 10px;border-bottom:1px solid #f1f5f9;font-size:13px}.footer{margin-top:40px;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px;display:flex;justify-content:space-between}</style></head>
             <body><h2>Reporte Mensual</h2><h1>${mes}</h1>
             <table><thead><tr><th>Atleta</th><th>Deporte</th><th>Ses. Mes</th><th>EVA</th><th>Tendencia</th><th>Estado</th></tr></thead><tbody>${filas}</tbody></table>
-            <div class="footer"><span>Jelian FT Clinical Sport v134</span><span>${new Date().toLocaleDateString('es-ES')}</span></div></body></html>`);
+            <div class="footer"><span>Jelian FT Clinical Sport v135</span><span>${new Date().toLocaleDateString('es-ES')}</span></div></body></html>`);
             win.document.close(); win.print();
         }
 
@@ -3409,7 +3412,7 @@ async function updateDashboard() {
             document.getElementById('kiosk-eva-num').textContent = eva;
             document.getElementById('kiosk-sesiones').textContent = p.evoluciones.length;
             document.getElementById('kiosk-deporte').textContent = p.deporte;
-            document.getElementById('kiosk-status').textContent = STATUS_LABELS[p.status] || 'Activo';
+            document.getElementById('kiosk-status').textContent = STATUS_LABELS[p.status || p.estado] || 'Activo';
             document.getElementById('kiosk-eva-ring').style.borderColor = color;
             document.getElementById('kiosk-overlay').classList.add('active');
         }
@@ -3425,7 +3428,7 @@ async function updateDashboard() {
                 const dias = diasDesdeUltimaSesion(p);
                 const rtsPct = p.rts ? Math.round((p.rts.filter(c=>c.cumplido).length / p.rts.length) * 100) : '—';
                 return [
-                    p.nombre, p.ci, p.edad, p.sexo, p.deporte, p.zona||'—', STATUS_LABELS[p.status]||'Activo',
+                    p.nombre, p.ci, p.edad, p.sexo, p.deporte, p.zona||'—', STATUS_LABELS[p.status || p.estado]||'Activo',
                     p.evoluciones.length, sesionesEsteMes(p),
                     p.evoluciones[0]?.eva ?? '—',
                     p.evoluciones.length>0 ? p.evoluciones[p.evoluciones.length-1].eva : '—',
@@ -3528,7 +3531,7 @@ async function updateDashboard() {
         function closeEditModal() {
             document.getElementById('edit-modal-overlay').classList.remove('active');
         }
-        function guardarEdicion() {
+        async function guardarEdicion() {
             const p = pacientes.find(x => x.id === currentId);
             if (!p) return;
             const nombre = document.getElementById('edit-nombre').value.trim();
@@ -3542,7 +3545,7 @@ async function updateDashboard() {
             p.emergencia = document.getElementById('edit-emergencia').value.trim();
             p.zona = document.getElementById('edit-zona').value;
             p.diag = document.getElementById('edit-diag').value.trim();
-            save();
+            await save();
             closeEditModal();
             verDetalle(currentId);
             showToast('✓ Expediente actualizado correctamente.');
@@ -3593,29 +3596,29 @@ async function updateDashboard() {
                 </div>
             `).join('');
         }
-        function toggleRTS(idx) {
+        async function toggleRTS(idx) {
             const p = pacientes.find(x => x.id === currentId);
             if (!p || !p.rts) return;
             p.rts[idx].cumplido = !p.rts[idx].cumplido;
-            save();
+            await save();
             renderRTS();
         }
-        function agregarCriterioRTS() {
+        async function agregarCriterioRTS() {
             const texto = prompt("Escribe el nuevo criterio RTS:");
             if (!texto || !texto.trim()) return;
             const p = pacientes.find(x => x.id === currentId);
             if (!p) return;
             if (!p.rts) p.rts = [];
             p.rts.push({ texto: texto.trim(), tipo: 'manual', cumplido: false });
-            save();
+            await save();
             renderRTS();
             showToast('✓ Criterio RTS agregado.');
         }
-        function eliminarCriterioRTS(idx) {
+        async function eliminarCriterioRTS(idx) {
             const p = pacientes.find(x => x.id === currentId);
             if (!p || !p.rts) return;
             p.rts.splice(idx, 1);
-            save();
+            await save();
             renderRTS();
         }
 
@@ -3626,12 +3629,12 @@ async function updateDashboard() {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 const p = pacientes.find(x => x.id === currentId);
                 if (!p) return;
                 if (!p.fotosClincias) p.fotosClincias = [];
                 p.fotosClincias.push({ src: e.target.result, fecha: new Date().toISOString().split('T')[0] });
-                save();
+                await save();
                 renderFotosClinnicas();
                 showToast('✓ Foto clínica guardada.');
             };
@@ -3657,12 +3660,12 @@ async function updateDashboard() {
                 </div>
             `).join('');
         }
-        function eliminarFotoClinnica(idx) {
+        async function eliminarFotoClinnica(idx) {
             const p = pacientes.find(x => x.id === currentId);
             if (!p || !p.fotosClincias) return;
             if (!confirm('¿Eliminar esta foto?')) return;
             p.fotosClincias.splice(idx, 1);
-            save();
+            await save();
             renderFotosClinnicas();
         }
         function verFotoClinica(src) {
@@ -3681,12 +3684,12 @@ async function updateDashboard() {
         // ============================================================
         // HOJA DE EJERCICIOS ESTRUCTURADA
         // ============================================================
-        function agregarEjercicioManual() {
+        async function agregarEjercicioManual() {
             const p = pacientes.find(x => x.id === currentId);
             if (!p) return;
             if (!p.ejerciciosHoja) p.ejerciciosHoja = [];
             p.ejerciciosHoja.push({ nombre: 'Nuevo ejercicio', series: 3, reps: '10', carga: '', descanso: '60s', descripcion: '' });
-            save();
+            await save();
             renderHojaEjercicios();
         }
         function renderHojaEjercicios() {
@@ -3713,17 +3716,17 @@ async function updateDashboard() {
                 </div>
             `).join('');
         }
-        function updateEjercicio(idx, campo, valor) {
+        async function updateEjercicio(idx, campo, valor) {
             const p = pacientes.find(x => x.id === currentId);
             if (!p || !p.ejerciciosHoja) return;
             p.ejerciciosHoja[idx][campo] = campo === 'series' ? parseInt(valor) : valor;
-            save();
+            await save();
         }
-        function eliminarEjercicio(idx) {
+        async function eliminarEjercicio(idx) {
             const p = pacientes.find(x => x.id === currentId);
             if (!p || !p.ejerciciosHoja) return;
             p.ejerciciosHoja.splice(idx, 1);
-            save();
+            await save();
             renderHojaEjercicios();
         }
         function imprimirHojaEjercicios() {
@@ -3758,7 +3761,7 @@ async function updateDashboard() {
                     <div class="notas-box">Notas del paciente:</div>
                 </div>
             `).join('') : '<p style="color:#94a3b8;font-style:italic">Sin ejercicios asignados.</p>'}
-            <div class="footer"><span>Jelian FT Clinical Sport v134</span><span>${new Date().toLocaleDateString('es-ES')}</span></div>
+            <div class="footer"><span>Jelian FT Clinical Sport v135</span><span>${new Date().toLocaleDateString('es-ES')}</span></div>
             </body></html>`);
             win.document.close();
             win.print();
@@ -4140,7 +4143,7 @@ async function updateDashboard() {
             t += `\nPOSIBLES DIAGNÓSTICOS:\n`; (a.posibles_diagnosticos||[]).forEach(d=>{t+=`• ${d}\n`;});
             t += `\nRECOMENDACIONES:\n`; (a.recomendaciones_fisioterapia||[]).forEach(r=>{t+=`• ${r}\n`;});
             if ((a.banderas_rojas||[]).length>0 && a.banderas_rojas[0]!=='') { t+=`\n🚩 BANDERAS ROJAS:\n`; a.banderas_rojas.forEach(b=>{t+=`• ${b}\n`;}); }
-            t += `\n⚠️ Análisis orientativo — Jelian FT Clinical Sport v134`;
+            t += `\n⚠️ Análisis orientativo — Jelian FT Clinical Sport v135`;
             navigator.clipboard.writeText(t).then(()=>showToast('✓ Análisis copiado al portapapeles.')).catch(()=>showToast('❌ No se pudo copiar.', true));
         }
 
