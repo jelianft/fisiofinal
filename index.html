@@ -117,6 +117,22 @@
 
         @media print { .no-print { display: none; } }
 
+        /* ===== ANATOMÍA ===== */
+        .anat-tab-btn { transition: all 0.2s; }
+        .anat-estructura-svg { cursor: pointer; transition: all 0.2s; }
+        .anat-estructura-svg:hover { filter: brightness(1.15) drop-shadow(0 0 4px rgba(16,185,129,0.5)); }
+        .anat-activo { filter: drop-shadow(0 0 8px #10b981) brightness(1.2) !important; }
+        .anat-list-item { transition: all 0.2s; }
+
+        /* ===== FOTOS CLÍNICAS MEJORADAS ===== */
+        .foto-filtro-btn { transition: all 0.2s; }
+        #fotos-clinicas-grid img { transition: transform 0.3s ease; }
+
+        /* Dark mode anatomía */
+        body.dark-mode #anat-info-panel { background: rgba(30,41,59,0.95); }
+        body.dark-mode .anat-list-item:hover { background: rgba(99,102,241,0.1) !important; }
+        body.dark-mode #anat-tests-grid > div { background: #1e293b !important; border-color: rgba(255,255,255,0.07) !important; }
+
         /* ===== DARK MODE ===== */
         body.dark-mode {
             --bg-main: #0f172a;
@@ -781,6 +797,11 @@
                 IA Imagen Médica
                 <span class="ml-auto text-[8px] font-black bg-indigo-500 text-white px-2 py-0.5 rounded-full tracking-wide">BETA</span>
             </button>
+            <button onclick="showSection('anatomia')" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                Anatomía
+                <span class="ml-auto text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
+            </button>
             <button onclick="openGlobalSearch()" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 Búsqueda Global
@@ -1250,17 +1271,99 @@
                         <button onclick="agregarCriterioRTS()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">+ Agregar Criterio</button>
                     </div>
 
-                    <!-- GALERÍA FOTOGRÁFICA CLÍNICA -->
+                    <!-- GALERÍA FOTOGRÁFICA CLÍNICA MEJORADA -->
                     <div class="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-sm border border-slate-100 mt-8">
-                        <div class="flex justify-between items-center mb-6">
-                            <h4 class="text-xl font-extrabold text-slate-900">📸 Seguimiento Fotográfico</h4>
-                            <label class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-xs font-black hover:bg-indigo-100 transition-all cursor-pointer">
-                                + Agregar Foto
-                                <input type="file" id="foto-clinica-input" class="hidden" accept="image/*" onchange="agregarFotoClinnica(event)">
-                            </label>
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                            <div>
+                                <h4 class="text-xl font-extrabold text-slate-900">📸 Seguimiento Fotográfico</h4>
+                                <p class="text-xs text-slate-400 mt-1">Comparativa visual antes/después por fase de recuperación</p>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <button onclick="abrirComparativaFotos()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">⚖️ Comparar</button>
+                                <button onclick="document.getElementById('foto-clinica-input-new').click()" class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-xs font-black hover:bg-indigo-100 transition-all">+ Agregar Foto</button>
+                                <input type="file" id="foto-clinica-input-new" class="hidden" accept="image/*" onchange="abrirModalFoto(event)">
+                                <!-- Mantener compatibilidad con input anterior -->
+                                <input type="file" id="foto-clinica-input" class="hidden" accept="image/*" onchange="abrirModalFoto(event)">
+                            </div>
                         </div>
-                        <div id="fotos-clinicas-grid" class="flex flex-wrap gap-3"></div>
+
+                        <!-- Filtro por fase -->
+                        <div class="flex gap-2 flex-wrap mb-5" id="fotos-filtros">
+                            <button onclick="filtrarFotos('all')" class="foto-filtro-btn active text-xs font-black px-3 py-1.5 rounded-full bg-indigo-600 text-white transition-all">Todas</button>
+                            <button onclick="filtrarFotos('inicial')" class="foto-filtro-btn text-xs font-black px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 transition-all">Inicial</button>
+                            <button onclick="filtrarFotos('progreso')" class="foto-filtro-btn text-xs font-black px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 transition-all">Progreso</button>
+                            <button onclick="filtrarFotos('alta')" class="foto-filtro-btn text-xs font-black px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 transition-all">Alta</button>
+                        </div>
+
+                        <div id="fotos-clinicas-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
                         <p id="fotos-empty" class="text-xs text-slate-400 italic">Sin fotografías clínicas. Agrega fotos para seguimiento visual de la evolución.</p>
+                    </div>
+
+                    <!-- MODAL AGREGAR FOTO -->
+                    <div id="modal-agregar-foto" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9990] hidden items-center justify-center p-4">
+                        <div class="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl">
+                            <h4 class="text-lg font-extrabold text-slate-900 mb-6">📸 Nueva Foto Clínica</h4>
+                            <div id="modal-foto-preview-wrap" class="mb-6 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center" style="height:200px">
+                                <img id="modal-foto-preview" src="" class="max-h-full max-w-full object-contain rounded-2xl hidden">
+                                <span class="text-slate-400 text-sm" id="modal-foto-noimg">Sin imagen</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fase</label>
+                                    <select id="modal-foto-fase" class="w-full bg-slate-50 p-3 rounded-xl text-xs font-bold mt-1 outline-none border border-transparent focus:border-indigo-500">
+                                        <option value="inicial">📌 Inicial (primera consulta)</option>
+                                        <option value="progreso">📈 Progreso (seguimiento)</option>
+                                        <option value="alta">✅ Alta / Final</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Zona / Descripción</label>
+                                    <input id="modal-foto-zona" type="text" placeholder="Ej: Rodilla derecha — vista anterior" class="w-full bg-slate-50 p-3 rounded-xl text-xs font-bold mt-1 outline-none border border-transparent focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Notas clínicas</label>
+                                    <textarea id="modal-foto-notas" rows="2" placeholder="Observaciones, cambios observados..." class="w-full bg-slate-50 p-3 rounded-xl text-xs font-medium mt-1 outline-none border border-transparent focus:border-indigo-500 resize-none"></textarea>
+                                </div>
+                            </div>
+                            <div class="flex gap-3 mt-6">
+                                <button onclick="cerrarModalFoto()" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">Cancelar</button>
+                                <button onclick="guardarFotoModal()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all">💾 Guardar Foto</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MODAL COMPARATIVA -->
+                    <div id="modal-comparativa" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9991] hidden items-center justify-center p-4">
+                        <div class="bg-white rounded-[2rem] p-8 max-w-3xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+                            <div class="flex justify-between items-center mb-6">
+                                <h4 class="text-lg font-extrabold text-slate-900">⚖️ Comparativa Antes / Después</h4>
+                                <button onclick="cerrarComparativa()" class="text-slate-400 hover:text-slate-700 font-black text-lg">✕</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">📌 Antes (Inicial)</p>
+                                    <select id="comp-sel-antes" class="w-full bg-slate-50 p-3 rounded-xl text-xs font-bold mb-3 outline-none border border-transparent focus:border-indigo-500" onchange="actualizarComparativa()"></select>
+                                    <div class="bg-slate-50 rounded-2xl overflow-hidden flex items-center justify-center" style="height:220px">
+                                        <img id="comp-img-antes" src="" class="max-h-full max-w-full object-contain rounded-2xl hidden">
+                                        <span id="comp-empty-antes" class="text-slate-300 text-sm">Sin foto</span>
+                                    </div>
+                                    <p id="comp-nota-antes" class="text-xs text-slate-500 mt-2 italic"></p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">✅ Después (Progreso/Alta)</p>
+                                    <select id="comp-sel-despues" class="w-full bg-slate-50 p-3 rounded-xl text-xs font-bold mb-3 outline-none border border-transparent focus:border-indigo-500" onchange="actualizarComparativa()"></select>
+                                    <div class="bg-slate-50 rounded-2xl overflow-hidden flex items-center justify-center" style="height:220px">
+                                        <img id="comp-img-despues" src="" class="max-h-full max-w-full object-contain rounded-2xl hidden">
+                                        <span id="comp-empty-despues" class="text-slate-300 text-sm">Sin foto</span>
+                                    </div>
+                                    <p id="comp-nota-despues" class="text-xs text-slate-500 mt-2 italic"></p>
+                                </div>
+                            </div>
+                            <div id="comp-evolucion" class="mt-6 p-4 bg-indigo-50 rounded-2xl hidden">
+                                <p class="text-xs font-black text-indigo-700 uppercase tracking-widest mb-1">📊 Evolución registrada</p>
+                                <p id="comp-dias" class="text-sm font-bold text-indigo-900"></p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- HOJA DE EJERCICIOS PARA IMPRIMIR -->
@@ -1619,6 +1722,89 @@
                         <button onclick="nuevoAnalisis()" class="mt-6 bg-rose-500 text-white px-6 py-3 rounded-xl font-bold text-xs hover:bg-rose-600 transition-all">Intentar de nuevo</button>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- ===== SECCIÓN ANATOMÍA ===== -->
+        <section id="anatomia" class="hidden max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+                <div>
+                    <span class="text-emerald-600 font-bold text-xs uppercase tracking-widest">Referencia Clínica</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-1">Biblioteca de Anatomía</h2>
+                    <p class="text-slate-500 text-sm mt-1">Diagramas interactivos y referencias por región corporal</p>
+                </div>
+            </div>
+
+            <!-- Tabs región -->
+            <div class="flex gap-2 flex-wrap mb-8">
+                <button onclick="setAnatomiaRegion('rodilla')" class="anat-tab-btn active px-5 py-2.5 rounded-2xl text-xs font-black transition-all bg-emerald-600 text-white">🦵 Rodilla</button>
+                <button onclick="setAnatomiaRegion('hombro')" class="anat-tab-btn px-5 py-2.5 rounded-2xl text-xs font-black transition-all bg-slate-100 text-slate-600">💪 Hombro</button>
+                <button onclick="setAnatomiaRegion('tobillo')" class="anat-tab-btn px-5 py-2.5 rounded-2xl text-xs font-black transition-all bg-slate-100 text-slate-600">🦶 Tobillo / Pie</button>
+                <button onclick="setAnatomiaRegion('columna')" class="anat-tab-btn px-5 py-2.5 rounded-2xl text-xs font-black transition-all bg-slate-100 text-slate-600">🦴 Columna</button>
+                <button onclick="setAnatomiaRegion('cadera')" class="anat-tab-btn px-5 py-2.5 rounded-2xl text-xs font-black transition-all bg-slate-100 text-slate-600">⚙️ Cadera / Pelvis</button>
+                <button onclick="setAnatomiaRegion('codo')" class="anat-tab-btn px-5 py-2.5 rounded-2xl text-xs font-black transition-all bg-slate-100 text-slate-600">🤲 Codo / Muñeca</button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <!-- Diagrama interactivo SVG -->
+                <div class="lg:col-span-3 glass-card rounded-[2rem] p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 id="anat-region-title" class="text-lg font-extrabold text-slate-900">Rodilla</h3>
+                        <span class="text-xs text-slate-400 font-bold">Haz clic en una estructura</span>
+                    </div>
+                    <div id="anat-svg-container" class="flex justify-center items-center" style="min-height:340px">
+                        <!-- SVG se inyecta dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Panel info estructura seleccionada -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div id="anat-info-panel" class="glass-card rounded-[2rem] p-8">
+                        <div id="anat-info-default" class="flex flex-col items-center justify-center h-48 text-center">
+                            <div class="text-5xl mb-4">👆</div>
+                            <p class="text-sm font-bold text-slate-500">Selecciona una estructura en el diagrama para ver información detallada</p>
+                        </div>
+                        <div id="anat-info-content" class="hidden">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div id="anat-info-icon" class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-xl"></div>
+                                <div>
+                                    <h4 id="anat-info-nombre" class="text-base font-extrabold text-slate-900"></h4>
+                                    <p id="anat-info-tipo" class="text-[10px] font-black text-emerald-600 uppercase tracking-widest"></p>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="bg-slate-50 p-4 rounded-2xl">
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Función principal</p>
+                                    <p id="anat-info-funcion" class="text-xs font-medium text-slate-700 leading-relaxed"></p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-2xl">
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Lesiones frecuentes</p>
+                                    <p id="anat-info-lesiones" class="text-xs font-medium text-slate-700 leading-relaxed"></p>
+                                </div>
+                                <div class="bg-emerald-50 p-4 rounded-2xl">
+                                    <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Tests clínicos</p>
+                                    <p id="anat-info-tests" class="text-xs font-medium text-slate-700 leading-relaxed"></p>
+                                </div>
+                                <div class="bg-indigo-50 p-4 rounded-2xl">
+                                    <p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1">Referencia de dolor</p>
+                                    <p id="anat-info-dolor" class="text-xs font-medium text-slate-700 leading-relaxed"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tarjetas de estructuras (lista estática) -->
+                    <div class="glass-card rounded-[2rem] p-6">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Estructuras de la región</p>
+                        <div id="anat-estructuras-list" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referencia rápida: Tests clínicos por región -->
+            <div class="mt-10 glass-card rounded-[2rem] p-8">
+                <h3 class="text-lg font-extrabold text-slate-900 mb-6">🔬 Tests Clínicos de Referencia</h3>
+                <div id="anat-tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
         </section>
 
@@ -5063,7 +5249,7 @@ async function updateDashboard() {
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             const sectionNavMap = {
                 'dashboard': 0, 'calendario': 1, 'lista-pacientes': 2,
-                'biblioteca': 3, 'plantillas': 4, 'reportes': 5, 'imagen-ia': 6
+                'biblioteca': 3, 'plantillas': 4, 'reportes': 5, 'imagen-ia': 6, 'anatomia': 7
             };
             const navBtns = document.querySelectorAll('nav .nav-btn');
             if (sectionNavMap[id] !== undefined && navBtns[sectionNavMap[id]]) {
@@ -5076,6 +5262,7 @@ async function updateDashboard() {
             if(id === 'plantillas') renderPlantillas();
             if(id === 'reportes') setTimeout(renderReportes, 100);
             if(id === 'imagen-ia') setTimeout(() => { initImgTipoChips(); renderHistorialImg(); }, 50);
+            if(id === 'anatomia') setTimeout(() => renderAnatomia('rodilla'), 50);
         }
 
         // ============================================================
@@ -5204,41 +5391,118 @@ async function updateDashboard() {
         // ============================================================
         // GALERÍA FOTOGRÁFICA CLÍNICA
         // ============================================================
-        function agregarFotoClinnica(event) {
+        // ============================================================
+        // SEGUIMIENTO FOTOGRÁFICO MEJORADO — antes/después + Supabase
+        // ============================================================
+        let _fotoTmpSrc = null;
+        let _fotoFiltroActual = 'all';
+
+        function abrirModalFoto(event) {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = async (e) => {
-                const p = pacientes.find(x => x.id === currentId);
-                if (!p) return;
-                if (!p.fotosClincias) p.fotosClincias = [];
-                p.fotosClincias.push({ src: e.target.result, fecha: new Date().toISOString().split('T')[0] });
-                await save();
-                renderFotosClinnicas();
-                showToast('✓ Foto clínica guardada.');
+            reader.onload = (e) => {
+                _fotoTmpSrc = e.target.result;
+                const prev = document.getElementById('modal-foto-preview');
+                const noimg = document.getElementById('modal-foto-noimg');
+                prev.src = _fotoTmpSrc;
+                prev.classList.remove('hidden');
+                noimg.classList.add('hidden');
+                document.getElementById('modal-agregar-foto').classList.remove('hidden');
+                document.getElementById('modal-agregar-foto').classList.add('flex');
             };
             reader.readAsDataURL(file);
             event.target.value = '';
         }
+
+        function cerrarModalFoto() {
+            document.getElementById('modal-agregar-foto').classList.add('hidden');
+            document.getElementById('modal-agregar-foto').classList.remove('flex');
+            _fotoTmpSrc = null;
+            document.getElementById('modal-foto-preview').src = '';
+            document.getElementById('modal-foto-preview').classList.add('hidden');
+            document.getElementById('modal-foto-noimg').classList.remove('hidden');
+            document.getElementById('modal-foto-zona').value = '';
+            document.getElementById('modal-foto-notas').value = '';
+        }
+
+        async function guardarFotoModal() {
+            if (!_fotoTmpSrc) return;
+            const p = pacientes.find(x => x.id === currentId);
+            if (!p) return;
+            const fase = document.getElementById('modal-foto-fase').value;
+            const zona = document.getElementById('modal-foto-zona').value.trim();
+            const notas = document.getElementById('modal-foto-notas').value.trim();
+            if (!p.fotosClincias) p.fotosClincias = [];
+            p.fotosClincias.push({
+                src: _fotoTmpSrc,
+                fecha: new Date().toISOString().split('T')[0],
+                fase,
+                zona: zona || 'Sin especificar',
+                notas
+            });
+            await save();
+            cerrarModalFoto();
+            renderFotosClinnicas();
+            showToast('✓ Foto clínica guardada en Supabase.');
+        }
+
+        // Compatibilidad con handler antiguo (el input viejo en el HTML)
+        function agregarFotoClinnica(event) { abrirModalFoto(event); }
+
+        function filtrarFotos(fase) {
+            _fotoFiltroActual = fase;
+            document.querySelectorAll('.foto-filtro-btn').forEach(b => {
+                b.classList.remove('bg-indigo-600', 'text-white');
+                b.classList.add('bg-slate-100', 'text-slate-600');
+            });
+            event.target.classList.add('bg-indigo-600', 'text-white');
+            event.target.classList.remove('bg-slate-100', 'text-slate-600');
+            renderFotosClinnicas();
+        }
+
+        function _faseBadge(fase) {
+            const map = { inicial: ['📌', 'bg-amber-100 text-amber-700'], progreso: ['📈', 'bg-indigo-100 text-indigo-700'], alta: ['✅', 'bg-emerald-100 text-emerald-700'] };
+            return map[fase] || ['📷', 'bg-slate-100 text-slate-600'];
+        }
+
         function renderFotosClinnicas() {
             const p = pacientes.find(x => x.id === currentId);
             const grid = document.getElementById('fotos-clinicas-grid');
             const empty = document.getElementById('fotos-empty');
             if (!grid || !p) return;
+            const fotos = (p.fotosClincias || []).filter(f => _fotoFiltroActual === 'all' || f.fase === _fotoFiltroActual);
             if (!p.fotosClincias || p.fotosClincias.length === 0) {
                 grid.innerHTML = '';
                 if (empty) empty.classList.remove('hidden');
                 return;
             }
             if (empty) empty.classList.add('hidden');
-            grid.innerHTML = p.fotosClincias.map((f, i) => `
-                <div class="relative group">
-                    <img src="${f.src}" class="foto-clinica-thumb" alt="Foto clínica" data-foto-idx="${i}" onclick="verFotoClinicaByIdx(${i})">
-                    <span class="absolute bottom-1 left-1 text-[8px] font-black text-white bg-black/50 px-1 rounded">${f.fecha}</span>
-                    <button onclick="eliminarFotoClinnica(${i})" class="absolute top-1 right-1 w-5 h-5 bg-rose-500 text-white text-xs rounded-full hidden group-hover:flex items-center justify-center">✕</button>
-                </div>
-            `).join('');
+            if (fotos.length === 0) {
+                grid.innerHTML = '<p class="text-xs text-slate-400 italic col-span-3">No hay fotos en esta fase.</p>';
+                return;
+            }
+            grid.innerHTML = fotos.map((f, i) => {
+                const realIdx = (p.fotosClincias || []).indexOf(f);
+                const [faseIcon, faseCls] = _faseBadge(f.fase);
+                return `
+                <div class="relative group rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 hover:shadow-lg transition-all cursor-pointer" onclick="verFotoClinicaByIdx(${realIdx})">
+                    <div class="aspect-square overflow-hidden">
+                        <img src="${f.src}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="Foto clínica">
+                    </div>
+                    <div class="p-3">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${faseCls}">${faseIcon} ${f.fase||'sin fase'}</span>
+                            <span class="text-[9px] text-slate-400 font-bold">${f.fecha}</span>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-700 truncate">${f.zona||''}</p>
+                        ${f.notas ? `<p class="text-[9px] text-slate-400 truncate mt-0.5">${f.notas}</p>` : ''}
+                    </div>
+                    <button onclick="event.stopPropagation();eliminarFotoClinnica(${realIdx})" class="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white text-xs rounded-full hidden group-hover:flex items-center justify-center font-black">✕</button>
+                </div>`;
+            }).join('');
         }
+
         async function eliminarFotoClinnica(idx) {
             const p = pacientes.find(x => x.id === currentId);
             if (!p || !p.fotosClincias) return;
@@ -5246,7 +5510,9 @@ async function updateDashboard() {
             p.fotosClincias.splice(idx, 1);
             await save();
             renderFotosClinnicas();
+            showToast('Foto eliminada.');
         }
+
         function verFotoClinica(src) {
             const overlay = document.createElement('div');
             overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
@@ -5254,10 +5520,69 @@ async function updateDashboard() {
             overlay.onclick = () => overlay.remove();
             document.body.appendChild(overlay);
         }
+
         function verFotoClinicaByIdx(idx) {
             const p = pacientes.find(x => x.id === currentId);
             if (!p || !p.fotosClincias || !p.fotosClincias[idx]) return;
             verFotoClinica(p.fotosClincias[idx].src);
+        }
+
+        function abrirComparativaFotos() {
+            const p = pacientes.find(x => x.id === currentId);
+            if (!p || !p.fotosClincias || p.fotosClincias.length === 0) {
+                showToast('Sin fotos para comparar.', true); return;
+            }
+            const modal = document.getElementById('modal-comparativa');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            const selAntes = document.getElementById('comp-sel-antes');
+            const selDespues = document.getElementById('comp-sel-despues');
+            const opts = p.fotosClincias.map((f, i) => {
+                const [icon] = _faseBadge(f.fase);
+                return `<option value="${i}">${icon} ${f.fecha} — ${f.zona||f.fase||'foto'}</option>`;
+            }).join('');
+            selAntes.innerHTML = `<option value="">-- Seleccionar --</option>` + opts;
+            selDespues.innerHTML = `<option value="">-- Seleccionar --</option>` + opts;
+            // Auto-seleccionar inicial y más reciente
+            const inicial = p.fotosClincias.findIndex(f => f.fase === 'inicial');
+            const alta = p.fotosClincias.map((f,i)=>({...f,i})).filter(f=>f.fase==='alta'||f.fase==='progreso').pop();
+            if (inicial >= 0) selAntes.value = inicial;
+            if (alta) selDespues.value = alta.i;
+            actualizarComparativa();
+        }
+
+        function cerrarComparativa() {
+            const modal = document.getElementById('modal-comparativa');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+        }
+
+        function actualizarComparativa() {
+            const p = pacientes.find(x => x.id === currentId);
+            if (!p) return;
+            const idxA = document.getElementById('comp-sel-antes').value;
+            const idxD = document.getElementById('comp-sel-despues').value;
+            const imgA = document.getElementById('comp-img-antes');
+            const imgD = document.getElementById('comp-img-despues');
+            const emA = document.getElementById('comp-empty-antes');
+            const emD = document.getElementById('comp-empty-despues');
+            const notaA = document.getElementById('comp-nota-antes');
+            const notaD = document.getElementById('comp-nota-despues');
+            if (idxA !== '' && p.fotosClincias[idxA]) {
+                imgA.src = p.fotosClincias[idxA].src; imgA.classList.remove('hidden'); emA.classList.add('hidden');
+                notaA.textContent = p.fotosClincias[idxA].notas || '';
+            } else { imgA.classList.add('hidden'); emA.classList.remove('hidden'); notaA.textContent = ''; }
+            if (idxD !== '' && p.fotosClincias[idxD]) {
+                imgD.src = p.fotosClincias[idxD].src; imgD.classList.remove('hidden'); emD.classList.add('hidden');
+                notaD.textContent = p.fotosClincias[idxD].notas || '';
+            } else { imgD.classList.add('hidden'); emD.classList.remove('hidden'); notaD.textContent = ''; }
+            // Calcular días entre fotos
+            const evDiv = document.getElementById('comp-evolucion');
+            if (idxA !== '' && idxD !== '' && p.fotosClincias[idxA] && p.fotosClincias[idxD]) {
+                const d1 = new Date(p.fotosClincias[idxA].fecha);
+                const d2 = new Date(p.fotosClincias[idxD].fecha);
+                const dias = Math.abs(Math.round((d2-d1)/(1000*60*60*24)));
+                document.getElementById('comp-dias').textContent = `${dias} día${dias!==1?'s':''} de evolución entre las fotos seleccionadas`;
+                evDiv.classList.remove('hidden');
+            } else { evDiv.classList.add('hidden'); }
         }
 
         // ============================================================
@@ -5775,6 +6100,514 @@ async function updateDashboard() {
             imgAnalisisActual = null;
         }
 
+        // ============================================================
+        // BIBLIOTECA DE ANATOMÍA — Diagramas interactivos + referencia
+        // ============================================================
+        const ANATOMIA_DATA = {
+            rodilla: {
+                titulo: 'Rodilla',
+                estructuras: [
+                    { id: 'lca', nombre: 'Ligamento Cruzado Anterior (LCA)', tipo: 'Ligamento', icono: '🔗',
+                      funcion: 'Estabilización anterior de la tibia respecto al fémur. Controla la rotación interna y el varo/valgo en extensión.',
+                      lesiones: 'Rotura completa/parcial (muy frecuente en deportes de pivote). Esguince grado I-III.',
+                      tests: 'Lachman Test (gold standard), Cajón Anterior, Pivot Shift Test, KT-1000',
+                      dolor: 'Cara anterior-central de rodilla. Hemartros agudo. Sensación de "crujido" en el momento de la lesión.' },
+                    { id: 'lcp', nombre: 'Ligamento Cruzado Posterior (LCP)', tipo: 'Ligamento', icono: '🔗',
+                      funcion: 'Evita el desplazamiento posterior de la tibia. Estabilizador primario posterior.',
+                      lesiones: 'Rotura por impacto directo en cara anterior (dashboard injury). Menos frecuente que LCA.',
+                      tests: 'Cajón Posterior, Test de Godfrey, Sag Test',
+                      dolor: 'Cara posterior de rodilla. Dolor difuso. Posible irradiación a pantorrilla.' },
+                    { id: 'menisco_medial', nombre: 'Menisco Medial', tipo: 'Fibrocartílago', icono: '🌙',
+                      funcion: 'Amortiguación y distribución de cargas en el compartimento medial. Estabilización secundaria.',
+                      lesiones: 'Lesión de asta posterior (más frecuente), rotura en asa de cubo, lesión degenerativa.',
+                      tests: 'McMurray (RI + varo), Test de Apley, Test de Thessaly 20°, Steinmann I y II',
+                      dolor: 'Interlínea medial. Dolor al girar en carga. Posible bloqueo articular.' },
+                    { id: 'menisco_lateral', nombre: 'Menisco Lateral', tipo: 'Fibrocartílago', icono: '🌙',
+                      funcion: 'Amortiguación en compartimento lateral. Mayor movilidad que el medial.',
+                      lesiones: 'Lesión de asta posterior, quiste meniscal lateral, lesión discal.',
+                      tests: 'McMurray (RE + valgo), Test de Apley lateral, Thessaly lateral',
+                      dolor: 'Interlínea lateral. Dolor en flexión profunda y rotación.' },
+                    { id: 'lco', nombre: 'Ligamento Colateral Interno (LCI)', tipo: 'Ligamento', icono: '🔗',
+                      funcion: 'Estabilización en valgo. Restricción a la rotación externa de tibia.',
+                      lesiones: 'Esguince por valgo forzado (grados I-III). Frecuente en fútbol y esquí.',
+                      tests: 'Test de estrés en valgo (0° y 30°), Palpación directa',
+                      dolor: 'Cara medial de rodilla. Dolor a la palpación del ligamento.' },
+                    { id: 'rotula', nombre: 'Rótula / Tendón Rotuliano', tipo: 'Hueso / Tendón', icono: '⚡',
+                      funcion: 'Palanca del cuádriceps. Incrementa la eficiencia mecánica en extensión.',
+                      lesiones: 'Tendinopatía rotuliana, condromalacia, síndrome femoropatelar, fractura de rótula.',
+                      tests: 'Clarke Test, Test de Zohlen, Palpación polo inferior, FPA',
+                      dolor: 'Polo inferior de rótula. Dolor al bajar escaleras y en cuclillas.' },
+                ],
+                tests: [
+                    { nombre: 'Lachman Test', estructura: 'LCA', posicion: 'Supino, rodilla 20-30° flexión', ejecucion: 'Traslación anterior de tibia con fémur fijo', positivo: 'Traslación >3mm o tope blando', sensibilidad: '85%' },
+                    { nombre: 'McMurray', estructura: 'Meniscos', posicion: 'Supino, rodilla en flexión máxima', ejecucion: 'Rotación interna + valgo (menisco lateral) / RI + varo (menisco medial)', positivo: 'Click o dolor en interlínea', sensibilidad: '61%' },
+                    { nombre: 'Apley', estructura: 'Meniscos', posicion: 'Prono, rodilla 90°', ejecucion: 'Compresión + rotación (menisco) / Tracción + rotación (ligamentos)', positivo: 'Dolor con compresión', sensibilidad: '58%' },
+                    { nombre: 'Thessaly 20°', estructura: 'Meniscos', posicion: 'De pie monopodal, 20° flexión', ejecucion: 'Rotación interna y externa del cuerpo x3', positivo: 'Dolor en interlínea', sensibilidad: '89%' },
+                    { nombre: 'Estrés en valgo', estructura: 'LCI', posicion: 'Supino, 0° y 30° de flexión', ejecucion: 'Fuerza en valgo sobre rodilla', positivo: 'Apertura articular con dolor', sensibilidad: '86%' },
+                    { nombre: 'Clarke / Zohlen', estructura: 'Rótula', posicion: 'Supino, rodilla extendida', ejecucion: 'Presión sobre rótula + contracción de cuádriceps', positivo: 'Dolor retrorrotuliano', sensibilidad: '49%' },
+                ]
+            },
+            hombro: {
+                titulo: 'Hombro',
+                estructuras: [
+                    { id: 'manguito', nombre: 'Manguito Rotador (Supraespinoso)', tipo: 'Tendón', icono: '💪',
+                      funcion: 'Depresión de la cabeza humeral. Rotación interna y abducción inicial (0-15°).',
+                      lesiones: 'Tendinopatía, rotura parcial/total. Causa más frecuente de dolor de hombro en >40 años.',
+                      tests: 'Neer Test, Hawkins-Kennedy, Empty Can (Jobe), Drop Arm Test',
+                      dolor: 'Cara anterolateral de hombro. Arco doloroso 60-120°. Dolor nocturno.' },
+                    { id: 'biceps', nombre: 'Bíceps (Porción Larga)', tipo: 'Tendón', icono: '💪',
+                      funcion: 'Flexión de hombro y codo. Supinación del antebrazo.',
+                      lesiones: 'Tendinitis bicipital, rotura del tendón de la porción larga.',
+                      tests: 'Speed Test, Yergason Test, Palpación del surco bicipital',
+                      dolor: 'Cara anterior de hombro, surco bicipital. Dolor a la supinación resistida.' },
+                    { id: 'acromio', nombre: 'Articulación Acromioclavicular', tipo: 'Articulación', icono: '🦴',
+                      funcion: 'Transmisión de fuerzas entre extremidad superior y tronco.',
+                      lesiones: 'Esguince AC (grados I-VI), luxación acromioclavicular.',
+                      tests: 'Test de Cross Body, Palpación directa, O Brien modificado',
+                      dolor: 'Punto exacto de AC. Dolor al cruzar el brazo por delante del cuerpo.' },
+                    { id: 'glenohumeral', nombre: 'Cápsula Glenohumeral / LGHI', tipo: 'Ligamento', icono: '🔗',
+                      funcion: 'Estabilización anterior e inferior de la articulación glenohumeral.',
+                      lesiones: 'Inestabilidad anterior, luxación glenohumeral, lesión de Bankart.',
+                      tests: 'Apprehension Test, Relocation Test, Load & Shift',
+                      dolor: 'Cara anterior de hombro. Miedo a luxación en ABD + RE.' },
+                ],
+                tests: [
+                    { nombre: 'Neer Test', estructura: 'Supraespinoso', posicion: 'Sentado, brazo neutro', ejecucion: 'Elevación pasiva con RI forzada', positivo: 'Dolor en arco de movimiento', sensibilidad: '72%' },
+                    { nombre: 'Hawkins-Kennedy', estructura: 'Manguito/Subescapular', posicion: 'Sentado, hombro 90° flexión', ejecucion: 'Rotación interna forzada', positivo: 'Dolor anterolateral', sensibilidad: '79%' },
+                    { nombre: 'Empty Can (Jobe)', estructura: 'Supraespinoso', posicion: 'De pie, ABD 90°, RI, pulgar abajo', ejecucion: 'Resistencia a la abducción', positivo: 'Debilidad o dolor', sensibilidad: '69%' },
+                    { nombre: 'Speed Test', estructura: 'Bíceps PLB', posicion: 'De pie, codo extendido, supinado', ejecucion: 'Resistencia a la flexión de hombro', positivo: 'Dolor en surco bicipital', sensibilidad: '54%' },
+                    { nombre: 'Apprehension Test', estructura: 'Cápsula anterior', posicion: 'Supino, ABD 90° + RE 90°', ejecucion: 'RE pasiva progresiva', positivo: 'Miedo a luxación', sensibilidad: '72%' },
+                    { nombre: 'Cross Body Test', estructura: 'AC', posicion: 'Sentado', ejecucion: 'Aducción horizontal forzada', positivo: 'Dolor en AC', sensibilidad: '82%' },
+                ]
+            },
+            tobillo: {
+                titulo: 'Tobillo / Pie',
+                estructuras: [
+                    { id: 'pla', nombre: 'Ligamento Peroneoastragalino Anterior (LPAA)', tipo: 'Ligamento', icono: '🔗',
+                      funcion: 'Estabilización lateral del tobillo. Limita la inversión y traslación anterior del astrágalo.',
+                      lesiones: 'Esguince de tobillo lateral (más frecuente en deporte). Rotura parcial o total.',
+                      tests: 'Cajón Anterior de Tobillo, Test de Inversión Forzada',
+                      dolor: 'Cara anterior del maléolo peroneo. Equimosis en 24-48h.' },
+                    { id: 'aquiles', nombre: 'Tendón de Aquiles', tipo: 'Tendón', icono: '⚡',
+                      funcion: 'Flexión plantar del pie. Transmisión de la fuerza del tríceps sural.',
+                      lesiones: 'Tendinopatía insercional o de cuerpo medio, rotura total del tendón.',
+                      tests: 'Thompson Test, Royal London Hospital Test, Arc Sign, Palpación',
+                      dolor: 'Cara posterior del talón (insercional) o 2-6cm proximal (cuerpo medio).' },
+                    { id: 'fascia', nombre: 'Fascia Plantar', tipo: 'Fascia', icono: '📏',
+                      funcion: 'Soporte del arco plantar. Windlass mechanism durante la marcha.',
+                      lesiones: 'Fasciopatía plantar (antes llamada fascitis). Espolón calcáneo.',
+                      tests: 'Windlass Test, Palpación de tuberosidad medial del calcáneo, First Step Test',
+                      dolor: 'Cara medial del calcáneo. Peor al levantarse y tras el reposo.' },
+                    { id: 'tibpost', nombre: 'Tibial Posterior', tipo: 'Tendón', icono: '💪',
+                      funcion: 'Supinación e inversión del pie. Soporte del arco medial.',
+                      lesiones: 'Disfunción del tibial posterior, pie plano adquirido del adulto.',
+                      tests: 'Too Many Toes Sign, Single Leg Heel Rise, Palpación retromaleolar',
+                      dolor: 'Cara medial del tobillo, zona retromaleolar.' },
+                ],
+                tests: [
+                    { nombre: 'Cajón Anterior', estructura: 'LPAA', posicion: 'Supino, tobillo 20° FP', ejecucion: 'Traslación anterior del astrágalo', positivo: '>3mm traslación o tope blando', sensibilidad: '83%' },
+                    { nombre: 'Thompson Test', estructura: 'Aquiles', posicion: 'Prono, rodilla flexionada', ejecucion: 'Compresión del tríceps sural', positivo: 'Ausencia de flexión plantar', sensibilidad: '96%' },
+                    { nombre: 'Windlass Test', estructura: 'Fascia plantar', posicion: 'De pie monopodal', ejecucion: 'Extensión pasiva del 1er dedo', positivo: 'Dolor en inserción calcánea', sensibilidad: '32%' },
+                    { nombre: 'Single Leg Heel Rise', estructura: 'Tibial posterior', posicion: 'De pie monopodal', ejecucion: 'Elevación repetida en punta de pie', positivo: 'Imposibilidad de supinación', sensibilidad: '70%' },
+                ]
+            },
+            columna: {
+                titulo: 'Columna Vertebral',
+                estructuras: [
+                    { id: 'disco', nombre: 'Disco Intervertebral', tipo: 'Fibrocartílago', icono: '🫧',
+                      funcion: 'Amortiguación de cargas axiales. Permite movimiento entre vértebras.',
+                      lesiones: 'Hernia discal (protrusión, extrusión, secuestro), degeneración discal.',
+                      tests: 'Lasègue (SLR), Slump Test, Bragard, Valsalva',
+                      dolor: 'Lumbalgia + radiculopatía (ciático). Peor en sedestación prolongada.' },
+                    { id: 'facetas', nombre: 'Articulaciones Facetarias', tipo: 'Articulación', icono: '🦴',
+                      funcion: 'Guían y limitan el movimiento segmentario. Estabilización posterior.',
+                      lesiones: 'Síndrome facetario, artrosis facetaria, bloqueo facetario.',
+                      tests: 'Kemp Test, Extensión + rotación con compresión, Palpación paravertebral',
+                      dolor: 'Lumbar + referido a glúteo/muslo (sin irradiación distal). Peor en extensión.' },
+                    { id: 'nervio_ciatico', nombre: 'Nervio Ciático', tipo: 'Nervio', icono: '⚡',
+                      funcion: 'Inervación motora y sensitiva de extremidad inferior (L4-S3).',
+                      lesiones: 'Compresión por hernia discal, síndrome piriforme, estenosis.',
+                      tests: 'Lasègue (SLR), Slump Test, Bowstring Test, Neurodinamia',
+                      dolor: 'Irradiación desde glúteo hasta pie siguiendo dermatoma. Parestesias/disestesias.' },
+                    { id: 'sacroiliaca', nombre: 'Articulación Sacroilíaca (ASI)', tipo: 'Articulación', icono: '⚙️',
+                      funcion: 'Transmisión de cargas entre columna y pelvis. Amortiguación.',
+                      lesiones: 'Disfunción sacroilíaca, sacroileítis, bloqueo articular.',
+                      tests: 'FABER, Gaenslen, Compresión/Distracción, Thigh Thrust, ASLR',
+                      dolor: 'Zona glútea alta, EIPS. Dolor unilateral, raramente irradia más allá de la rodilla.' },
+                ],
+                tests: [
+                    { nombre: 'Lasègue (SLR)', estructura: 'Nervio Ciático / Disco', posicion: 'Supino', ejecucion: 'Elevación pasiva de pierna con rodilla extendida', positivo: 'Dolor radicular <70°', sensibilidad: '91%' },
+                    { nombre: 'Slump Test', estructura: 'Sistema nervioso central', posicion: 'Sentado al borde de la camilla', ejecucion: 'Flexión cervical + rodilla extendida + FD tobillo', positivo: 'Síntomas reproducidos', sensibilidad: '84%' },
+                    { nombre: 'Kemp Test', estructura: 'Facetas', posicion: 'De pie', ejecucion: 'Extensión + rotación + compresión axial', positivo: 'Dolor lumbar ipsilateral', sensibilidad: '67%' },
+                    { nombre: 'FABER', estructura: 'Sacroilíaca / Cadera', posicion: 'Supino, figura 4', ejecucion: 'Presión sobre rodilla flexionada', positivo: 'Dolor en ASI o cadera', sensibilidad: '77%' },
+                    { nombre: 'Gaenslen', estructura: 'Sacroilíaca', posicion: 'Decúbito lateral', ejecucion: 'Extensión de cadera inferior + flexión superior', positivo: 'Dolor en ASI', sensibilidad: '71%' },
+                ]
+            },
+            cadera: {
+                titulo: 'Cadera / Pelvis',
+                estructuras: [
+                    { id: 'labrum', nombre: 'Labrum Acetabular', tipo: 'Fibrocartílago', icono: '🌙',
+                      funcion: 'Profundización de la cavidad acetabular. Sello de presión negativa intraarticular.',
+                      lesiones: 'Lesión del labrum (anterior más frecuente), asociada a choque femoroacetabular (FAI).',
+                      tests: 'FADIR, FABER, Test de Impingement anterior, Thomas modificado',
+                      dolor: 'Ingle profunda (C-sign). Dolor en sedestación prolongada y en rotación.' },
+                    { id: 'isquiotibiales', nombre: 'Isquiotibiales (Inserción)', tipo: 'Tendón', icono: '💪',
+                      funcion: 'Extensión de cadera y flexión de rodilla.',
+                      lesiones: 'Tendinopatía proximal de isquiotibiales, avulsión isquiática.',
+                      tests: 'Puranen-Orava Test, Test de Bent Knee Stretch, Palpación tuberosidad isquiática',
+                      dolor: 'Glúteo profundo / tuberosidad isquiática. Peor en sedestación y en sprint.' },
+                    { id: 'piriforme', nombre: 'Músculo Piriforme', tipo: 'Músculo', icono: '🎯',
+                      funcion: 'Rotación externa de cadera. Estabilizador de la articulación sacroilíaca.',
+                      lesiones: 'Síndrome del piriforme (compresión del ciático).',
+                      tests: 'FAIR Test, Pace Test, Beatty Test, Freiberg Test',
+                      dolor: 'Glúteo profundo con irradiación ciática. Diferencial con hernia discal.' },
+                    { id: 'it_band', nombre: 'Banda Iliotibial (TFL/ITB)', tipo: 'Fascia', icono: '📏',
+                      funcion: 'Estabilización lateral de cadera y rodilla. Control de la aducción en carga.',
+                      lesiones: 'Síndrome de la banda iliotibial (rodilla del corredor).',
+                      tests: 'Test de Ober, Test de Noble, Palpación del tubérculo de Gerdy',
+                      dolor: 'Cara lateral de rodilla (epicóndilo lateral). Peor a los 30 min de carrera.' },
+                ],
+                tests: [
+                    { nombre: 'FADIR', estructura: 'FAI / Labrum', posicion: 'Supino', ejecucion: 'Flexión 90° + aducción + RI pasiva', positivo: 'Dolor en ingle', sensibilidad: '88%' },
+                    { nombre: 'Test de Ober', estructura: 'Banda Iliotibial', posicion: 'Decúbito lateral', ejecucion: 'Abducción + extensión de cadera, luego soltar', positivo: 'Extremidad no baja al neutro', sensibilidad: '76%' },
+                    { nombre: 'FAIR Test', estructura: 'Piriforme', posicion: 'Decúbito lateral', ejecucion: 'Flexión + RI + aducción pasiva con presión sobre piriforme', positivo: 'Dolor glúteo con irradiación', sensibilidad: '78%' },
+                    { nombre: 'Puranen-Orava', estructura: 'Isquiotibiales', posicion: 'De pie', ejecucion: 'Extensión de rodilla con cadera 90° flexión', positivo: 'Dolor en tuberosidad isquiática', sensibilidad: '76%' },
+                ]
+            },
+            codo: {
+                titulo: 'Codo / Muñeca',
+                estructuras: [
+                    { id: 'epi_lat', nombre: 'Extensores del Carpo (Epicóndilo Lateral)', tipo: 'Tendón', icono: '💪',
+                      funcion: 'Extensión de muñeca y dedos. Supinación del antebrazo.',
+                      lesiones: 'Epicondilalgia lateral (tenis elbow). ECRB afectado principalmente.',
+                      tests: 'Cozen Test, Mill Test, Chair Test, Maudsley Test',
+                      dolor: 'Epicóndilo lateral. Irradiación por cara dorsal del antebrazo. Peor al apretar.' },
+                    { id: 'epi_med', nombre: 'Flexores del Carpo (Epicóndilo Medial)', tipo: 'Tendón', icono: '💪',
+                      funcion: 'Flexión de muñeca y dedos. Pronación.',
+                      lesiones: 'Epicondilalgia medial (golfer\'s elbow).',
+                      tests: 'Test de Golfer (Flexión + pronación resistida), Palpación epicóndilo medial',
+                      dolor: 'Epicóndilo medial. Peor al flexionar muñeca con carga.' },
+                    { id: 'tunel_carpo', nombre: 'Nervio Mediano (Túnel Carpiano)', tipo: 'Nervio', icono: '⚡',
+                      funcion: 'Inervación sensitiva de los 3 primeros dedos y motor de la eminencia tenar.',
+                      lesiones: 'Síndrome del túnel carpiano (neuropatía por compresión más frecuente).',
+                      tests: 'Phalen Test, Tinel Sign, Durkan Test, Sensibilidad con monofilamento',
+                      dolor: 'Parestesias nocturas en 1°-3° dedos. Debilidad en pinza. Peor al conducir.' },
+                    { id: 'triangular', nombre: 'Complejo Fibrocartílago Triangular (TFCC)', tipo: 'Fibrocartílago', icono: '🌙',
+                      funcion: 'Estabilización de la articulación radiocubital distal. Carga axial en el cúbito.',
+                      lesiones: 'Lesión traumática o degenerativa del TFCC.',
+                      tests: 'TFCC Compression Test, Press Test, Shuck Test, RUD Stress Test',
+                      dolor: 'Cara cubital de la muñeca. Dolor en pronosupinación con carga.' },
+                ],
+                tests: [
+                    { nombre: 'Cozen Test', estructura: 'Epicóndilo lateral', posicion: 'Codo extendido, muñeca pronada', ejecucion: 'Extensión de muñeca resistida', positivo: 'Dolor en epicóndilo lateral', sensibilidad: '84%' },
+                    { nombre: 'Phalen Test', estructura: 'Nervio Mediano', posicion: 'Sentado', ejecucion: 'Flexión máxima de muñeca 60 segundos', positivo: 'Parestesias en 1°-3° dedos', sensibilidad: '75%' },
+                    { nombre: 'Tinel Sign (muñeca)', estructura: 'Nervio Mediano', posicion: 'Muñeca neutra', ejecucion: 'Percusión sobre el túnel carpiano', positivo: 'Parestesias distales', sensibilidad: '50%' },
+                    { nombre: 'TFCC Compression', estructura: 'TFCC', posicion: 'Codo 90°, antebrazo neutro', ejecucion: 'Compresión axial + desviación cubital + pronosupinación', positivo: 'Dolor cubital', sensibilidad: '74%' },
+                    { nombre: 'Mill Test', estructura: 'Epicóndilo lateral', posicion: 'Codo extendido, muñeca en flexión', ejecucion: 'Pronación forzada', positivo: 'Dolor en epicóndilo lateral', sensibilidad: '76%' },
+                ]
+            }
+        };
+
+        let _anatRegionActual = 'rodilla';
+
+        function setAnatomiaRegion(region) {
+            _anatRegionActual = region;
+            document.querySelectorAll('.anat-tab-btn').forEach(b => {
+                b.classList.remove('bg-emerald-600', 'text-white');
+                b.classList.add('bg-slate-100', 'text-slate-600');
+            });
+            event.target.classList.add('bg-emerald-600', 'text-white');
+            event.target.classList.remove('bg-slate-100', 'text-slate-600');
+            renderAnatomia(region);
+        }
+
+        function renderAnatomia(region) {
+            const data = ANATOMIA_DATA[region];
+            if (!data) return;
+            document.getElementById('anat-region-title').textContent = data.titulo;
+            renderAnatomeSVG(region, data);
+            renderEstructurasList(data);
+            renderTestsGrid(data);
+            limpiarInfoPanel();
+        }
+
+        function limpiarInfoPanel() {
+            document.getElementById('anat-info-default').classList.remove('hidden');
+            document.getElementById('anat-info-content').classList.add('hidden');
+        }
+
+        function seleccionarEstructura(id) {
+            const data = ANATOMIA_DATA[_anatRegionActual];
+            const est = data.estructuras.find(e => e.id === id);
+            if (!est) return;
+            // Highlight SVG
+            document.querySelectorAll('.anat-estructura-svg').forEach(el => {
+                el.classList.remove('anat-activo');
+            });
+            const el = document.getElementById('svg-' + id);
+            if (el) el.classList.add('anat-activo');
+            // Mostrar info
+            document.getElementById('anat-info-default').classList.add('hidden');
+            document.getElementById('anat-info-content').classList.remove('hidden');
+            document.getElementById('anat-info-icon').textContent = est.icono;
+            document.getElementById('anat-info-nombre').textContent = est.nombre;
+            document.getElementById('anat-info-tipo').textContent = est.tipo;
+            document.getElementById('anat-info-funcion').textContent = est.funcion;
+            document.getElementById('anat-info-lesiones').textContent = est.lesiones;
+            document.getElementById('anat-info-tests').textContent = est.tests;
+            document.getElementById('anat-info-dolor').textContent = est.dolor;
+            // Highlight list item
+            document.querySelectorAll('.anat-list-item').forEach(li => li.classList.remove('bg-emerald-50', 'border-emerald-200'));
+            const li = document.getElementById('li-' + id);
+            if (li) { li.classList.add('bg-emerald-50', 'border-emerald-200'); li.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+        }
+
+        function renderEstructurasList(data) {
+            const cont = document.getElementById('anat-estructuras-list');
+            cont.innerHTML = data.estructuras.map(e => `
+                <div id="li-${e.id}" class="anat-list-item flex items-center gap-3 p-3 rounded-xl border border-transparent cursor-pointer hover:bg-slate-50 transition-all" onclick="seleccionarEstructura('${e.id}')">
+                    <span class="text-lg">${e.icono}</span>
+                    <div>
+                        <p class="text-xs font-bold text-slate-700">${e.nombre}</p>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wide">${e.tipo}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTestsGrid(data) {
+            const cont = document.getElementById('anat-tests-grid');
+            cont.innerHTML = data.tests.map(t => `
+                <div class="bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-md transition-all">
+                    <div class="flex justify-between items-start mb-2">
+                        <h5 class="text-sm font-extrabold text-slate-900">${t.nombre}</h5>
+                        <span class="text-[9px] font-black px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">${t.sensibilidad}</span>
+                    </div>
+                    <p class="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-3">${t.estructura}</p>
+                    <div class="space-y-1.5">
+                        <p class="text-[10px] text-slate-500"><span class="font-black text-slate-700">Posición:</span> ${t.posicion}</p>
+                        <p class="text-[10px] text-slate-500"><span class="font-black text-slate-700">Ejecución:</span> ${t.ejecucion}</p>
+                        <p class="text-[10px] text-emerald-700 font-bold"><span class="font-black">✓ Positivo:</span> ${t.positivo}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAnatomeSVG(region, data) {
+            const cont = document.getElementById('anat-svg-container');
+            const svgs = {
+                rodilla: `<svg viewBox="0 0 300 380" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:340px">
+                    <defs><style>
+                        .anat-estructura-svg { cursor:pointer; transition: all 0.2s; }
+                        .anat-estructura-svg:hover { filter: brightness(1.15); }
+                        .anat-activo { filter: drop-shadow(0 0 8px #10b981) brightness(1.2); }
+                        .anat-label { font-family: sans-serif; font-size: 9px; font-weight: 700; pointer-events: none; }
+                    </style></defs>
+                    <!-- Fémur -->
+                    <ellipse cx="150" cy="70" rx="55" ry="65" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <text x="150" y="72" text-anchor="middle" class="anat-label" fill="#64748b">Fémur</text>
+                    <!-- Tibia -->
+                    <ellipse cx="150" cy="305" rx="50" ry="60" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <text x="150" y="308" text-anchor="middle" class="anat-label" fill="#64748b">Tibia</text>
+                    <!-- Espacio articular -->
+                    <rect x="95" y="128" width="110" height="14" rx="4" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+                    <!-- Menisco medial -->
+                    <path id="svg-menisco_medial" class="anat-estructura-svg" d="M100 132 Q118 125 118 140 Q100 145 100 132Z" fill="#6366f1" opacity="0.7" onclick="seleccionarEstructura('menisco_medial')"/>
+                    <text x="78" y="138" class="anat-label" fill="#6366f1">M.Med</text>
+                    <!-- Menisco lateral -->
+                    <path id="svg-menisco_lateral" class="anat-estructura-svg" d="M200 132 Q182 125 182 140 Q200 145 200 132Z" fill="#8b5cf6" opacity="0.7" onclick="seleccionarEstructura('menisco_lateral')"/>
+                    <text x="202" y="138" class="anat-label" fill="#8b5cf6">M.Lat</text>
+                    <!-- LCA -->
+                    <line id="svg-lca" class="anat-estructura-svg" x1="140" y1="130" x2="160" y2="142" stroke="#ef4444" stroke-width="6" stroke-linecap="round" onclick="seleccionarEstructura('lca')"/>
+                    <text x="120" y="118" class="anat-label" fill="#ef4444">LCA</text>
+                    <!-- LCP -->
+                    <line id="svg-lcp" class="anat-estructura-svg" x1="160" y1="130" x2="140" y2="142" stroke="#f97316" stroke-width="6" stroke-linecap="round" onclick="seleccionarEstructura('lcp')"/>
+                    <text x="162" y="118" class="anat-label" fill="#f97316">LCP</text>
+                    <!-- LCO -->
+                    <line id="svg-lco" class="anat-estructura-svg" x1="97" y1="115" x2="97" y2="155" stroke="#0ea5e9" stroke-width="5" stroke-linecap="round" onclick="seleccionarEstructura('lco')"/>
+                    <text x="60" y="136" class="anat-label" fill="#0ea5e9">LCI</text>
+                    <!-- Rótula -->
+                    <ellipse id="svg-rotula" class="anat-estructura-svg" cx="150" cy="135" rx="20" ry="14" fill="#10b981" opacity="0.8" onclick="seleccionarEstructura('rotula')"/>
+                    <text x="150" y="139" text-anchor="middle" class="anat-label" fill="white">Rótula</text>
+                    <!-- Leyenda -->
+                    <rect x="8" y="330" width="284" height="44" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <text x="16" y="345" class="anat-label" fill="#64748b">Haz clic en cada estructura para ver información</text>
+                    <circle cx="16" cy="358" r="4" fill="#ef4444"/><text x="24" y="361" class="anat-label" fill="#64748b">LCA</text>
+                    <circle cx="56" cy="358" r="4" fill="#f97316"/><text x="64" y="361" class="anat-label" fill="#64748b">LCP</text>
+                    <circle cx="96" cy="358" r="4" fill="#6366f1"/><text x="104" y="361" class="anat-label" fill="#64748b">M.Med</text>
+                    <circle cx="144" cy="358" r="4" fill="#8b5cf6"/><text x="152" y="361" class="anat-label" fill="#64748b">M.Lat</text>
+                    <circle cx="192" cy="358" r="4" fill="#10b981"/><text x="200" y="361" class="anat-label" fill="#64748b">Rótula</text>
+                    <circle cx="236" cy="358" r="4" fill="#0ea5e9"/><text x="244" y="361" class="anat-label" fill="#64748b">LCI</text>
+                </svg>`,
+                hombro: `<svg viewBox="0 0 300 340" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:320px">
+                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15)}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}</style></defs>
+                    <!-- Escápula -->
+                    <path d="M60 80 Q100 60 180 90 Q200 130 190 180 Q160 210 120 200 Q80 180 60 140 Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <text x="120" y="150" text-anchor="middle" class="anat-label" fill="#64748b">Escápula</text>
+                    <!-- Acromion -->
+                    <rect x="155" y="68" width="55" height="18" rx="8" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="182" y="80" text-anchor="middle" class="anat-label" fill="#475569">Acromion</text>
+                    <!-- Clavícula -->
+                    <line x1="215" y1="73" x2="280" y2="55" stroke="#94a3b8" stroke-width="10" stroke-linecap="round"/>
+                    <text x="255" y="52" class="anat-label" fill="#64748b">Clavícula</text>
+                    <!-- Articulación AC -->
+                    <ellipse id="svg-acromio" class="anat-estructura-svg" cx="213" cy="72" rx="10" ry="8" fill="#f59e0b" opacity="0.85" onclick="seleccionarEstructura('acromio')"/>
+                    <text x="220" y="68" class="anat-label" fill="#92400e">AC</text>
+                    <!-- Húmero -->
+                    <ellipse cx="200" cy="195" rx="35" ry="30" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <rect x="182" y="215" width="36" height="90" rx="10" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="200" y="270" text-anchor="middle" class="anat-label" fill="#64748b">Húmero</text>
+                    <!-- GH Cápsula -->
+                    <ellipse id="svg-glenohumeral" class="anat-estructura-svg" cx="175" cy="175" rx="22" ry="28" fill="#6366f1" opacity="0.5" onclick="seleccionarEstructura('glenohumeral')"/>
+                    <text x="120" y="178" class="anat-label" fill="#4f46e5">GH</text>
+                    <!-- Manguito rotador -->
+                    <path id="svg-manguito" class="anat-estructura-svg" d="M158 148 Q185 135 210 155 Q205 170 185 168 Q165 165 158 148Z" fill="#ef4444" opacity="0.7" onclick="seleccionarEstructura('manguito')"/>
+                    <text x="175" y="145" text-anchor="middle" class="anat-label" fill="#dc2626">Manguito</text>
+                    <!-- Bíceps PLB -->
+                    <path id="svg-biceps" class="anat-estructura-svg" d="M185 168 Q188 185 190 230" stroke="#10b981" stroke-width="5" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('biceps')" style="pointer-events:stroke"/>
+                    <text x="194" y="195" class="anat-label" fill="#059669">Bíceps</text>
+                    <!-- Leyenda -->
+                    <rect x="8" y="300" width="284" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <circle cx="16" cy="318" r="4" fill="#ef4444"/><text x="24" y="321" class="anat-label" fill="#64748b">Manguito</text>
+                    <circle cx="80" cy="318" r="4" fill="#10b981"/><text x="88" y="321" class="anat-label" fill="#64748b">Bíceps PLB</text>
+                    <circle cx="152" cy="318" r="4" fill="#f59e0b"/><text x="160" y="321" class="anat-label" fill="#64748b">AC</text>
+                    <circle cx="188" cy="318" r="4" fill="#6366f1"/><text x="196" y="321" class="anat-label" fill="#64748b">Cápsula GH</text>
+                </svg>`,
+                tobillo: `<svg viewBox="0 0 300 340" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:320px">
+                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15)}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}</style></defs>
+                    <!-- Tibia/Peroné -->
+                    <rect x="100" y="20" width="40" height="120" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <rect x="160" y="30" width="28" height="100" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="120" y="75" text-anchor="middle" class="anat-label" fill="#64748b">Tibia</text>
+                    <text x="174" y="75" text-anchor="middle" class="anat-label" fill="#64748b">Peroné</text>
+                    <!-- Astrágalo -->
+                    <ellipse cx="130" cy="168" rx="45" ry="28" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="130" y="172" text-anchor="middle" class="anat-label" fill="#64748b">Astrágalo</text>
+                    <!-- Calcáneo -->
+                    <ellipse cx="115" cy="230" rx="50" ry="28" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="115" y="234" text-anchor="middle" class="anat-label" fill="#64748b">Calcáneo</text>
+                    <!-- LPAA -->
+                    <line id="svg-pla" class="anat-estructura-svg" x1="172" y1="128" x2="168" y2="160" stroke="#ef4444" stroke-width="5" stroke-linecap="round" onclick="seleccionarEstructura('pla')"/>
+                    <text x="174" y="148" class="anat-label" fill="#dc2626">LPAA</text>
+                    <!-- Aquiles -->
+                    <line id="svg-aquiles" class="anat-estructura-svg" x1="140" y1="140" x2="145" y2="215" stroke="#f97316" stroke-width="7" stroke-linecap="round" onclick="seleccionarEstructura('aquiles')"/>
+                    <text x="148" y="185" class="anat-label" fill="#ea580c">Aquiles</text>
+                    <!-- Fascia plantar -->
+                    <path id="svg-fascia" class="anat-estructura-svg" d="M72 248 Q115 260 185 255 Q190 270 180 278 Q115 275 68 260Z" fill="#10b981" opacity="0.7" onclick="seleccionarEstructura('fascia')"/>
+                    <text x="120" y="270" text-anchor="middle" class="anat-label" fill="#065f46">Fascia Plantar</text>
+                    <!-- Tibial posterior -->
+                    <path id="svg-tibpost" class="anat-estructura-svg" d="M104 140 Q90 165 88 200" stroke="#6366f1" stroke-width="5" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('tibpost')" style="pointer-events:stroke"/>
+                    <text x="48" y="178" class="anat-label" fill="#4f46e5">Tib.Post</text>
+                    <!-- Leyenda -->
+                    <rect x="8" y="298" width="284" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <circle cx="16" cy="316" r="4" fill="#ef4444"/><text x="24" y="319" class="anat-label" fill="#64748b">LPAA</text>
+                    <circle cx="60" cy="316" r="4" fill="#f97316"/><text x="68" y="319" class="anat-label" fill="#64748b">Aquiles</text>
+                    <circle cx="112" cy="316" r="4" fill="#10b981"/><text x="120" y="319" class="anat-label" fill="#64748b">Fascia Plantar</text>
+                    <circle cx="200" cy="316" r="4" fill="#6366f1"/><text x="208" y="319" class="anat-label" fill="#64748b">Tib.Posterior</text>
+                </svg>`,
+                columna: `<svg viewBox="0 0 300 360" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:340px">
+                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15)}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}</style></defs>
+                    <!-- Vértebras (5 lumbares) -->
+                    ${[0,1,2,3,4].map(i=>`
+                    <rect x="95" y="${30+i*44}" width="80" height="28" rx="6" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="135" y="${48+i*44}" text-anchor="middle" class="anat-label" fill="#64748b">L${i+1}</text>
+                    <!-- Apófisis espinosa -->
+                    <rect x="175" y="${34+i*44}" width="22" height="20" rx="4" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"/>
+                    `).join('')}
+                    <!-- Discos intervertebrales -->
+                    ${[0,1,2,3].map(i=>`
+                    <rect id="${i===1?'svg-disco':''}" class="${i===1?'anat-estructura-svg':''}" x="100" y="${58+i*44}" width="70" height="12" rx="3" fill="${i===1?'#6366f1':'#a5b4fc'}" opacity="0.75" ${i===1?`onclick="seleccionarEstructura('disco')"`:''}/>
+                    `).join('')}
+                    <text x="60" y="105" class="anat-label" fill="#4f46e5">Disco</text>
+                    <!-- Facetas -->
+                    <rect id="svg-facetas" class="anat-estructura-svg" x="82" y="72" width="14" height="12" rx="3" fill="#f97316" opacity="0.8" onclick="seleccionarEstructura('facetas')"/>
+                    <text x="50" y="81" class="anat-label" fill="#ea580c">Faceta</text>
+                    <!-- Nervio ciático -->
+                    <path id="svg-nervio_ciatico" class="anat-estructura-svg" d="M130 236 Q140 270 130 310 Q125 330 120 350" stroke="#ef4444" stroke-width="4" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('nervio_ciatico')" style="pointer-events:stroke"/>
+                    <text x="142" y="290" class="anat-label" fill="#dc2626">Ciático</text>
+                    <!-- Sacro y sacroilíaca -->
+                    <ellipse cx="135" cy="252" rx="38" ry="22" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="135" y="256" text-anchor="middle" class="anat-label" fill="#64748b">Sacro</text>
+                    <ellipse id="svg-sacroiliaca" class="anat-estructura-svg" cx="90" cy="248" rx="14" ry="20" fill="#10b981" opacity="0.7" onclick="seleccionarEstructura('sacroiliaca')"/>
+                    <text x="55" y="252" class="anat-label" fill="#065f46">ASI</text>
+                    <!-- Leyenda -->
+                    <rect x="8" y="318" width="284" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <circle cx="16" cy="336" r="4" fill="#6366f1"/><text x="24" y="339" class="anat-label" fill="#64748b">Disco IV</text>
+                    <circle cx="68" cy="336" r="4" fill="#f97316"/><text x="76" y="339" class="anat-label" fill="#64748b">Facetas</text>
+                    <circle cx="122" cy="336" r="4" fill="#ef4444"/><text x="130" y="339" class="anat-label" fill="#64748b">Nervio Ciático</text>
+                    <circle cx="200" cy="336" r="4" fill="#10b981"/><text x="208" y="339" class="anat-label" fill="#64748b">ASI</text>
+                </svg>`,
+                cadera: `<svg viewBox="0 0 300 340" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:320px">
+                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15)}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}</style></defs>
+                    <!-- Pelvis -->
+                    <path d="M50 80 Q150 40 250 80 Q270 130 240 180 Q200 210 150 215 Q100 210 60 180 Q30 130 50 80Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <text x="150" y="130" text-anchor="middle" class="anat-label" fill="#64748b">Pelvis</text>
+                    <!-- Acetábulo -->
+                    <circle cx="150" cy="190" r="30" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+                    <!-- Labrum -->
+                    <circle id="svg-labrum" class="anat-estructura-svg" cx="150" cy="190" r="33" fill="none" stroke="#6366f1" stroke-width="8" stroke-dasharray="4 2" onclick="seleccionarEstructura('labrum')"/>
+                    <text x="192" y="175" class="anat-label" fill="#4f46e5">Labrum</text>
+                    <!-- Cabeza femoral -->
+                    <circle cx="150" cy="190" r="24" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    <!-- Cuello femoral -->
+                    <path d="M150 214 Q165 240 170 280 Q148 282 128 280 Q133 240 150 214Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="150" y="255" text-anchor="middle" class="anat-label" fill="#64748b">Fémur</text>
+                    <!-- Isquiotibiales -->
+                    <path id="svg-isquiotibiales" class="anat-estructura-svg" d="M80 200 Q70 220 75 270" stroke="#f97316" stroke-width="6" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('isquiotibiales')" style="pointer-events:stroke"/>
+                    <text x="32" y="238" class="anat-label" fill="#ea580c">Isquioitb.</text>
+                    <!-- Piriforme -->
+                    <path id="svg-piriforme" class="anat-estructura-svg" d="M95 160 Q130 148 155 165" stroke="#ef4444" stroke-width="5" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('piriforme')" style="pointer-events:stroke"/>
+                    <text x="88" y="148" class="anat-label" fill="#dc2626">Piriforme</text>
+                    <!-- ITB -->
+                    <path id="svg-it_band" class="anat-estructura-svg" d="M220 185 Q230 220 225 275" stroke="#10b981" stroke-width="6" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('it_band')" style="pointer-events:stroke"/>
+                    <text x="232" y="235" class="anat-label" fill="#065f46">ITB</text>
+                    <!-- Leyenda -->
+                    <rect x="8" y="298" width="284" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <circle cx="16" cy="316" r="4" fill="#6366f1"/><text x="24" y="319" class="anat-label" fill="#64748b">Labrum</text>
+                    <circle cx="70" cy="316" r="4" fill="#f97316"/><text x="78" y="319" class="anat-label" fill="#64748b">Isquiotibiales</text>
+                    <circle cx="148" cy="316" r="4" fill="#ef4444"/><text x="156" y="319" class="anat-label" fill="#64748b">Piriforme</text>
+                    <circle cx="200" cy="316" r="4" fill="#10b981"/><text x="208" y="319" class="anat-label" fill="#64748b">ITB</text>
+                </svg>`,
+                codo: `<svg viewBox="0 0 300 340" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:320px">
+                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15)}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}</style></defs>
+                    <!-- Húmero distal -->
+                    <rect x="100" y="20" width="70" height="100" rx="10" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="135" y="70" text-anchor="middle" class="anat-label" fill="#64748b">Húmero</text>
+                    <!-- Epicóndilo lateral -->
+                    <ellipse id="svg-epi_lat" class="anat-estructura-svg" cx="175" cy="115" rx="18" ry="14" fill="#ef4444" opacity="0.8" onclick="seleccionarEstructura('epi_lat')"/>
+                    <text x="194" y="118" class="anat-label" fill="#dc2626">Lat</text>
+                    <!-- Epicóndilo medial -->
+                    <ellipse id="svg-epi_med" class="anat-estructura-svg" cx="95" cy="115" rx="18" ry="14" fill="#f97316" opacity="0.8" onclick="seleccionarEstructura('epi_med')"/>
+                    <text x="58" y="118" class="anat-label" fill="#ea580c">Med</text>
+                    <!-- Radio y cúbito -->
+                    <rect x="105" y="130" width="30" height="120" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <rect x="145" y="130" width="28" height="120" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="120" y="195" text-anchor="middle" class="anat-label" fill="#64748b">Radio</text>
+                    <text x="160" y="195" text-anchor="middle" class="anat-label" fill="#64748b">Cúbito</text>
+                    <!-- Muñeca / Túnel carpiano -->
+                    <rect x="90" y="255" width="90" height="38" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="135" y="278" text-anchor="middle" class="anat-label" fill="#64748b">Muñeca</text>
+                    <!-- Nervio mediano -->
+                    <path id="svg-tunel_carpo" class="anat-estructura-svg" d="M130 250 Q132 265 133 275" stroke="#6366f1" stroke-width="6" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('tunel_carpo')" style="pointer-events:stroke"/>
+                    <text x="136" y="260" class="anat-label" fill="#4f46e5">Mediano</text>
+                    <!-- TFCC -->
+                    <ellipse id="svg-triangular" class="anat-estructura-svg" cx="168" cy="258" rx="14" ry="10" fill="#10b981" opacity="0.8" onclick="seleccionarEstructura('triangular')"/>
+                    <text x="182" y="261" class="anat-label" fill="#065f46">TFCC</text>
+                    <!-- Leyenda -->
+                    <rect x="8" y="302" width="284" height="30" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <circle cx="16" cy="318" r="4" fill="#ef4444"/><text x="24" y="321" class="anat-label" fill="#64748b">Epi.Lateral</text>
+                    <circle cx="88" cy="318" r="4" fill="#f97316"/><text x="96" y="321" class="anat-label" fill="#64748b">Epi.Medial</text>
+                    <circle cx="160" cy="318" r="4" fill="#6366f1"/><text x="168" y="321" class="anat-label" fill="#64748b">T.Carpiano</text>
+                    <circle cx="230" cy="318" r="4" fill="#10b981"/><text x="238" y="321" class="anat-label" fill="#64748b">TFCC</text>
+                </svg>`
+            };
+            cont.innerHTML = svgs[region] || `<div class="text-center text-slate-400 text-sm p-8">Diagrama no disponible para esta región</div>`;
+        }
+
+        // Dark mode para la sección anatomía
+        // (se maneja automáticamente por el sistema de dark mode existente)
+
+        // ============================================================
         // Init API Key label
         (function initApiKeyLabel() {
             if (localStorage.getItem('jelian_anthropic_key')) {
