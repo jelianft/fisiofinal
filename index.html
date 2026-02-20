@@ -6,6 +6,12 @@
     <title>Jelian FT - Clinical Sport v134</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const SUPABASE_URL = 'https://autdqxqlhxpibleqjvbu.supabase.co';
+      const SUPABASE_KEY = 'sb_publishable_iIunAaNnuIWfNhBgd7kjJQ_ykOJxuCn';
+      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    </script>
        <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         
@@ -500,6 +506,39 @@
     
     </style>
 </head>
+    <script>
+        let pinBuffer = '';
+        const PIN_KEY = 'jelian_pin';
+        function pinPress(d) {
+            if (pinBuffer.length >= 4) return;
+            pinBuffer += d;
+            document.querySelectorAll('.pin-dot').forEach((dot, i) => dot.classList.toggle('filled', i < pinBuffer.length));
+            if (pinBuffer.length === 4) setTimeout(checkPin, 150);
+        }
+        function pinClear() { pinBuffer = pinBuffer.slice(0,-1); document.querySelectorAll('.pin-dot').forEach((dot, i) => dot.classList.toggle('filled', i < pinBuffer.length)); }
+        function pinSkip() { unlockApp(); }
+        function checkPin() {
+            const saved = localStorage.getItem(PIN_KEY);
+            if (!saved || pinBuffer === saved) { unlockApp(); }
+            else {
+                document.getElementById('pin-error').classList.remove('hidden');
+                pinBuffer = '';
+                document.querySelectorAll('.pin-dot').forEach(dot => dot.classList.remove('filled'));
+                setTimeout(() => document.getElementById('pin-error').classList.add('hidden'), 2000);
+            }
+        }
+        function unlockApp() {
+            const pinEl = document.getElementById('pin-screen');
+            pinEl.style.transition = 'opacity 0.35s ease';
+            pinEl.style.opacity = '0';
+            setTimeout(() => {
+                pinEl.style.display = 'none';
+                document.getElementById('app-content').classList.remove('hidden');
+                document.body.classList.toggle('dark-mode', localStorage.getItem('jelian_darkmode') === '1');
+                showSection('dashboard');
+            }, 350);
+        }
+    </script>
     <!-- PIN SCREEN -->
     <div id="pin-screen">
         <div class="text-center mb-4">
@@ -1978,12 +2017,84 @@ const MAPEO_ZONAS = {
         };
 
         // --- 4. LÓGICA DE APLICACIÓN ---
-        let pacientes = JSON.parse(localStorage.getItem('jelian_full_v110')) || [];
+        let pacientes = [];
         let currentId = null;
         let mainChart = null;
         let regionalChart = null;
 
-        function save() { localStorage.setItem('jelian_full_v110', JSON.stringify(pacientes)); }
+        // --- SUPABASE: cargar pacientes ---
+        async function cargarPacientesDB() {
+            const { data, error } = await sb.from('pacientes').select('*').order('created_at', { ascending: false });
+            if (error) { console.error('Error cargando pacientes:', error); return; }
+            // Adaptar formato Supabase al formato local de la app
+            pacientes = (data || []).map(p => ({
+                id: p.id,
+                nombre: p.nombre,
+                ci: p.ci || '',
+                edad: p.edad || '',
+                sexo: p.sexo || '',
+                deporte: p.deporte || '',
+                emergencia: p.emergencia || '',
+                telefono: p.telefono || '',
+                diag: p.diagnostico || '',
+                zona: p.zona || 'Rodilla',
+                valoracion: p.valoracion || [],
+                evoluciones: p.evoluciones || [],
+                rts: p.rts || null,
+                fotosClincias: p.fotos || [],
+                ejerciciosHoja: p.ejercicios_hoja || [],
+                estado: p.estado || 'activo',
+                _supaId: p.id
+            }));
+            renderPacientes();
+            updateDashboard();
+        }
+
+        async function save() {
+            if (currentId) {
+                const p = pacientes.find(x => x.id === currentId);
+                if (!p) return;
+                const payload = {
+                    nombre: p.nombre, ci: p.ci, edad: p.edad, sexo: p.sexo,
+                    deporte: p.deporte, emergencia: p.emergencia, telefono: p.telefono,
+                    diagnostico: p.diag, zona: p.zona, valoracion: p.valoracion,
+                    evoluciones: p.evoluciones || [], fotos: p.fotosClincias || [],
+                    ejercicios_hoja: p.ejerciciosHoja || [], estado: p.estado || p.status || 'activo',
+                    rts: p.rts || null, objetivos: p.objetivos || []
+                };
+                const { error } = await sb.from('pacientes').update(payload).eq('id', p.id);
+                if (error) { console.error('Error en save():', error); showToast('Error guardando cambios', true); }
+            }
+        }
+
+        async function upsertPaciente(p) {
+            const payload = {
+                id: typeof p.id === 'number' ? undefined : p.id,
+                nombre: p.nombre,
+                ci: p.ci,
+                edad: p.edad,
+                sexo: p.sexo,
+                deporte: p.deporte,
+                emergencia: p.emergencia,
+                telefono: p.telefono,
+                diagnostico: p.diag,
+                zona: p.zona,
+                valoracion: p.valoracion,
+                evoluciones: p.evoluciones,
+                rts: p.rts,
+                fotos: p.fotosClincias,
+                ejercicios_hoja: p.ejerciciosHoja,
+                estado: p.estado || 'activo'
+            };
+            if (typeof p.id !== 'number') payload.id = p.id;
+            const { data, error } = await sb.from('pacientes').upsert(payload).select().single();
+            if (error) { console.error('Error guardando paciente:', error); showToast('Error guardando datos', true); return; }
+            // Actualizar id local si era nuevo
+            if (data && typeof p.id === 'number') {
+                p.id = data.id;
+                p._supaId = data.id;
+            }
+        }
 
         let toastTimeout = null;
         function showToast(msg, isError = false) {
@@ -2114,11 +2225,22 @@ function renderPacientes() { renderLista(); }
         ejerciciosHoja: []
     };
 
-    pacientes.unshift(p);
-    save();
+    // Guardar en Supabase directamente
+    const payload = {
+        nombre: p.nombre, ci: p.ci, edad: p.edad, sexo: p.sexo,
+        deporte: p.deporte, emergencia: p.emergencia, telefono: p.telefono,
+        diagnostico: p.diag, zona: p.zona, valoracion: p.valoracion,
+        evoluciones: [], fotos: [], ejercicios_hoja: [], estado: 'activo'
+    };
+    sb.from('pacientes').insert(payload).select().single().then(({ data, error }) => {
+        if (error) { showToast('Error guardando paciente: ' + error.message, true); return; }
+        p.id = data.id;
+        pacientes.unshift(p);
+        renderPacientes();
+        updateDashboard();
+    });
     this.reset();
     showSection('lista-pacientes');
-    updateDashboard(); // Actualiza los contadores del inicio
 };
         function renderLista() {
             const t = document.getElementById('tabla-pacientes');
@@ -2339,7 +2461,10 @@ function renderPacientes() { renderLista(); }
                 psfs: isNaN(psfsVal) ? null : psfsVal
             };
             p.evoluciones.unshift(s);
-            save();
+            // Guardar en Supabase
+            sb.from('pacientes').update({ evoluciones: p.evoluciones }).eq('id', currentId).then(({ error }) => {
+                if (error) showToast('Error guardando sesión', true);
+            });
             verDetalle(currentId);
             ['s-eva', 's-fuerza', 's-notas', 's-psfs'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.style.borderColor = ''; el.style.color = ''; });
             document.getElementById('s-rpe').value = 5;
@@ -2409,7 +2534,7 @@ function renderPacientes() { renderLista(); }
             updateChartEvolucion();
             showToast('✓ Sesión eliminada.');
         }
-function updateDashboard() {
+async function updateDashboard() {
     // 1. Actualizar fecha y total de pacientes
     if(document.getElementById('current-date')) {
         const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -2579,12 +2704,13 @@ function updateDashboard() {
             const p = pacientes.find(x => x.id === currentId);
             if (!p) return;
             document.getElementById('modal-nombre-paciente').innerText = p.nombre;
-            document.getElementById('modal-confirm-btn').onclick = function() {
+            document.getElementById('modal-confirm-btn').onclick = async function() {
+                await sb.from('pacientes').delete().eq('id', currentId);
                 pacientes = pacientes.filter(x => x.id !== currentId);
-                save();
                 cerrarModal();
                 showSection('lista-pacientes');
                 showToast("✓ Atleta dado de alta correctamente.");
+                updateDashboard();
             };
             document.getElementById('modal-overlay').classList.remove('hidden');
         }
@@ -2624,44 +2750,7 @@ function updateDashboard() {
 
         // ============================================================
         // PIN SYSTEM
-        // ============================================================
-        let pinBuffer = '';
-        const PIN_KEY = 'jelian_pin';
 
-        function pinPress(d) {
-            if (pinBuffer.length >= 4) return;
-            pinBuffer += d;
-            updatePinDots();
-            if (pinBuffer.length === 4) setTimeout(checkPin, 150);
-        }
-        function pinClear() { pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); }
-        function pinSkip() { unlockApp(); }
-        function updatePinDots() {
-            document.querySelectorAll('.pin-dot').forEach((dot, i) => {
-                dot.classList.toggle('filled', i < pinBuffer.length);
-            });
-        }
-        function checkPin() {
-            const saved = localStorage.getItem(PIN_KEY);
-            if (!saved || pinBuffer === saved) { unlockApp(); }
-            else {
-                document.getElementById('pin-error').classList.remove('hidden');
-                pinBuffer = '';
-                updatePinDots();
-                setTimeout(() => document.getElementById('pin-error').classList.add('hidden'), 2000);
-            }
-        }
-        function unlockApp() {
-            const pinEl = document.getElementById('pin-screen');
-            pinEl.style.transition = 'opacity 0.35s ease';
-            pinEl.style.opacity = '0';
-            setTimeout(() => {
-                pinEl.style.display = 'none';
-                document.getElementById('app-content').classList.remove('hidden');
-                document.body.classList.toggle('dark-mode', localStorage.getItem('jelian_darkmode') === '1');
-                showSection('dashboard');
-            }, 350);
-        }
         function setupPin() {
             const nuevo = prompt("Ingresa un PIN de 4 dígitos (deja vacío para eliminar):");
             if (nuevo === null) return;
@@ -2972,10 +3061,22 @@ function updateDashboard() {
         let calDiaSeleccionado = null;
         const CITAS_KEY = 'jelian_citas';
 
-        function getCitas() { try { return JSON.parse(localStorage.getItem(CITAS_KEY)) || []; } catch { return []; } }
-        function saveCitas(c) { localStorage.setItem(CITAS_KEY, JSON.stringify(c)); }
+        async function getCitas() { 
+            const { data, error } = await sb.from('citas').select('*, pacientes(nombre)').order('fecha').order('hora');
+            if (error) { console.error('Error citas:', error); return []; }
+            return (data || []).map(c => ({
+                id: c.id,
+                atleta: c.pacientes?.nombre || c.paciente_nombre || '',
+                paciente_id: c.paciente_id,
+                fecha: c.fecha,
+                hora: c.hora,
+                tipo: c.tipo || '',
+                estado: c.estado || 'pendiente'
+            }));
+        }
+        async function saveCitas(c) { /* no usado - ahora se guarda por cita */ }
 
-        function renderCalendario() {
+        async function renderCalendario() {
             const año = calFecha.getFullYear(), mes = calFecha.getMonth();
             const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
             document.getElementById('cal-mes-titulo').textContent = `${meses[mes]} ${año}`;
@@ -2989,7 +3090,7 @@ function updateDashboard() {
             const primerDia = new Date(año, mes, 1).getDay();
             const offset = primerDia === 0 ? 6 : primerDia - 1;
             const diasMes = new Date(año, mes+1, 0).getDate();
-            const citas = getCitas();
+            const citas = await getCitas();
             const hoy = new Date();
             let html = '';
             for (let i = 0; i < offset; i++) html += '<div></div>';
@@ -3006,9 +3107,9 @@ function updateDashboard() {
             document.getElementById('cal-grid').innerHTML = html;
         }
 
-        function selDia(fechaStr) {
+        async function selDia(fechaStr) {
             calDiaSeleccionado = fechaStr;
-            const citas = getCitas().filter(c => c.fecha === fechaStr);
+            const citas = (await getCitas()).filter(c => c.fecha === fechaStr);
             const [año,mes,dia] = fechaStr.split('-');
             const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
             document.getElementById('cal-dia-titulo').textContent = `${dia} de ${meses[parseInt(mes)-1]} de ${año}`;
@@ -3033,22 +3134,20 @@ function updateDashboard() {
             const cont = document.getElementById('form-cita-container');
             cont.classList.remove('hidden');
             const sel = document.getElementById('cita-atleta');
-            sel.innerHTML = pacientes.map(p=>`<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            sel.innerHTML = pacientes.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
             document.getElementById('cita-fecha').value = calDiaSeleccionado || new Date().toISOString().split('T')[0];
             document.getElementById('cita-hora').value = '';
             cont.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function guardarCita() {
-            const atleta = document.getElementById('cita-atleta').value;
+        async function guardarCita() {
+            const pacienteId = document.getElementById('cita-atleta').value;
             const fecha = document.getElementById('cita-fecha').value;
             const hora = document.getElementById('cita-hora').value;
             const tipo = document.getElementById('cita-tipo').value;
-            if (!atleta || !fecha || !hora) { showToast('❌ Completa todos los campos.', true); return; }
-            const citas = getCitas();
-            citas.push({ atleta, fecha, hora, tipo });
-            citas.sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.hora.localeCompare(b.hora));
-            saveCitas(citas);
+            if (!pacienteId || !fecha || !hora) { showToast('❌ Completa todos los campos.', true); return; }
+            const { error } = await sb.from('citas').insert({ paciente_id: pacienteId, fecha, hora, tipo, estado: 'pendiente' });
+            if (error) { showToast('Error guardando cita: ' + error.message, true); return; }
             // Limpiar y cerrar formulario
             document.getElementById('cita-hora').value = '';
             document.getElementById('form-cita-container').classList.add('hidden');
@@ -3687,9 +3786,9 @@ function updateDashboard() {
         // ============================================================
         // DASHBOARD — CITAS DE HOY
         // ============================================================
-        function renderCitasHoyDashboard() {
+        async function renderCitasHoyDashboard() {
             const hoy = new Date().toISOString().split('T')[0];
-            const citas = getCitas().filter(c => c.fecha === hoy).sort((a,b) => a.hora.localeCompare(b.hora));
+            const citas = (await getCitas()).filter(c => c.fecha === hoy).sort((a,b) => a.hora.localeCompare(b.hora));
             const cont = document.getElementById('dash-citas-hoy');
             const badge = document.getElementById('dash-citas-badge');
             if (!cont) return;
@@ -3741,7 +3840,7 @@ function updateDashboard() {
             renderSemana();
         }
 
-        function renderSemana() {
+        async function renderSemana() {
             const lunes = getLunesDeSemana(calSemanaOffset);
             const dias = [];
             for (let i = 0; i < 7; i++) {
@@ -3750,7 +3849,7 @@ function updateDashboard() {
             const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
             const hoyStr = new Date().toISOString().split('T')[0];
             const diasNombre = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-            const citas = getCitas();
+            const citas = await getCitas();
 
             // Título
             document.getElementById('cal-semana-titulo').textContent =
@@ -3790,12 +3889,12 @@ function updateDashboard() {
         // ============================================================
         // CALENDAR SEARCH
         // ============================================================
-        function filtrarCitasBusqueda(q) {
+        async function filtrarCitasBusqueda(q) {
             const panel = document.getElementById('cal-search-results');
             const list = document.getElementById('cal-search-list');
             if (!q.trim()) { panel.classList.add('hidden'); return; }
             panel.classList.remove('hidden');
-            const citas = getCitas().filter(c => c.atleta.toLowerCase().includes(q.toLowerCase()) || c.tipo.toLowerCase().includes(q.toLowerCase()));
+            const citas = (await getCitas()).filter(c => c.atleta.toLowerCase().includes(q.toLowerCase()) || c.tipo.toLowerCase().includes(q.toLowerCase()));
             if (citas.length === 0) {
                 list.innerHTML = '<p class="text-xs text-slate-400 italic">Sin resultados.</p>'; return;
             }
@@ -4106,6 +4205,14 @@ function updateDashboard() {
         (function initPin() {
             const saved = localStorage.getItem(PIN_KEY);
             if (!saved) { unlockApp(); }
+        })();
+
+        // --- INIT SUPABASE ---
+        (async function initApp() {
+            await cargarPacientesDB();
+            renderCalendario();
+            renderBiblioteca();
+            updateDashboard();
         })();
 
     </script>
