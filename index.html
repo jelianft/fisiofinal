@@ -2026,10 +2026,11 @@ const MAPEO_ZONAS = {
         async function cargarPacientesDB() {
             const { data, error } = await sb.from('pacientes').select('*').order('created_at', { ascending: false });
             if (error) { console.error('Error cargando pacientes:', error); return; }
+            const colCedula = _cedulaCol(); // puede ser null si no existe la columna
             pacientes = (data || []).map(p => ({
                 id: p.id,
                 nombre: p.nombre || '',
-                ci: p[_cedulaColName] || '',
+                ci: (colCedula ? p[colCedula] : '') || '',
                 edad: p.edad || '',
                 sexo: p.sexo || '',
                 deporte: p.deporte || '',
@@ -2053,36 +2054,76 @@ const MAPEO_ZONAS = {
         }
 
         // Detectar nombre de columna cédula al iniciar
-        let _cedulaColName = 'cedula'; // valor por defecto
-        async function detectarColumnasCedula() {
-            // Intentamos leer 1 registro; si no hay datos, probamos insertar y capturar el error
-            // Alternativa segura: hacer una query de introspección via Supabase
+        // === SCHEMA INTROSPECTION ===
+        // Detecta las columnas reales de la tabla 'pacientes' en Supabase
+        // y construye payloads dinámicos que nunca envían columnas inexistentes.
+        let _dbCols = null; // Set de columnas reales, null = no detectado aún
+
+        async function detectarSchemaDB() {
+            try {
+                // Supabase expone information_schema via PostgREST
+                const { data } = await sb
+                    .from('information_schema.columns')
+                    .select('column_name')
+                    .eq('table_name', 'pacientes')
+                    .eq('table_schema', 'public');
+                if (data && data.length > 0) {
+                    _dbCols = new Set(data.map(r => r.column_name));
+                    console.log('[JelianFT] Columnas detectadas:', [..._dbCols]);
+                    return;
+                }
+            } catch(e) { /* PostgREST puede no exponer information_schema — fallback */ }
+
+            // Fallback: leer 1 fila para detectar columnas
             try {
                 const { data } = await sb.from('pacientes').select('*').limit(1);
                 if (data && data.length > 0) {
-                    const row = data[0];
-                    if (row.hasOwnProperty('ci')) _cedulaColName = 'ci';
-                    else if (row.hasOwnProperty('cedula')) _cedulaColName = 'cedula';
-                    else if (row.hasOwnProperty('documento')) _cedulaColName = 'documento';
-                    else if (row.hasOwnProperty('identificacion')) _cedulaColName = 'identificacion';
-                    // Si no hay ninguna, dejamos 'cedula' como default
+                    _dbCols = new Set(Object.keys(data[0]));
+                    console.log('[JelianFT] Columnas detectadas por fila:', [..._dbCols]);
+                    return;
                 }
-                // Si no hay filas, intentamos detectar por error en un insert nulo (dry-run)
-                // No hacemos esto para no crear registros. Usamos 'cedula' como default.
-            } catch(e) { /* usar default */ }
+            } catch(e) { /* tabla vacía o error */ }
+
+            // Último fallback: tabla vacía o sin acceso, usamos columnas conocidas
+            // sin el campo cédula (lo omitimos si no existe)
+            _dbCols = new Set(['id','nombre','edad','sexo','deporte','emergencia','telefono',
+                               'diagnostico','zona','valoracion','evoluciones','fotos',
+                               'ejercicios_hoja','estado','rts','objetivos','foto_avatar',
+                               'created_at','updated_at']);
+            console.warn('[JelianFT] Schema no detectado, usando columnas base (sin cédula).');
         }
 
-        // Helper: devuelve el nombre correcto de la columna cédula según el schema detectado
-        function _cedulaCol() { return _cedulaColName; }
+        // Filtra un payload para incluir solo columnas que existen en la DB
+        function _filtrarPayload(payload) {
+            if (!_dbCols) return payload; // si no detectamos, enviamos todo
+            const filtrado = {};
+            for (const [k, v] of Object.entries(payload)) {
+                if (_dbCols.has(k)) filtrado[k] = v;
+            }
+            return filtrado;
+        }
+
+        // Detecta el nombre de la columna cédula (puede no existir)
+        function _cedulaCol() {
+            if (!_dbCols) return null;
+            for (const name of ['ci','cedula','cedula_identidad','documento','identificacion','id_documento']) {
+                if (_dbCols.has(name)) return name;
+            }
+            return null; // no existe ninguna columna para cédula
+        }
+
+        // Retorna el fragmento de payload para cédula, o {} si la columna no existe
         function _cedulaPayload(ci) {
-            return { [_cedulaColName]: ci || '' };
+            const col = _cedulaCol();
+            if (!col) return {}; // columna no existe → no enviar nada
+            return { [col]: ci || '' };
         }
 
         async function save() {
             if (currentId) {
                 const p = pacientes.find(x => x.id === currentId);
                 if (!p) return;
-                const payload = {
+                const rawPayload = {
                     nombre: p.nombre,
                     ..._cedulaPayload(p.ci),
                     edad: p.edad, sexo: p.sexo,
@@ -2093,13 +2134,14 @@ const MAPEO_ZONAS = {
                     rts: p.rts || null, objetivos: p.objetivos || [],
                     foto_avatar: p.foto || null
                 };
+                const payload = _filtrarPayload(rawPayload);
                 const { error } = await sb.from('pacientes').update(payload).eq('id', p.id);
                 if (error) { console.error('Error en save():', error); showToast('Error guardando cambios: ' + error.message, true); }
             }
         }
 
         async function upsertPaciente(p) {
-            const payload = {
+            const rawPayload = {
                 id: typeof p.id === 'number' ? undefined : p.id,
                 nombre: p.nombre,
                 ..._cedulaPayload(p.ci),
@@ -2117,10 +2159,10 @@ const MAPEO_ZONAS = {
                 ejercicios_hoja: p.ejerciciosHoja,
                 estado: p.estado || 'activo'
             };
-            if (typeof p.id !== 'number') payload.id = p.id;
+            if (typeof p.id !== 'number') rawPayload.id = p.id;
+            const payload = _filtrarPayload(rawPayload);
             const { data, error } = await sb.from('pacientes').upsert(payload).select().single();
             if (error) { console.error('Error guardando paciente:', error); showToast('Error guardando datos', true); return; }
-            // Actualizar id local si era nuevo
             if (data && typeof p.id === 'number') {
                 p.id = data.id;
                 p._supaId = data.id;
@@ -2234,7 +2276,7 @@ function renderPacientes() { renderLista(); }
     const detectZona = zonaManual || (lesionEncontrada ? lesionEncontrada.z : "Rodilla");
 
     const ciVal = document.getElementById('reg-ci').value;
-    const payload = {
+    const rawPayload = {
         nombre: document.getElementById('reg-nombre').value,
         ..._cedulaPayload(ciVal),
         edad: document.getElementById('reg-edad').value,
@@ -2247,6 +2289,7 @@ function renderPacientes() { renderLista(); }
         valoracion: Array.from(document.querySelectorAll('.eval-input')).map(i => ({ p: i.dataset.test, r: i.value })),
         evoluciones: [], fotos: [], ejercicios_hoja: [], estado: 'activo'
     };
+    const payload = _filtrarPayload(rawPayload);
 
     const { data, error } = await sb.from('pacientes').insert(payload).select().single();
     if (error) { showToast('Error guardando paciente: ' + error.message, true); return; }
@@ -4240,7 +4283,7 @@ async function updateDashboard() {
 
         // --- INIT SUPABASE ---
         (async function initApp() {
-            await detectarColumnasCedula();
+            await detectarSchemaDB();
             await cargarPacientesDB();
             renderCalendario();
             renderBiblioteca();
