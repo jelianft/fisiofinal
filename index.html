@@ -1584,6 +1584,18 @@
     </main>
 
     <script>
+        // ── HTML ESCAPE UTILITY ──────────────────────────────────────
+        function escHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/`/g, '&#96;');
+        }
+        
         // --- 1. BIBLIOTECA CLÍNICA EXTENSA (Nivel Alto Rendimiento) ---
         const BibliotecaClinicaIA = {
     "Cadera": {
@@ -2926,13 +2938,13 @@ function renderPacientes() { renderLista(); }
                 <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 relative animate-in">
                     <div class="flex justify-between items-start mb-6">
                         <div>
-                            <span class="text-[10px] font-black text-slate-300 uppercase">${s.fecha}</span>
+                            <span class="text-[10px] font-black text-slate-300 uppercase">${escHtml(s.fecha)}</span>
                             <div class="mt-2 flex gap-2 flex-wrap">
-                                    <span class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-full text-[10px] font-black">${s.fuerza}</span>
-                                    ${s.rpe ? `<span class="bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full text-[10px] font-black">RPE ${s.rpe}/10</span>` : ''}
+                                    <span class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-full text-[10px] font-black">${escHtml(s.fuerza)}</span>
+                                    ${s.rpe ? `<span class="bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full text-[10px] font-black">RPE ${escHtml(s.rpe)}/10</span>` : ''}
                                     ${s.duracion ? `<span class="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full text-[10px] font-black">⏱ ${formatDuracion(s.duracion)}</span>` : ''}
                                     ${s.psfs != null ? `<span class="bg-sky-50 text-sky-600 px-4 py-1.5 rounded-full text-[10px] font-black">PSFS ${s.psfs}%</span>` : ''}
-                                    ${(s.tecnicas && s.tecnicas.length > 0) ? s.tecnicas.map(t=>`<span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[9px] font-bold">${t}</span>`).join('') : ''}
+                                    ${(s.tecnicas && s.tecnicas.length > 0) ? s.tecnicas.map(t=>`<span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[9px] font-bold">${escHtml(t)}</span>`).join('') : ''}
                                 </div>
                         </div>
                         <div class="flex items-center gap-3">
@@ -2940,7 +2952,7 @@ function renderPacientes() { renderLista(); }
                             <button onclick="eliminarSesion(${i})" class="text-slate-300 hover:text-rose-500 transition-colors text-lg leading-none" title="Eliminar sesión">✕</button>
                         </div>
                     </div>
-                    <p class="text-sm font-medium text-slate-600 italic border-l-2 border-indigo-200 pl-4">"${(s.notas || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}"</p>
+                    <p class="text-sm font-medium text-slate-600 italic border-l-2 border-indigo-200 pl-4">"${escHtml(s.notas || '')}"</p>
                 </div>
             `).join('');
         }
@@ -3331,7 +3343,7 @@ async function updateDashboard() {
                 return `
                 <div class="p-4 rounded-2xl border ${o.completado ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 bg-white'} dark:border-slate-700">
                     <div class="flex justify-between items-start mb-2">
-                        <p class="text-xs font-bold text-slate-700 ${o.completado ? 'line-through opacity-50' : ''}">${o.texto}</p>
+                        <p class="text-xs font-bold text-slate-700 ${o.completado ? 'line-through opacity-50' : ''}">${escHtml(o.texto)}</p>
                         <button onclick="toggleObjetivo(${i})" class="text-[10px] font-black px-2 py-1 rounded-lg ${o.completado ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}">
                             ${o.completado ? '✓ Logrado' : 'Marcar'}
                         </button>
@@ -3557,7 +3569,7 @@ async function updateDashboard() {
                 const isHoy = hoy.getDate()===d && hoy.getMonth()===mes && hoy.getFullYear()===año;
                 html += `<div class="cal-day ${isHoy?'today':''} ${citasHoy.length?'has-events':''}" onclick="selDia('${fechaStr}')">
                     <span class="text-xs font-bold ${isHoy?'text-indigo-600':'text-slate-600'}">${d}</span>
-                    ${citasHoy.slice(0,2).map(c=>`<span class="cal-event-pill">${c.hora} ${c.atleta}</span>`).join('')}
+                    ${citasHoy.slice(0,2).map(c=>`<span class="cal-event-pill">${escHtml(c.hora)} ${escHtml(c.atleta)}</span>`).join('')}
                     ${citasHoy.length>2?`<span class="text-[9px] text-indigo-400 font-bold">+${citasHoy.length-2} más</span>`:''}
                 </div>`;
             }
@@ -4041,7 +4053,7 @@ async function updateDashboard() {
             cont.innerHTML = p.rts.map((c, i) => `
                 <div class="rts-item ${c.cumplido ? 'bg-emerald-50' : 'bg-white'}">
                     <div class="rts-dot ${c.cumplido ? 'verde' : 'rojo'}"></div>
-                    <span class="flex-1 text-xs font-bold text-slate-700 ${c.cumplido ? 'line-through opacity-50' : ''}">${c.texto}</span>
+                    <span class="flex-1 text-xs font-bold text-slate-700 ${c.cumplido ? 'line-through opacity-50' : ''}">${escHtml(c.texto)}</span>
                     <div class="flex gap-2">
                         <button onclick="toggleRTS(${i})" class="text-[10px] font-black px-3 py-1 rounded-lg ${c.cumplido ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'} hover:opacity-80">
                             ${c.cumplido ? '✓ Cumplido' : 'Marcar'}
@@ -4158,16 +4170,16 @@ async function updateDashboard() {
             cont.innerHTML = p.ejerciciosHoja.map((ej, i) => `
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
                     <div class="flex justify-between items-start">
-                        <input value="${ej.nombre}" onchange="updateEjercicio(${i},'nombre',this.value)" class="font-bold text-sm text-slate-800 bg-transparent outline-none w-full" placeholder="Nombre del ejercicio">
+                        <input value="${escHtml(ej.nombre)}" onchange="updateEjercicio(${i},'nombre',this.value)" class="font-bold text-sm text-slate-800 bg-transparent outline-none w-full" placeholder="Nombre del ejercicio">
                         <button onclick="eliminarEjercicio(${i})" class="text-slate-300 hover:text-rose-400 text-lg leading-none ml-2">✕</button>
                     </div>
                     <div class="grid grid-cols-4 gap-2">
-                        <div><label class="text-[8px] font-black text-slate-400 uppercase">Series</label><input type="number" value="${ej.series}" onchange="updateEjercicio(${i},'series',this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold outline-none"></div>
-                        <div><label class="text-[8px] font-black text-slate-400 uppercase">Reps</label><input value="${ej.reps}" onchange="updateEjercicio(${i},'reps',this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold outline-none"></div>
-                        <div><label class="text-[8px] font-black text-slate-400 uppercase">Carga</label><input value="${ej.carga}" onchange="updateEjercicio(${i},'carga',this.value)" placeholder="kg" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold outline-none"></div>
-                        <div><label class="text-[8px] font-black text-slate-400 uppercase">Descanso</label><input value="${ej.descanso}" onchange="updateEjercicio(${i},'descanso',this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold outline-none"></div>
+                        <div><label class="text-[8px] font-black text-slate-400 uppercase">Series</label><input type="number" value="${escHtml(ej.series)}" onchange="updateEjercicio(${i},'series',this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold outline-none"></div>
+                        <div><label class="text-[8px] font-black text-slate-400 uppercase">Reps</label><input value="${escHtml(ej.reps)}" onchange="updateEjercicio(${i},'reps',this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold outline-none"></div>
+                        <div><label class="text-[8px] font-black text-slate-400 uppercase">Carga</label><input value="${escHtml(ej.carga)}" onchange="updateEjercicio(${i},'carga',this.value)" placeholder="kg" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold outline-none"></div>
+                        <div><label class="text-[8px] font-black text-slate-400 uppercase">Descanso</label><input value="${escHtml(ej.descanso)}" onchange="updateEjercicio(${i},'descanso',this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold outline-none"></div>
                     </div>
-                    <input value="${ej.descripcion}" onchange="updateEjercicio(${i},'descripcion',this.value)" placeholder="Descripción / instrucciones..." class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs outline-none">
+                    <input value="${escHtml(ej.descripcion)}" onchange="updateEjercicio(${i},'descripcion',this.value)" placeholder="Descripción / instrucciones..." class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs outline-none">
                 </div>
             `).join('');
         }
@@ -4335,7 +4347,7 @@ async function updateDashboard() {
                     const dStr = d.toISOString().split('T')[0];
                     const citasSlot = citas.filter(c => c.fecha === dStr && c.hora && c.hora.startsWith(hora.slice(0,3)));
                     html += `<td class="week-slot border-l border-slate-100" onclick="selDia('${dStr}');setCalView('mes')">
-                        ${citasSlot.map(c => `<span class="week-pill" title="${c.tipo}">${c.hora} ${c.atleta}</span>`).join('')}
+                        ${citasSlot.map(c => `<span class="week-pill" title="${escHtml(c.tipo)}">${escHtml(c.hora)} ${escHtml(c.atleta)}</span>`).join('')}
                     </td>`;
                 });
                 html += `</tr>`;
