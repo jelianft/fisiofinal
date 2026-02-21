@@ -15,7 +15,6 @@
     <title>Jelian FT - Clinical Sport v136</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
     <script>
       const SUPABASE_URL = 'https://autdqxqlhxpibleqjvbu.supabase.co';
@@ -679,18 +678,18 @@
         </div>
         <p id="pin-error" class="text-rose-400 text-xs font-bold hidden">PIN incorrecto</p>
         <div class="grid grid-cols-3 gap-3 mt-2">
-            <button class="pin-key" onclick="pinPress('1')" aria-label="Dígito 1">1</button>
-            <button class="pin-key" onclick="pinPress('2')" aria-label="Dígito 2">2</button>
-            <button class="pin-key" onclick="pinPress('3')" aria-label="Dígito 3">3</button>
-            <button class="pin-key" onclick="pinPress('4')" aria-label="Dígito 4">4</button>
-            <button class="pin-key" onclick="pinPress('5')" aria-label="Dígito 5">5</button>
-            <button class="pin-key" onclick="pinPress('6')" aria-label="Dígito 6">6</button>
-            <button class="pin-key" onclick="pinPress('7')" aria-label="Dígito 7">7</button>
-            <button class="pin-key" onclick="pinPress('8')" aria-label="Dígito 8">8</button>
-            <button class="pin-key" onclick="pinPress('9')" aria-label="Dígito 9">9</button>
-            <button class="pin-key text-slate-500 text-sm" onclick="pinClear()" aria-label="Borrar último dígito">⌫</button>
-            <button class="pin-key" onclick="pinPress('0')" aria-label="Dígito 0">0</button>
-            <button class="pin-key text-slate-400 text-[10px] font-black tracking-wide" onclick="pinSkip()" aria-label="Omitir PIN y entrar">Omitir</button>
+            <button type="button" class="pin-key" onclick="pinPress('1')" aria-label="Dígito 1">1</button>
+            <button type="button" class="pin-key" onclick="pinPress('2')" aria-label="Dígito 2">2</button>
+            <button type="button" class="pin-key" onclick="pinPress('3')" aria-label="Dígito 3">3</button>
+            <button type="button" class="pin-key" onclick="pinPress('4')" aria-label="Dígito 4">4</button>
+            <button type="button" class="pin-key" onclick="pinPress('5')" aria-label="Dígito 5">5</button>
+            <button type="button" class="pin-key" onclick="pinPress('6')" aria-label="Dígito 6">6</button>
+            <button type="button" class="pin-key" onclick="pinPress('7')" aria-label="Dígito 7">7</button>
+            <button type="button" class="pin-key" onclick="pinPress('8')" aria-label="Dígito 8">8</button>
+            <button type="button" class="pin-key" onclick="pinPress('9')" aria-label="Dígito 9">9</button>
+            <button type="button" class="pin-key text-slate-500 text-sm" onclick="pinClear()" aria-label="Borrar último dígito">⌫</button>
+            <button type="button" class="pin-key" onclick="pinPress('0')" aria-label="Dígito 0">0</button>
+            <button type="button" class="pin-key text-slate-400 text-[10px] font-black tracking-wide" onclick="pinSkip()" aria-label="Omitir PIN y entrar">Omitir</button>
         </div>
         <p class="text-slate-600 text-[10px] mt-2">Presiona <strong>Omitir</strong> para entrar sin PIN o configúralo desde Ajustes</p>
     </div>
@@ -899,11 +898,7 @@
                 Calculadoras
                 <span class="ml-auto text-[8px] font-black bg-violet-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
             </button>
-            <button onclick="showSection('vista-paciente')" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                QR Paciente
-                <span class="ml-auto text-[8px] font-black bg-sky-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
-            </button>
+
             <button onclick="openGlobalSearch()" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 Búsqueda Global
@@ -955,7 +950,7 @@
             </button>
         </div>
         <div class="p-6 text-[10px] text-slate-600 font-bold">
-            v135.0.0 • 2026 STABLE
+            v136.0.0 • 2026 STABLE
         </div>
     </aside>
 
@@ -2316,39 +2311,7 @@
             </div>
         </section>
 
-        <!-- ===== VISTA / QR PACIENTE ===== -->
-        <section id="vista-paciente" class="hidden max-w-4xl mx-auto pb-20">
-            <div class="mb-10">
-                <span class="text-sky-500 font-bold text-xs uppercase tracking-widest">Acceso Paciente</span>
-                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-1">QR Paciente</h2>
-                <p class="text-slate-500 text-sm mt-1">Genera un código QR para que el paciente acceda a su plan de ejercicios desde su celular</p>
-            </div>
-            <div class="glass-card rounded-3xl p-8 mb-6">
-                <div class="flex flex-col sm:flex-row gap-6 items-start sm:items-end">
-                    <div class="flex-1"><label class="text-xs font-bold text-slate-500 block mb-2">Seleccionar paciente</label>
-                    <select id="qr-paciente" onchange="generarQR()" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold"><option value="">Seleccionar...</option></select></div>
-                    <button onclick="generarQR()" class="bg-sky-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-sky-700 transition-all">Generar QR</button>
-                </div>
-            </div>
-            <div id="qr-resultado" class="hidden">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- QR -->
-                    <div class="glass-card rounded-3xl p-8 flex flex-col items-center text-center">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Código QR</p>
-                        <div id="qr-canvas-wrap" class="mb-4"></div>
-                        <p id="qr-nombre-label" class="text-sm font-black text-slate-800 mb-1"></p>
-                        <p class="text-xs text-slate-400 mb-4">Plan de ejercicios · Jelian FT</p>
-                        <button onclick="imprimirQR()" class="w-full bg-sky-600 text-white py-3 rounded-xl text-xs font-black hover:bg-sky-700 transition-all">🖨 Imprimir QR</button>
-                    </div>
-                    <!-- Vista previa del plan -->
-                    <div class="glass-card rounded-3xl p-8">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Vista previa del plan</p>
-                        <div id="qr-plan-preview" class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar"></div>
-                        <p class="text-[10px] text-slate-400 mt-4">El paciente verá esta información al escanear el QR</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+
 
     </main>
 
@@ -4309,7 +4272,7 @@ const MAPEO_ZONAS = {
                 valoracion: p.valoracion || [],
                 evoluciones: p.evoluciones || [],
                 rts: p.rts || null,
-                fotosClincias: p.fotos || [],
+                fotosClinicas: p.fotos || [],
                 ejerciciosHoja: p.ejercicios_hoja || [],
                 estado: p.estado || 'activo',
                 status: p.estado || 'activo',
@@ -4377,7 +4340,7 @@ const MAPEO_ZONAS = {
 
         async function save() {
             if (!currentId) return;
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const rawPayload = {
                 nombre: p.nombre,
@@ -4385,7 +4348,7 @@ const MAPEO_ZONAS = {
                 edad: p.edad, sexo: p.sexo,
                 deporte: p.deporte, emergencia: p.emergencia, telefono: p.telefono,
                 diagnostico: p.diag, zona: p.zona, valoracion: p.valoracion,
-                evoluciones: p.evoluciones || [], fotos: p.fotosClincias || [],
+                evoluciones: p.evoluciones || [], fotos: p.fotosClinicas || [],
                 ejercicios_hoja: p.ejerciciosHoja || [], estado: p.estado || p.status || 'activo',
                 rts: p.rts || null, objetivos: p.objetivos || [],
                 foto_avatar: p.foto || null
@@ -4405,8 +4368,9 @@ const MAPEO_ZONAS = {
         }
 
         async function upsertPaciente(p) {
+            // FIX: id se asigna UNA sola vez. Si es número (id local temporal), lo omitimos para que Supabase genere uno real.
             const rawPayload = {
-                id: typeof p.id === 'number' ? undefined : p.id,
+                ...(typeof p.id === 'number' ? {} : { id: p.id }),
                 nombre: p.nombre,
                 ..._cedulaPayload(p.ci),
                 edad: p.edad,
@@ -4419,11 +4383,11 @@ const MAPEO_ZONAS = {
                 valoracion: p.valoracion,
                 evoluciones: p.evoluciones,
                 rts: p.rts,
-                fotos: p.fotosClincias,
+                fotos: p.fotosClinicas,
                 ejercicios_hoja: p.ejerciciosHoja,
                 estado: p.estado || 'activo'
             };
-            if (typeof p.id !== 'number') rawPayload.id = p.id;
+            // (FIX: línea duplicada eliminada — antes había rawPayload.id = p.id aquí de nuevo)
             const payload = _filtrarPayload(rawPayload);
             try {
                 const { data, error } = await sb.from('pacientes').upsert(payload).select().single();
@@ -4494,21 +4458,13 @@ function renderPacientes() { renderLista(); }
         }
         const _debouncedSearch = debounce(renderLista, 180);
         const _debouncedGlobalSearch = debounce(runGlobalSearch, 200);
-        const _debouncedBiblioteca = debounce(() => {
-            const q = document.getElementById('busqueda-biblioteca')?.value || '';
-            const cont = document.getElementById('contenedor-biblioteca');
-            cont.innerHTML = bibliotecaLesiones
-                .filter(l => l.n.toLowerCase().includes(q.toLowerCase()) || l.z.toLowerCase().includes(q.toLowerCase()))
-                .map(l => `
-                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:border-indigo-500 transition-all cursor-pointer group" data-lesion="${l.n.replace(/'/g, '&apos;')}" onclick="cargarProtocolo(this.dataset.lesion)">
-                        <span class="text-[8px] font-black text-indigo-500 uppercase bg-indigo-50 px-3 py-1 rounded-full tracking-widest">${l.z}</span>
-                        <h4 class="font-extrabold text-slate-800 text-sm mt-4 uppercase italic group-hover:text-indigo-600">${l.n}</h4>
-                    </div>
-                `).join('');
-        }, 180);
+        // FIX: _debouncedBiblioteca delegaba a renderBiblioteca pero tenía una copia duplicada de la misma lógica.
+        // Simplificado: el debounce llama directamente a renderBiblioteca.
+        const _debouncedBiblioteca = debounce(() => renderBiblioteca(), 180);
         function renderBiblioteca() {
-            const q = document.getElementById('busqueda-biblioteca').value.toLowerCase();
+            const q = (document.getElementById('busqueda-biblioteca')?.value || '').toLowerCase();
             const cont = document.getElementById('contenedor-biblioteca');
+            if (!cont) return;
             cont.innerHTML = bibliotecaLesiones
                 .filter(l => l.n.toLowerCase().includes(q) || l.z.toLowerCase().includes(q))
                 .map(l => `
@@ -4625,7 +4581,7 @@ function renderPacientes() { renderLista(); }
         sexo: payload.sexo, deporte: payload.deporte, emergencia: payload.emergencia,
         telefono: payload.telefono, diag: payload.diagnostico, zona: payload.zona,
         valoracion: payload.valoracion, evoluciones: [], rts: null,
-        fotosClincias: [], ejerciciosHoja: [], estado: 'activo', status: 'activo',
+        fotosClinicas: [], ejerciciosHoja: [], estado: 'activo', status: 'activo',
         foto: null, objetivos: [], _supaId: data.id
     };
     pacientes.unshift(newP);
@@ -4710,8 +4666,9 @@ function renderPacientes() { renderLista(); }
         }
 
         function verDetalle(id) {
-            currentId = id;
-            const p = pacientes.find(x => x.id === id);
+            currentId = String(id); // FIX: normalizar siempre a String
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p) { showToast('Paciente no encontrado.', true); return; } // FIX: guard vs crash
             document.getElementById('p-nombre').innerText = p.nombre;
             document.getElementById('p-deporte-tag').innerText = p.deporte;
             document.getElementById('p-edad').innerText = p.edad + " AÑOS";
@@ -4768,7 +4725,7 @@ function renderPacientes() { renderLista(); }
             renderSesiones();
             renderObjetivos();
             renderRTS();
-            renderFotosClinnicas();
+            renderFotosClinicas();
             renderHojaEjercicios();
             updateChartEvolucion();
             showSection('detalle-paciente');
@@ -4779,7 +4736,7 @@ function renderPacientes() { renderLista(); }
             const eva = parseInt(document.getElementById('s-eva').value);
             if(isNaN(eva)) { showToast("❌ Ingresa un valor EVA primero.", true); return; }
             
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const plan = MotorClinico.generarPlan(p, eva);
             
             const display = document.getElementById('display-plan-ia');
@@ -4814,7 +4771,7 @@ function renderPacientes() { renderLista(); }
         async function exportarPlanIAaHoja() {
             const plan = window._lastIAPlan;
             if (!plan) return;
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             if (!p.ejerciciosHoja) p.ejerciciosHoja = [];
             plan.ejercicios.forEach(ej => {
@@ -4833,7 +4790,7 @@ function renderPacientes() { renderLista(); }
         }
 
         async function agregarSesion() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const evaVal = parseInt(document.getElementById('s-eva').value);
             if (isNaN(evaVal) || evaVal < 0 || evaVal > 10) {
                 showToast("❌ EVA debe ser un número entre 0 y 10.", true);
@@ -4894,7 +4851,8 @@ function renderPacientes() { renderLista(); }
         }
 
         function renderSesiones() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p) return; // FIX: guard vs crash si no hay paciente activo
             const cont = document.getElementById('sesiones-container');
             if (!p.evoluciones || p.evoluciones.length === 0) {
                 cont.innerHTML = '<div class="text-center py-12 text-slate-400"><p class="font-black text-sm uppercase tracking-widest">Sin sesiones registradas</p><p class="text-xs mt-2">Agrega la primera sesión usando el formulario de arriba</p></div>';
@@ -4924,7 +4882,7 @@ function renderPacientes() { renderLista(); }
         }
 
         async function eliminarSesion(idx) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             if (!confirm(`¿Eliminar la sesión del ${p.evoluciones[idx].fecha}?`)) return;
             p.evoluciones.splice(idx, 1);
@@ -5064,7 +5022,7 @@ async function updateDashboard() {
 }
 
         function updateChartEvolucion() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const canvas = document.getElementById('chartEvolucion');
             if(!p || !p.evoluciones.length || !canvas) return;
             const evos = [...p.evoluciones].reverse();
@@ -5103,12 +5061,12 @@ async function updateDashboard() {
         }
 
         function eliminarPaciente() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             document.getElementById('modal-nombre-paciente').innerText = p.nombre;
             document.getElementById('modal-confirm-btn').onclick = async function() {
                 try { await sb.from('pacientes').delete().eq('id', currentId); } catch(e) { console.error('[JelianFT] Error eliminando:', e.message); }
-                pacientes = pacientes.filter(x => x.id !== currentId);
+                pacientes = pacientes.filter(x => String(x.id) !== String(currentId));
                 cerrarModal();
                 showSection('lista-pacientes');
                 showToast("✓ Atleta dado de alta correctamente.");
@@ -5164,7 +5122,7 @@ async function updateDashboard() {
         // EXPORTAR CSV INDIVIDUAL (paciente)
         // ============================================================
         function exportarCSVPaciente() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const header = 'Fecha,EVA,Métrica,RPE,PSFS,Técnicas,Notas\n';
             const filas = (p.evoluciones || []).map(s =>
@@ -5370,7 +5328,7 @@ async function updateDashboard() {
             return `<span class="status-badge status-${s}">${STATUS_LABELS[s] || s}</span>`;
         }
         async function cambiarStatus(id) {
-            const p = pacientes.find(x => x.id === id);
+            const p = pacientes.find(x => String(x.id) === String(id));
             if (!p) return;
             const opts = Object.keys(STATUS_LABELS);
             const currentStatus = p.status || p.estado || 'activo';
@@ -5393,7 +5351,7 @@ async function updateDashboard() {
             if (!file) return;
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const p = pacientes.find(x => x.id === currentId);
+                const p = pacientes.find(x => String(x.id) === String(currentId));
                 if (!p) return;
                 p.foto = e.target.result;
                 await save();
@@ -5416,7 +5374,7 @@ async function updateDashboard() {
         // OBJECTIVES
         // ============================================================
         async function addObjetivo() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const texto = document.getElementById('obj-texto').value.trim();
             const evaObj = parseInt(document.getElementById('obj-eva').value);
@@ -5432,14 +5390,14 @@ async function updateDashboard() {
             showToast("✓ Objetivo guardado.");
         }
         async function toggleObjetivo(idx) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.objetivos) return;
             p.objetivos[idx].completado = !p.objetivos[idx].completado;
             await save();
             renderObjetivos();
         }
         function renderObjetivos() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const cont = document.getElementById('objetivos-list');
             if (!cont) return;
             if (!p || !p.objetivos || p.objetivos.length === 0) {
@@ -5489,9 +5447,10 @@ async function updateDashboard() {
         // EXPORT PDF (print-based)
         // ============================================================
         function exportarPDF() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const printWin = window.open('', '_blank');
+            if (!printWin) { showToast('❌ Habilita las ventanas emergentes para imprimir.', true); return; }
             const evosHTML = p.evoluciones.map(s => `
                 <tr>
                     <td style="padding:8px;border-bottom:1px solid #f1f5f9">${s.fecha}</td>
@@ -5720,7 +5679,7 @@ async function updateDashboard() {
                             <p class="text-[10px] text-slate-400">${c.tipo}</p>
                         </div>
                     </div>
-                    <button onclick="eliminarCita('${c.fecha}',${i})" class="text-rose-400 hover:text-rose-600 text-xs font-black">✕</button>
+                    <button onclick="eliminarCita('${c.id}')" class="text-rose-400 hover:text-rose-600 text-xs font-black">✕</button>
                 </div>`).join('');
         }
 
@@ -5757,19 +5716,17 @@ async function updateDashboard() {
             showToast('✓ Cita guardada.');
         }
 
-        async function eliminarCita(fecha, idx) {
-            const todas = await getCitas();
-            const citasDelDia = todas.filter(c => c.fecha === fecha);
-            const toDelete = citasDelDia[idx];
-            if (!toDelete || !toDelete.id) return;
+        async function eliminarCita(citaId) {
+            // FIX: elimina por ID directo — antes usaba índice posicional frágil que fallaba si se reordenaban las citas
+            if (!citaId) return;
             try {
-                const { error } = await sb.from('citas').delete().eq('id', toDelete.id);
+                const { error } = await sb.from('citas').delete().eq('id', citaId);
                 if (error) { showToast('Error eliminando cita: ' + _sbErrMsg(error), true); return; }
             } catch(e) {
                 showToast('Error de red al eliminar cita: ' + e.message, true); return;
             }
-            renderCalendario();
-            selDia(fecha);
+            await renderCalendario();
+            if (calDiaSeleccionado) selDia(calDiaSeleccionado);
             showToast('✓ Cita eliminada.');
         }
 
@@ -5950,6 +5907,7 @@ async function updateDashboard() {
                 return `<tr><td>${p.nombre}</td><td>${p.deporte}</td><td>${sesMes}</td><td>${evaActual}/10</td><td>${tendencia}</td><td>${STATUS_LABELS[p.status || p.estado]||'Activo'}</td></tr>`;
             }).join('');
             const win = window.open('','_blank');
+            if (!win) { showToast('❌ Habilita las ventanas emergentes para imprimir.', true); return; }
             const mes = new Date().toLocaleDateString('es-ES',{month:'long',year:'numeric'});
             win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte ${mes}</title>
             <style>body{font-family:'Segoe UI',sans-serif;padding:40px;color:#0f172a}h1{font-size:24px;font-weight:900;margin:0}h2{color:#6366f1;font-size:11px;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px}
@@ -5957,7 +5915,7 @@ async function updateDashboard() {
             td{padding:12px 10px;border-bottom:1px solid #f1f5f9;font-size:13px}.footer{margin-top:40px;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px;display:flex;justify-content:space-between}</style></head>
             <body><h2>Reporte Mensual</h2><h1>${mes}</h1>
             <table><thead><tr><th>Atleta</th><th>Deporte</th><th>Ses. Mes</th><th>EVA</th><th>Tendencia</th><th>Estado</th></tr></thead><tbody>${filas}</tbody></table>
-            <div class="footer"><span>Jelian FT Clinical Sport v135</span><span>${new Date().toLocaleDateString('es-ES')}</span></div></body></html>`);
+            <div class="footer"><span>Jelian FT Clinical Sport v136</span><span>${new Date().toLocaleDateString('es-ES')}</span></div></body></html>`);
             win.document.close(); win.print();
         }
 
@@ -6006,7 +5964,7 @@ async function updateDashboard() {
         // MODO KIOSK
         // ============================================================
         function openKiosk() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const eva = p.evoluciones[0]?.eva ?? 0;
             const color = eva > 6 ? '#ef4444' : eva > 3 ? '#f59e0b' : '#10b981';
@@ -6119,7 +6077,7 @@ async function updateDashboard() {
         // EDIT PATIENT MODAL
         // ============================================================
         function openEditModal() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             document.getElementById('edit-nombre').value = p.nombre || '';
             document.getElementById('edit-ci').value = p.ci || '';
@@ -6136,7 +6094,7 @@ async function updateDashboard() {
             document.getElementById('edit-modal-overlay').classList.remove('active');
         }
         async function guardarEdicion() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const nombre = document.getElementById('edit-nombre').value.trim();
             if (!nombre) { showToast('❌ El nombre no puede estar vacío.', true); return; }
@@ -6168,7 +6126,7 @@ async function updateDashboard() {
         ];
 
         function renderRTS() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             if (!p.rts) p.rts = RTS_DEFAULT_CRITERIOS.map(c => ({ ...c, cumplido: false }));
             const cont = document.getElementById('rts-criterios');
@@ -6201,7 +6159,7 @@ async function updateDashboard() {
             `).join('');
         }
         async function toggleRTS(idx) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.rts) return;
             p.rts[idx].cumplido = !p.rts[idx].cumplido;
             await save();
@@ -6210,7 +6168,7 @@ async function updateDashboard() {
         async function agregarCriterioRTS() {
             const texto = prompt("Escribe el nuevo criterio RTS:");
             if (!texto || !texto.trim()) return;
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             if (!p.rts) p.rts = [];
             p.rts.push({ texto: texto.trim(), tipo: 'manual', cumplido: false });
@@ -6219,7 +6177,7 @@ async function updateDashboard() {
             showToast('✓ Criterio RTS agregado.');
         }
         async function eliminarCriterioRTS(idx) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.rts) return;
             p.rts.splice(idx, 1);
             await save();
@@ -6266,13 +6224,13 @@ async function updateDashboard() {
 
         async function guardarFotoModal() {
             if (!_fotoTmpSrc) return;
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const fase = document.getElementById('modal-foto-fase').value;
             const zona = document.getElementById('modal-foto-zona').value.trim();
             const notas = document.getElementById('modal-foto-notas').value.trim();
-            if (!p.fotosClincias) p.fotosClincias = [];
-            p.fotosClincias.push({
+            if (!p.fotosClinicas) p.fotosClinicas = [];
+            p.fotosClinicas.push({
                 src: _fotoTmpSrc,
                 fecha: new Date().toISOString().split('T')[0],
                 fase,
@@ -6281,12 +6239,12 @@ async function updateDashboard() {
             });
             await save();
             cerrarModalFoto();
-            renderFotosClinnicas();
+            renderFotosClinicas();
             showToast('✓ Foto clínica guardada en Supabase.');
         }
 
         // Compatibilidad con handler antiguo (el input viejo en el HTML)
-        function agregarFotoClinnica(event) { abrirModalFoto(event); }
+        function agregarFotoClinica(event) { abrirModalFoto(event); }
 
         function filtrarFotos(fase) {
             _fotoFiltroActual = fase;
@@ -6296,7 +6254,7 @@ async function updateDashboard() {
             });
             event.target.classList.add('bg-indigo-600', 'text-white');
             event.target.classList.remove('bg-slate-100', 'text-slate-600');
-            renderFotosClinnicas();
+            renderFotosClinicas();
         }
 
         function _faseBadge(fase) {
@@ -6304,13 +6262,13 @@ async function updateDashboard() {
             return map[fase] || ['📷', 'bg-slate-100 text-slate-600'];
         }
 
-        function renderFotosClinnicas() {
-            const p = pacientes.find(x => x.id === currentId);
+        function renderFotosClinicas() {
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const grid = document.getElementById('fotos-clinicas-grid');
             const empty = document.getElementById('fotos-empty');
             if (!grid || !p) return;
-            const fotos = (p.fotosClincias || []).filter(f => _fotoFiltroActual === 'all' || f.fase === _fotoFiltroActual);
-            if (!p.fotosClincias || p.fotosClincias.length === 0) {
+            const fotos = (p.fotosClinicas || []).filter(f => _fotoFiltroActual === 'all' || f.fase === _fotoFiltroActual);
+            if (!p.fotosClinicas || p.fotosClinicas.length === 0) {
                 grid.innerHTML = '';
                 if (empty) empty.classList.remove('hidden');
                 return;
@@ -6321,7 +6279,7 @@ async function updateDashboard() {
                 return;
             }
             grid.innerHTML = fotos.map((f, i) => {
-                const realIdx = (p.fotosClincias || []).indexOf(f);
+                const realIdx = (p.fotosClinicas || []).indexOf(f);
                 const [faseIcon, faseCls] = _faseBadge(f.fase);
                 return `
                 <div class="relative group rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 hover:shadow-lg transition-all cursor-pointer" onclick="verFotoClinicaByIdx(${realIdx})">
@@ -6336,18 +6294,18 @@ async function updateDashboard() {
                         <p class="text-[10px] font-bold text-slate-700 truncate">${f.zona||''}</p>
                         ${f.notas ? `<p class="text-[9px] text-slate-400 truncate mt-0.5">${f.notas}</p>` : ''}
                     </div>
-                    <button onclick="event.stopPropagation();eliminarFotoClinnica(${realIdx})" class="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white text-xs rounded-full hidden group-hover:flex items-center justify-center font-black">✕</button>
+                    <button onclick="event.stopPropagation();eliminarFotoClinica(${realIdx})" class="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white text-xs rounded-full hidden group-hover:flex items-center justify-center font-black">✕</button>
                 </div>`;
             }).join('');
         }
 
-        async function eliminarFotoClinnica(idx) {
-            const p = pacientes.find(x => x.id === currentId);
-            if (!p || !p.fotosClincias) return;
+        async function eliminarFotoClinica(idx) {
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p || !p.fotosClinicas) return;
             if (!confirm('¿Eliminar esta foto?')) return;
-            p.fotosClincias.splice(idx, 1);
+            p.fotosClinicas.splice(idx, 1);
             await save();
-            renderFotosClinnicas();
+            renderFotosClinicas();
             showToast('Foto eliminada.');
         }
 
@@ -6360,29 +6318,29 @@ async function updateDashboard() {
         }
 
         function verFotoClinicaByIdx(idx) {
-            const p = pacientes.find(x => x.id === currentId);
-            if (!p || !p.fotosClincias || !p.fotosClincias[idx]) return;
-            verFotoClinica(p.fotosClincias[idx].src);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p || !p.fotosClinicas || !p.fotosClinicas[idx]) return;
+            verFotoClinica(p.fotosClinicas[idx].src);
         }
 
         function abrirComparativaFotos() {
-            const p = pacientes.find(x => x.id === currentId);
-            if (!p || !p.fotosClincias || p.fotosClincias.length === 0) {
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p || !p.fotosClinicas || p.fotosClinicas.length === 0) {
                 showToast('Sin fotos para comparar.', true); return;
             }
             const modal = document.getElementById('modal-comparativa');
             modal.classList.remove('hidden'); modal.classList.add('flex');
             const selAntes = document.getElementById('comp-sel-antes');
             const selDespues = document.getElementById('comp-sel-despues');
-            const opts = p.fotosClincias.map((f, i) => {
+            const opts = p.fotosClinicas.map((f, i) => {
                 const [icon] = _faseBadge(f.fase);
                 return `<option value="${i}">${icon} ${f.fecha} — ${f.zona||f.fase||'foto'}</option>`;
             }).join('');
             selAntes.innerHTML = `<option value="">-- Seleccionar --</option>` + opts;
             selDespues.innerHTML = `<option value="">-- Seleccionar --</option>` + opts;
             // Auto-seleccionar inicial y más reciente
-            const inicial = p.fotosClincias.findIndex(f => f.fase === 'inicial');
-            const alta = p.fotosClincias.map((f,i)=>({...f,i})).filter(f=>f.fase==='alta'||f.fase==='progreso').pop();
+            const inicial = p.fotosClinicas.findIndex(f => f.fase === 'inicial');
+            const alta = p.fotosClinicas.map((f,i)=>({...f,i})).filter(f=>f.fase==='alta'||f.fase==='progreso').pop();
             if (inicial >= 0) selAntes.value = inicial;
             if (alta) selDespues.value = alta.i;
             actualizarComparativa();
@@ -6394,7 +6352,7 @@ async function updateDashboard() {
         }
 
         function actualizarComparativa() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const idxA = document.getElementById('comp-sel-antes').value;
             const idxD = document.getElementById('comp-sel-despues').value;
@@ -6404,19 +6362,19 @@ async function updateDashboard() {
             const emD = document.getElementById('comp-empty-despues');
             const notaA = document.getElementById('comp-nota-antes');
             const notaD = document.getElementById('comp-nota-despues');
-            if (idxA !== '' && p.fotosClincias[idxA]) {
-                imgA.src = p.fotosClincias[idxA].src; imgA.classList.remove('hidden'); emA.classList.add('hidden');
-                notaA.textContent = p.fotosClincias[idxA].notas || '';
+            if (idxA !== '' && p.fotosClinicas[idxA]) {
+                imgA.src = p.fotosClinicas[idxA].src; imgA.classList.remove('hidden'); emA.classList.add('hidden');
+                notaA.textContent = p.fotosClinicas[idxA].notas || '';
             } else { imgA.classList.add('hidden'); emA.classList.remove('hidden'); notaA.textContent = ''; }
-            if (idxD !== '' && p.fotosClincias[idxD]) {
-                imgD.src = p.fotosClincias[idxD].src; imgD.classList.remove('hidden'); emD.classList.add('hidden');
-                notaD.textContent = p.fotosClincias[idxD].notas || '';
+            if (idxD !== '' && p.fotosClinicas[idxD]) {
+                imgD.src = p.fotosClinicas[idxD].src; imgD.classList.remove('hidden'); emD.classList.add('hidden');
+                notaD.textContent = p.fotosClinicas[idxD].notas || '';
             } else { imgD.classList.add('hidden'); emD.classList.remove('hidden'); notaD.textContent = ''; }
             // Calcular días entre fotos
             const evDiv = document.getElementById('comp-evolucion');
-            if (idxA !== '' && idxD !== '' && p.fotosClincias[idxA] && p.fotosClincias[idxD]) {
-                const d1 = new Date(p.fotosClincias[idxA].fecha);
-                const d2 = new Date(p.fotosClincias[idxD].fecha);
+            if (idxA !== '' && idxD !== '' && p.fotosClinicas[idxA] && p.fotosClinicas[idxD]) {
+                const d1 = new Date(p.fotosClinicas[idxA].fecha);
+                const d2 = new Date(p.fotosClinicas[idxD].fecha);
                 const dias = Math.abs(Math.round((d2-d1)/(1000*60*60*24)));
                 document.getElementById('comp-dias').textContent = `${dias} día${dias!==1?'s':''} de evolución entre las fotos seleccionadas`;
                 evDiv.classList.remove('hidden');
@@ -6427,7 +6385,7 @@ async function updateDashboard() {
         // HOJA DE EJERCICIOS ESTRUCTURADA
         // ============================================================
         async function agregarEjercicioManual() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             if (!p.ejerciciosHoja) p.ejerciciosHoja = [];
             p.ejerciciosHoja.push({ nombre: 'Nuevo ejercicio', series: 3, reps: '10', carga: '', descanso: '60s', descripcion: '' });
@@ -6435,7 +6393,7 @@ async function updateDashboard() {
             renderHojaEjercicios();
         }
         function renderHojaEjercicios() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const cont = document.getElementById('ejercicios-personalizados-container');
             if (!cont || !p) return;
             if (!p.ejerciciosHoja || p.ejerciciosHoja.length === 0) {
@@ -6459,23 +6417,24 @@ async function updateDashboard() {
             `).join('');
         }
         async function updateEjercicio(idx, campo, valor) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.ejerciciosHoja) return;
             p.ejerciciosHoja[idx][campo] = campo === 'series' ? parseInt(valor) : valor;
             await save();
         }
         async function eliminarEjercicio(idx) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.ejerciciosHoja) return;
             p.ejerciciosHoja.splice(idx, 1);
             await save();
             renderHojaEjercicios();
         }
         function imprimirHojaEjercicios() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const ejercicios = p.ejerciciosHoja || [];
             const win = window.open('', '_blank');
+            if (!win) { showToast('❌ Habilita las ventanas emergentes para imprimir.', true); return; }
             win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hoja de Ejercicios - ${p.nombre}</title>
             <style>
                 body{font-family:'Segoe UI',sans-serif;padding:40px;color:#0f172a;max-width:800px;margin:0 auto}
@@ -6503,7 +6462,7 @@ async function updateDashboard() {
                     <div class="notas-box">Notas del paciente:</div>
                 </div>
             `).join('') : '<p style="color:#94a3b8;font-style:italic">Sin ejercicios asignados.</p>'}
-            <div class="footer"><span>Jelian FT Clinical Sport v135</span><span>${new Date().toLocaleDateString('es-ES')}</span></div>
+            <div class="footer"><span>Jelian FT Clinical Sport v136</span><span>${new Date().toLocaleDateString('es-ES')}</span></div>
             </body></html>`);
             win.document.close();
             win.print();
@@ -7778,6 +7737,7 @@ async function updateDashboard() {
             const el = document.getElementById(previewId);
             if (!el) return;
             const w = window.open('', '_blank', 'width=800,height=900');
+            if (!w) { showToast('❌ Habilita las ventanas emergentes para imprimir.', true); return; }
             w.document.write('<html><head><title>Jelian FT - Documento</title><style>body{margin:32px;font-family:Georgia,serif;line-height:1.7;color:#1e293b}table{border-collapse:collapse;width:100%}td{border:1px solid #e2e8f0;padding:8px 12px}</style></head><body>' + el.innerHTML + '</body></html>');
             w.document.close();
             w.focus();
@@ -7857,9 +7817,14 @@ async function updateDashboard() {
         function marcarPagado(id) { const f=facturas.find(x=>x.id===id); if(f){f.estado='pagado';saveFacturas();renderFacturas();showToast('Marcado como pagado');} }
         function eliminarFactura(id) { if(!confirm('¿Eliminar esta factura?'))return; facturas=facturas.filter(f=>f.id!==id);saveFacturas();renderFacturas(); }
         function exportarFacturasCSV() {
-            const header='Fecha,Paciente,Tipo,Monto,Estado,Metodo,Notas\n';
-            const rows=facturas.map(f=>f.fecha+',"'+f.pacNombre+'","'+f.tipo+'",'+f.monto+','+f.estado+','+f.metodo+',"'+(f.notas||'')+'"').join('\n');
-            const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([header+rows],{type:'text/csv'}));a.download='facturas_jelianft.csv';a.click();
+            // FIX: CSV injection prevention + BOM para Excel UTF-8
+            const _csvSafe = v => { const s = String(v == null ? '' : v); return /^[=+\-@\t\r]/.test(s) ? "'" + s : s; };
+            const header = 'Fecha,Paciente,Tipo,Monto,Estado,Metodo,Notas\n';
+            const rows = facturas.map(f => [f.fecha, f.pacNombre, f.tipo, f.monto, f.estado, f.metodo, f.notas||'']
+                .map(v => '"' + _csvSafe(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\uFEFF' + header + rows], {type: 'text/csv;charset=utf-8;'}));
+            a.download = 'facturas_jelianft.csv'; a.click();
         }
 
         // ============================================================
@@ -8033,7 +7998,7 @@ async function updateDashboard() {
             let total=0,count=0;
             OSW_ITEMS.forEach((_,i)=>{const sel=document.querySelector('input[name=osw'+i+']:checked');if(sel){total+=parseInt(sel.value);count++;}});
             if(count<10){showToast('Responde todas las preguntas',true);return;}
-            const pct=(total/50)*100;
+            const pct = count > 0 ? (total / (count * 5)) * 100 : 0; // FIX: divisor correcto ODI (preguntas respondidas × 5)
             document.getElementById('oswestry-resultado').classList.remove('hidden');
             document.getElementById('oswestry-valor').textContent=pct.toFixed(0)+'%';
             let nivel,desc,col;
@@ -8065,150 +8030,15 @@ async function updateDashboard() {
             document.getElementById('dash-nivel').textContent=nivel;document.getElementById('dash-nivel').className='text-sm font-black '+col;
         }
 
-        // ============================================================
-        // QR PACIENTE
-        // ============================================================
-        function renderVistaPaciente(){
-            const sel=document.getElementById('qr-paciente');if(!sel)return;
-            const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>';
-            (pacientes||[]).forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.nombre;sel.appendChild(o);});
-            if(prev)sel.value=prev;
-        }
-        // Construye el texto que se codifica en el QR (nombre, diagnóstico, ejercicios)
-        function _buildQRText(p){
-            const ejs=p.ejerciciosHoja||[];
-            let t='JELIAN FT - PLAN DEL PACIENTE\n';
-            t+='Nombre: '+p.nombre+'\n';
-            if(p.diag)t+='Diagnostico: '+p.diag+'\n';
-            if(p.deporte)t+='Deporte: '+p.deporte+'\n';
-            if(ejs.length){
-                t+='\nEJERCICIOS:\n';
-                ejs.forEach((e,i)=>{
-                    t+=(i+1)+'. '+(e.nombre||'Ejercicio')+'\n';
-                    if(e.series)t+='   '+e.series+' series x '+e.reps+' reps\n';
-                    if(e.carga)t+='   Carga: '+e.carga+'\n';
-                    if(e.descripcion)t+='   '+e.descripcion+'\n';
-                });
-            }
-            t+='\nJelian FT Clinical Sport';
-            return t;
-        }
 
-        // Genera un SVG de QR real usando qrcode-generator (ISO 18004 compliant)
-        function _renderQRReal(container, text){
-            container.innerHTML='';
-            try{
-                // Nivel M (15% corrección de errores) — buen balance legibilidad/capacidad
-                const qr=qrcode(0,'M');
-                qr.addData(text);
-                qr.make();
-                const n=qr.getModuleCount();
-                const cell=7; // px por módulo
-                const margin=4; // módulos de quiet zone
-                const total=(n+margin*2)*cell;
-                let svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+total+'" height="'+total+'"'
-                    +' viewBox="0 0 '+total+' '+total+'" style="display:block;border-radius:10px;">';
-                svg+='<rect width="'+total+'" height="'+total+'" fill="white"/>';
-                for(let r=0;r<n;r++){
-                    for(let c=0;c<n;c++){
-                        if(qr.isDark(r,c)){
-                            const x=(c+margin)*cell;
-                            const y=(r+margin)*cell;
-                            svg+='<rect x="'+x+'" y="'+y+'" width="'+cell+'" height="'+cell+'" fill="#0f172a"/>';
-                        }
-                    }
-                }
-                svg+='</svg>';
-                container.innerHTML=svg;
-            }catch(e){
-                // Si el texto es demasiado largo, acortar y reintentar
-                if(text.length>300){
-                    _renderQRReal(container, text.substring(0,300));
-                }else{
-                    container.innerHTML='<p class="text-xs text-rose-500 p-4">Error generando QR: '+e.message+'</p>';
-                }
-            }
-        }
 
-        function generarQR(){
-            const pacId=document.getElementById('qr-paciente').value;
-            if(!pacId){document.getElementById('qr-resultado').classList.add('hidden');return;}
-            const p=(pacientes||[]).find(x=>String(x.id)===String(pacId));if(!p)return;
-            document.getElementById('qr-resultado').classList.remove('hidden');
-            document.getElementById('qr-nombre-label').textContent=p.nombre;
-            // Preview visual del plan
-            const ejercicios=(p.ejerciciosHoja||[]),sesiones=(p.valoracion||[]).slice(-3);
-            const preview=document.getElementById('qr-plan-preview');
-            preview.innerHTML='<div class="bg-indigo-50 rounded-xl p-3 mb-2"><p class="text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-1">Paciente</p><p class="font-bold text-slate-900 text-sm">'+escHtml(p.nombre)+'</p>'+(p.diag?'<p class="text-xs text-slate-500">'+escHtml(p.diag)+'</p>':'')+'</div>'
-                +(ejercicios.length?'<div class="mb-2"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Plan de Ejercicios</p>'+ejercicios.map(e=>'<div class="bg-white rounded-xl p-3 mb-1 border border-slate-100"><p class="font-bold text-xs text-slate-900">'+escHtml(e.nombre||e.ejercicio||'Ejercicio')+'</p>'+(e.series?'<p class="text-[10px] text-slate-500">'+e.series+' series · '+e.reps+' reps'+(e.notas?' · '+escHtml(e.notas):'')+'</p>':'')+'</div>').join('')+'</div>':'<p class="text-xs text-slate-400 text-center py-4">Sin ejercicios en el plan</p>')
-                +(sesiones.length?'<div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Últimas Sesiones</p>'+[...sesiones].reverse().map(s=>'<div class="bg-white rounded-xl p-3 mb-1 border border-slate-100"><p class="text-[10px] text-slate-500">'+(s.fecha||'')+' · EVA: '+(s.eva??'—')+' · RPE: '+(s.rpe??'—')+'</p>'+(s.notas?'<p class="text-xs text-slate-600 mt-0.5">'+escHtml(s.notas)+'</p>':'')+'</div>').join('')+'</div>':'');
-            // QR real y escaneable
-            const canvasWrap=document.getElementById('qr-canvas-wrap');
-            _renderQRReal(canvasWrap, _buildQRText(p));
-        }
-
-        function imprimirQR(){
-            const pac=document.getElementById('qr-paciente').value;
-            const p=(pacientes||[]).find(x=>String(x.id)===String(pac));
-            if(!p){showToast('Selecciona un paciente primero.',true);return;}
-            const w=window.open('','_blank','width=620,height=860');
-            if(!w){showToast('❌ Habilita ventanas emergentes para imprimir.',true);return;}
-            const qrSVG=document.getElementById('qr-canvas-wrap').innerHTML;
-            const planHTML=document.getElementById('qr-plan-preview').innerHTML;
-            w.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>QR Plan - '+escHtml(p.nombre)+'</title>'
-                +'<style>*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#1e293b;background:white}'
-                +'.page{max-width:560px;margin:0 auto;padding:32px}'
-                +'.header{border-bottom:3px solid #6366f1;padding-bottom:16px;margin-bottom:24px}'
-                +'.brand{font-size:11px;font-weight:900;color:#6366f1;letter-spacing:3px;text-transform:uppercase}'
-                +'.pac-name{font-size:22px;font-weight:900;color:#0f172a;margin:4px 0 0}'
-                +'.qr-block{display:flex;flex-direction:column;align-items:center;background:#f8fafc;border:2px solid #e0e7ff;border-radius:20px;padding:28px;margin-bottom:24px}'
-                +'.qr-hint{font-size:12px;color:#64748b;margin-top:14px;text-align:center;max-width:260px;line-height:1.5}'
-                +'.plan-title{font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}'
-                +'.footer{margin-top:32px;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px;display:flex;justify-content:space-between}'
-                +'@media print{.page{padding:16px}}'
-                +'</style></head><body>'
-                +'<div class="page">'
-                +'<div class="header"><div class="brand">Jelian FT · Clinical Sport</div><div class="pac-name">'+escHtml(p.nombre)+'</div></div>'
-                +'<div class="qr-block">'+qrSVG+'<p class="qr-hint">📱 Escanea con la cámara de tu celular para ver tu plan de ejercicios</p></div>'
-                +'<p class="plan-title">Resumen del plan</p>'
-                +planHTML
-                +'<div class="footer"><span>Jelian FT Clinical Sport v136</span><span>'+new Date().toLocaleDateString('es-ES')+'</span></div>'
-                +'</div></body></html>');
-            w.document.close();w.focus();setTimeout(()=>w.print(),500);
-        }
-
-        // ============================================================
-        // RECORDATORIOS DE CITAS
-        // ============================================================
-        function activarNotificacionesCitas(){
-            if(!('Notification' in window)){showToast('Tu navegador no soporta notificaciones',true);return;}
-            if(Notification.permission==='granted'){programarRecordatorios();showToast('Recordatorios activados ✓');}
-            else if(Notification.permission!=='denied'){
-                Notification.requestPermission().then(perm=>{
-                    if(perm==='granted'){programarRecordatorios();showToast('Recordatorios activados ✓');}
-                    else showToast('Permiso de notificaciones denegado',true);
-                });
-            }else showToast('Notificaciones bloqueadas. Actívalas en la config. del navegador.',true);
-        }
-        function programarRecordatorios(){
-            if(Notification.permission!=='granted')return;
-            const hoy=new Date(),manana=new Date(hoy);manana.setDate(hoy.getDate()+1);
-            const mananaStr=manana.toISOString().split('T')[0];
-            const hoyStr=hoy.toISOString().split('T')[0];
-            const citasM=(citas||[]).filter(c=>c.fecha===mananaStr);
-            const citasH=(citas||[]).filter(c=>c.fecha===hoyStr);
-            setTimeout(()=>new Notification('Jelian FT — Citas mañana',{body:citasM.length?'Tienes '+citasM.length+' cita(s): '+citasM.map(c=>c.pacNombre||c.nombre||'Paciente').join(', '):'Sin citas mañana.',icon:'icon-512.png'}),1000);
-            if(citasH.length)setTimeout(()=>new Notification('Jelian FT — Citas hoy',{body:citasH.length+' cita(s) hoy: '+citasH.map(c=>c.pacNombre||c.nombre||'Paciente').join(', '),icon:'icon-512.png'}),2500);
-        }
-
-        // Hook showSection para inicializar módulos nuevos
+        // Hook showSection para inicializar módulos al navegar
         const _origShowSection2 = showSection;
         showSection = function(id){
             _origShowSection2(id);
             if(id==='facturacion'){renderFacturas();_poblarSelectPacientes('fact-filtro-paciente');}
             if(id==='inventario')renderInventario();
             if(id==='calculadoras')calcTab('imc');
-            if(id==='vista-paciente')renderVistaPaciente();
         };
 
     </script>
