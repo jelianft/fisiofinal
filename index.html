@@ -2260,7 +2260,11 @@ const MAPEO_ZONAS = {
     "Rodilla": ["Condromalacia rotuliana", "Síndrome patelofemoral", "Tendinitis rotuliana", "Lesión LCA", "Lesión LCP", "Meniscopatía medial", "Meniscopatía lateral", "Bursitis prerrotuliana", "Síndrome de banda iliotibial", "Artrosis temprana de rodilla", "Contractura cuádriceps", "Fractura por estrés fémur", "Contusión muscular profunda", "Rodilla del saltador", "Rodilla del corredor", "Contusión ósea", "Contusión muscular", "Desgarro grado I", "Desgarro grado II", "Desgarro grado III", "Desequilibrios musculares", "Desalineación biomecánica", "Bloqueo articular", "Recaída muscular", "Síndrome de Osgood-Schlatter", "Síndrome de Sinding-Larsen-Johansson", "Condropatía femoral", "Neuropatía del ciático poplíteo externo (CPE)", "Calambres musculares", "DOMS", "Edema óseo", "Pinzamiento articular", "Sobrecarga cuádriceps", "Síndrome de Osgood-Schlatter", "Condromalacia rotuliana", "Síndrome de Sinding-Larsen-Johansson", "Síndrome de banda iliotibial (ITBS)", "Lesión LCP (ligamento cruzado posterior)", "Meniscopatía medial", "Meniscopatía lateral", "Bursitis prerrotuliana", "Artrosis temprana de rodilla", "Rodilla del saltador (tendinopatía rotuliana)", "Rodilla del corredor (síndrome patelofemoral)", "Edema óseo de rodilla", "Pinzamiento articular de rodilla", "Contractura de cuádriceps", "Desequilibrios musculares (rodilla)", "Rehabilitación post-LCA (6 meses)", "Síndrome del corredor (ITBS avanzado)"],
     "Hombro": [
       "Síndrome de impingement subacromial (SIS)",
-      "Manguito rotador — tendinopatía",
+      "Manguito rotador — tendinopatía global (todos los tendones)",
+      "Supraespinoso — tendinopatía (arco doloroso)",
+      "Infraespinoso — tendinopatía y debilidad de RE",
+      "Subescapular — tendinopatía y debilidad de RI",
+      "Redondo menor — tendinopatía (RE a 90° ABD)",
       "Rotura del supraespinoso (parcial — cara articular)",
       "Rotura del supraespinoso (total)",
       "Rotura del manguito rotador (parcial)",
@@ -2534,25 +2538,59 @@ const MAPEO_ZONAS = {
       rts:"Noble negativo · Cadencia >170 · Carrera 10km sin dolor · Control valgo en aterrizaje"},
 
     // ===== 💪 HOMBRO =====
-    { n:"Manguito rotador", z:"Hombro",
-      e:["Test de Jobe","Full Can Test","Test de Patte","Test de Gerber","RMN","Ecografía"],
-      p:"F1(0-4sem): Isométricos plano escapular, control escapular.\nF2(4-10sem): Fortalecimiento concéntrico, rotadores externos.\nF3(10-20sem): Overhead progresivo, retorno.",
-      fases:[
-        {f:"Fase 1 — Control dolor (0-4 sem)",ejs:["Isométrico rotación externa en neutro 5x10seg","Péndulos de Codman 2x5min","Retracción escapular con banda 3x15","Crioterapia post-sesión"]},
-        {f:"Fase 2 — Fortalecimiento (4-10 sem)",ejs:["Rotación externa con banda plano escapular 3x15","Full can plano escapular 3x15","Remo con cable 3x15","Push up plus (serrato) 3x15"]},
-        {f:"Fase 3 — Overhead (10-20 sem)",ejs:["Press militar con control escapular 4x10","Pulldown plano escapular 4x10","Ejercicios bola medicinal overhead","Gestos deportivos (lanzamiento progresivo)"]}
-      ],
-      rts:"Fuerza RE/RI >66% · Empty can negativo · Overhead sin dolor · Lanzamiento sin restricción"},
+    // ── MANGUITO ROTADOR — Los 4 músculos + conjunto ──────────────────────────
 
-    { n:"Tendinitis supraespinoso", z:"Hombro",
-      e:["Test de Neer","Test de Kennedy-Hawkins","Test de Jobe","Ecografía","Arco doloroso 60-120°"],
-      p:"F1: Isométricos en plano escapular, analgesia.\nF2: Excéntricos, control escapular.\nF3: Overhead progresivo.",
+    { n:"Manguito rotador — tendinopatía global (todos los tendones)", z:"Hombro",
+      e:["Test de Jobe/Empty Can (supraespinoso)","Full Can Test","Test de Patte (infraespinoso)","Test de Gerber/Lift-off (subescapular)","Test de Hornblower (redondo menor)","Ecografía dinámica 4 tendones","RMN hombro con gadolinio"],
+      p:"F1(0-4sem): Descarga, isométricos indoloros por músculo.\nF2(4-10sem): Excéntrico individualizado, control escapular.\nF3(10-20sem): Concéntrico-excéntrico, overhead, retorno.",
       fases:[
-        {f:"Fase 1 — Analgesia (0-2 sem)",ejs:["Isométrico abducción en plano escapular 5x10seg","Péndulos Codman 3x3min","TENS y ultrasonido terapéutico","Evitar abducción sobre 90°"]},
-        {f:"Fase 2 — Excéntrico (2-6 sem)",ejs:["Full can excéntrico con mancuerna 3x15","Rotación externa con banda 3x15","Remo alto 3x12","Control escapular: retracción y depresión"]},
-        {f:"Fase 3 — Overhead (6-12 sem)",ejs:["Press overhead progresivo 4x10","Pulldown en V 4x10","Ejercicios funcionales overhead","Retorno deportivo progresivo"]}
+        {f:"Fase 1 — Descarga y analgesia (0-4 sem)",ejs:["Isométrico supraespinoso (empty can a 30°) 3x10x45seg","Isométrico infraespinoso (RE en neutro) 3x10x45seg","Isométrico subescapular (RI en neutro) 3x10x45seg","Isométrico redondo menor (RE a 90° ABD) 3x10x45seg","Péndulos Codman 3x5min","Crioterapia 15min x3/día","Control escapular básico"]},
+        {f:"Fase 2 — Excéntrico por músculo (4-10 sem)",ejs:["Excéntrico supraespinoso: full can bajada lenta 4x15","Excéntrico infraespinoso: RE lateral decúbito 4x15","Excéntrico subescapular: RI con banda 4x15","RE a 90° ABD (redondo menor) con banda 3x15","Serrato anterior: serratus punch 3x15","Trapecio inferior: Y en decúbito prono 3x15","Remo horizontal con RE final 3x15"]},
+        {f:"Fase 3 — Carga completa y overhead (10-20 sem)",ejs:["Full can con mancuerna 4x12","RE con mancuerna en plano escapular 4x12","Press en plano escapular 4x10","Remo con supinación 4x10","Diagonal D2 con banda 3x15","Ejercicios isocinéticos RE/RI","Overhead progresivo hasta rango completo"]}
       ],
-      rts:"Neer y Hawkins negativos · Abducción completa sin dolor · Fuerza ≥90%"},
+      rts:"Ratio RE/RI >66% · Jobe, Patte, Lift-off, Hornblower negativos · Overhead sin dolor · Fuerza ≥85%"},
+
+    { n:"Supraespinoso — tendinopatía (arco doloroso)", z:"Hombro",
+      e:["Test de Jobe (Empty Can a 90°/30°)","Full Can Test","Test de Neer","Test de Hawkins-Kennedy","Arco doloroso 60°-120°","Ecografía (engrosamiento, hipoecogenicidad)","RMN (señal aumentada sin rotura)"],
+      p:"F1(0-3sem): Analgesia, isométrico indoloro.\nF2(3-8sem): Excéntrico supraespinoso, espacio subacromial.\nF3(8-16sem): Full can progresivo, overhead.",
+      fases:[
+        {f:"Fase 1 — Analgesia (0-3 sem)",ejs:["Isométrico abducción 30° (empty can) 3x10x45seg","Péndulos Codman sin carga 3x5min","Crioterapia 15min x3","TENS intereferencial subacromial","Corrección postural escapular"]},
+        {f:"Fase 2 — Excéntrico (3-8 sem)",ejs:["Full can excéntrico con mancuerna ligera 4x15 (bajar 4seg)","Elevación lateral excéntrica en plano escapular 4x15","Depresión escapular activa con polea 3x15","RE con banda en neutro 3x15","Wall slides 3x12"]},
+        {f:"Fase 3 — Carga y overhead (8-16 sem)",ejs:["Full can con carga progresiva 4x12","Elevación plano escapular hasta 150° 4x12","Press militar controlado 4x10","Pulldown con control escapular 4x10","Gestos deportivos específicos"]}
+      ],
+      rts:"Jobe y Hawkins negativos · Arco completo sin dolor · Fuerza abducción ≥85%"},
+
+    { n:"Infraespinoso — tendinopatía y debilidad de RE", z:"Hombro",
+      e:["Test de Patte (RE a 90° ABD)","Test de Hornblower (RE a 90° codo flexo)","Fuerza RE isocinética","Ecografía infraespinoso","RMN (señal, atrofia)","Palpación fosa infraespinosa"],
+      p:"F1(0-3sem): Isométrico RE, descarga.\nF2(3-8sem): Excéntrico RE, diagonal D2.\nF3(8-16sem): Potencia RE, lanzamiento.",
+      fases:[
+        {f:"Fase 1 — Isométrico RE (0-3 sem)",ejs:["Isométrico RE en neutro contra pared 3x10x45seg","Isométrico RE a 45° ABD 3x10x45seg","Crioterapia fosa infraespinosa","Evitar carga excéntrica máxima inicial","Péndulos Codman 2x5min"]},
+        {f:"Fase 2 — Excéntrico RE (3-8 sem)",ejs:["Side-lying RE excéntrico con mancuerna 4x15 (bajar 4seg)","RE con banda a 0° excéntrico 4x15","Diagonal D2 con banda 3x15","Remo con RE final 3x15","RE a 90° ABD con banda 3x15"]},
+        {f:"Fase 3 — Potencia (8-16 sem)",ejs:["RE a 90° con carga progresiva 4x12","Test isocinético RE (objetivo >66% RI)","Pliometría RE con pelota medicinal 3x10","Lanzamiento progresivo si deportista","Análisis biomecánico RE en gesto deportivo"]}
+      ],
+      rts:"Patte negativo · RE/RI ratio >66% · Pliometría sin dolor · Lanzamiento completo"},
+
+    { n:"Subescapular — tendinopatía y debilidad de RI", z:"Hombro",
+      e:["Test de Lift-off (Gerber)","Test de presión abdominal (Belly Press)","Test de Bear-Hug","Test de Napoleon","Ecografía subescapular (cara anterior)","RMN (porción superior más vulnerable)"],
+      p:"F1(0-3sem): Isométrico RI, evitar RE forzada.\nF2(3-8sem): Excéntrico RI, diagonal D1.\nF3(8-16sem): Press, RI funcional, retorno.",
+      fases:[
+        {f:"Fase 1 — Isométrico RI (0-3 sem)",ejs:["Isométrico RI en neutro contra pared 3x10x45seg","Isométrico RI a 45° 3x10x45seg","Crioterapia región anterior hombro","Evitar RE pasiva forzada","Educación sobre posición protegida"]},
+        {f:"Fase 2 — Excéntrico RI (3-8 sem)",ejs:["RI excéntrica con banda en neutro 4x15 (volver 4seg)","Diagonal D1 con banda (RI+ADD+flex) 3x15","Bear-hug con resistencia progresiva 3x15","Press cerrado (push-up) con control 3x12","Remo con RI final 3x15"]},
+        {f:"Fase 3 — Press y retorno (8-16 sem)",ejs:["Press plano progresivo con control escapular 4x10","RI con polea a velocidades 4x12","Belly press test como control de progreso","Gestos de empuje/lanzamiento","Test Lift-off: objetivo simetría"]}
+      ],
+      rts:"Lift-off, Belly-press y Bear-hug negativos · Fuerza RI ≥85% · Press sin dolor"},
+
+    { n:"Redondo menor — tendinopatía (RE a 90° ABD)", z:"Hombro",
+      e:["Test de Hornblower (RE a 90° con codo flexo)","Test de Patte (diferencial infraespinoso)","Palpación borde axilar escápula","Ecografía redondo menor","RMN (músculo, atrofia grasa)","EMG si neuropatía axilar asociada"],
+      p:"F1(0-3sem): Isométrico RE a 90°, descargar.\nF2(3-8sem): Excéntrico RE a 90°.\nF3(8-16sem): Potencia RE, retorno.",
+      fases:[
+        {f:"Fase 1 — Isométrico a 90° (0-3 sem)",ejs:["Isométrico RE a 90° ABD contra pared 3x10x30seg","Isométrico RE en decúbito lateral a 90° 3x10x30seg","Crioterapia borde axilar escapular","Evitar RE máxima bajo carga","Péndulos Codman 2x5min"]},
+        {f:"Fase 2 — Excéntrico RE a 90° (3-8 sem)",ejs:["RE excéntrica a 90° ABD con banda 4x15","Decúbito lateral RE a 90° con mancuerna 4x15","Diagonal D2 énfasis RE final 3x15","Control motor escapular 3x15","Propiocepción a 90° ABD 3x30seg"]},
+        {f:"Fase 3 — Potencia a 90° (8-16 sem)",ejs:["RE a 90° con carga alta 4x10","Pliometría RE a 90° con pelota 3x10","Lanzamiento con énfasis fase de aceleración","Test Hornblower: objetivo simetría","Retorno deportivo progresivo"]}
+      ],
+      rts:"Hornblower negativo · RE a 90° fuerza ≥80% · Sin compensación deltoides"},
+
+
 
     { n:"Bursitis subacromial", z:"Hombro",
       e:["Arco doloroso 60°-120°","Test de Neer","Test de Kennedy-Hawkins","Test de Yocum","Ecografía"],
@@ -3116,15 +3154,7 @@ const MAPEO_ZONAS = {
       ],
       rts:"Sin dolor en tuberosidad tibial · Extensión sin dolor · Salto sin restricción"},
 
-    { n:"Condromalacia rotuliana", z:"Rodilla",
-      e:["Prueba de Clarke (Grinding test)","Dolor anterior rodilla en escaleras","McConnell test","Artroscopia / RMN para clasificar grado"],
-      p:"F1: Control inflamatorio, evitar flexión >90°.\nF2: VMO, glúteo, propiocepción.\nF3: Retorno deportivo con corrección biomecánica.",
-      fases:[
-        {f:"Fase 1 — Descarga (0-3 sem)",ejs:["Vendaje McConnell medial 3x/semana","Isométrico VMO sin dolor 5x10seg","Evitar escalar escaleras y sentadilla profunda","Crioterapia 15min x3/día"]},
-        {f:"Fase 2 — Fortalecimiento (3-8 sem)",ejs:["Terminal Knee Extension (TKE) con banda 3x15","Step up lateral con control valgo 3x12","Glúteo medio: clamshell con banda 3x20","Propiocepción monopodal 3x30seg"]},
-        {f:"Fase 3 — Funcional (8-14 sem)",ejs:["Sentadilla completa con control 4x10","Saltos con aterrizaje controlado 3x10","Carrera en terreno variado","Gestos deportivos específicos"]}
-      ],
-      rts:"Clarke negativo · Escaleras sin dolor · Sentadilla sin restricción"},
+    
 
     { n:"Síndrome de Sinding-Larsen-Johansson", z:"Rodilla",
       e:["Dolor polo inferior rótula en adolescentes","Rx rodilla lateral","Dolor en salto y carrera","Palpación polo inferior"],
@@ -3156,25 +3186,9 @@ const MAPEO_ZONAS = {
       ],
       rts:"Cajón posterior negativo · Fuerza cuádriceps ≥90% · LSI ≥90% · Sprint sin dolor"},
 
-    { n:"Meniscopatía medial", z:"Rodilla",
-      e:["Test de McMurray medial","Test de Apley","Test de Thessaly","RMN (grado y tipo de lesión)","ROM rodilla"],
-      p:"F1(0-3sem): Control inflamatorio, ROM.\nF2(3-8sem): Fortalecimiento muscular, propiocepción.\nF3(8-16sem): Retorno funcional.",
-      fases:[
-        {f:"Fase 1 — Control (0-3 sem)",ejs:["Crioterapia y compresión","ROM activo rodilla en rango indoloro","Isométrico cuádriceps e isquios 3x10seg","Bicicleta estática sin carga"]},
-        {f:"Fase 2 — Fortalecimiento (3-8 sem)",ejs:["Leg press bilateral 3x15","Step up lateral controlado 3x12","Propiocepción monopodal 3x30seg","Puente glúteo unilateral 3x10"]},
-        {f:"Fase 3 — Funcional (8-16 sem)",ejs:["Sentadilla progresiva","Saltos con aterrizaje técnico","Cambios de dirección controlados","Gestos deportivos graduales"]}
-      ],
-      rts:"McMurray negativo · Thessaly negativo · Sentadilla sin dolor · Deporte sin restricción"},
+    
 
-    { n:"Meniscopatía lateral", z:"Rodilla",
-      e:["Test de McMurray lateral","Test de Apley lateral","RMN (lesión asta posterior/anterior)","Test de Thessaly lateral"],
-      p:"F1: Control inflamatorio, descarga.\nF2: Fortalecimiento muscular perimuscular.\nF3: Retorno funcional progresivo.",
-      fases:[
-        {f:"Fase 1 — Control (0-3 sem)",ejs:["Crioterapia 15min x3/día","ROM activo en rango indoloro","Bombeos circulatorios","Isométrico cuádriceps e isquios"]},
-        {f:"Fase 2 — Fortalecimiento (3-8 sem)",ejs:["Prensa bilateral a unilateral 3x15","Clamshell y abducción cadera 3x20","Step down controlado 3x12","Propiocepción dinámica 3x30seg"]},
-        {f:"Fase 3 — Retorno (8-16 sem)",ejs:["Pliometría progresiva","Sentadilla unilateral","Carrera con cambios de dirección","Gestos deportivos completos"]}
-      ],
-      rts:"McMurray lateral negativo · Sentadilla sin dolor · Salto sin restricción · Deporte completo"},
+    
 
     { n:"Bursitis prerrotuliana", z:"Rodilla",
       e:["Palpación prerrotuliana","Fluctuación local","Enrojecimiento y calor local","Ecografía bursa","Eritrosedimentación"],
@@ -3186,15 +3200,7 @@ const MAPEO_ZONAS = {
       ],
       rts:"Sin fluctuación bursal · Arrodillarse sin dolor · Deporte sin restricción"},
 
-    { n:"Artrosis temprana de rodilla", z:"Rodilla",
-      e:["Rx bilateral carga (escala Kellgren-Lawrence)","KOOS cuestionario","ROM activo","Evaluación biomecánica","Evaluación muscular isocinética"],
-      p:"F1: Educación, control peso, ejercicio aeróbico indoloro.\nF2: Fortalecimiento muscular, propiocepción.\nF3: Mantenimiento y estilo de vida activo.",
-      fases:[
-        {f:"Fase 1 — Control y educación (continuo)",ejs:["Caminar 30min/día en superficie plana","Bicicleta estática sin resistencia","Isométrico cuádriceps 3x10seg","Educación: neurofisiología dolor articular"]},
-        {f:"Fase 2 — Fortalecimiento (8-16 sem)",ejs:["Leg press bilateral con carga ligera 3x15","Sentadilla parcial con apoyo 3x15","Propiocepción en tabla 3x30seg","Hidrogimnasia si disponible"]},
-        {f:"Fase 3 — Mantenimiento (crónico)",ejs:["Ciclismo o natación como deporte adaptado","Fortalecimiento mantenimiento 2-3x/sem","Control biomecánico con rodillera si necesario","Monitorización EVA y función"]}
-      ],
-      rts:"KOOS>70% · Marcha sin cojera · Deporte adaptado sin dolor mayor a 3 EVA"},
+    
 
     // ===== 🦶 PIE Y TOBILLO — LESIONES ADICIONALES =====
     { n:"Periostitis tibial (Shin Splints)", z:"Tobillo",
@@ -3207,25 +3213,9 @@ const MAPEO_ZONAS = {
       ],
       rts:"Sin dolor en palpación · Carrera 30min sin dolor · Biomecánica corregida"},
 
-    { n:"Tendinitis aquilea", z:"Tobillo",
-      e:["VISA-A cuestionario","Palpación del tendón (punto doloroso)","Test de Thompson","Ecografía del tendón Aquiles","Prueba de Royal London Hospital"],
-      p:"F1(0-2sem): Reducir carga, elevación de talón, isometría.\nF2(2-8sem): Protocolo de Alfredson (excéntrico).\nF3(8-16sem): Pliometría, retorno al deporte.",
-      fases:[
-        {f:"Fase 1 — Control carga (0-2 sem)",ejs:["Reducir kilómetros o suspender carrera","Elevación talón (tacón de 1.5cm)","Isométrico tríceps sural: 5x45seg","Crioterapia post-actividad"]},
-        {f:"Fase 2 — Protocolo Alfredson (2-8 sem)",ejs:["Excéntrico de talón en escalón (rodilla recta): 3x15 x2/día","Excéntrico de talón (rodilla flexionada): 3x15 x2/día","Progresión de carga semana a semana","VISA-A semanal para monitorizar"]},
-        {f:"Fase 3 — Pliometría (8-16 sem)",ejs:["Saltos con skipping progresivo","Carrera progresiva desde trote","Pliometría unilateral 3x10","Gestos deportivos específicos"]}
-      ],
-      rts:"VISA-A>80 · Sin dolor en marcha · Trote 20min sin dolor · Salto sin restricción"},
+    
 
-    { n:"Fractura por estrés tibial", z:"Tobillo",
-      e:["Rx (puede ser normal en inicio)","Gammagrafía ósea o RMN","Dolor tibial localizado que mejora en reposo","Prueba del diapasón","Clasificación de riesgo (BSI score)"],
-      p:"F1(0-6sem): Descarga total o parcial según localización.\nF2(6-10sem): Carga progresiva sin dolor.\nF3(10-16sem): Retorno a carrera muy progresivo.",
-      fases:[
-        {f:"Fase 1 — Descarga (0-6 sem)",ejs:["Bota walker o muletas si necesario","Natación o bicicleta sin carga axial","Ejercicios musculatura superior","Revisión nutricional y ósea"]},
-        {f:"Fase 2 — Carga progresiva (6-10 sem)",ejs:["Marcha progresiva sin dolor","Bicicleta con carga progresiva","Fortalecimiento de gemelos y tibiales","Monitorizar dolor con EVA"]},
-        {f:"Fase 3 — Retorno carrera (10-16 sem)",ejs:["Retorno carrera protocolo: caminar/correr","+10% volumen por semana","Superficie blanda primero","Control radiológico previo al retorno"]}
-      ],
-      rts:"Rx/RMN sin línea de fractura · Sin dolor en palpación · Carrera sin dolor"},
+    
 
     { n:"Síndrome compartimental crónico", z:"Tobillo",
       e:["Presión intracompartimental post-ejercicio (>30mmHg)","Dolor reproducible con ejercicio","Parestesias en ejercicio","Test de marcha en cinta con monitorización"],
@@ -3247,15 +3237,7 @@ const MAPEO_ZONAS = {
       ],
       rts:"Mulder negativo · Marcha sin parestesias · Calzado deportivo sin dolor"},
 
-    { n:"Inestabilidad crónica de tobillo (CAI)", z:"Tobillo",
-      e:["CAIT cuestionario (<24 puntos)","Star Excursion Balance Test","Test de cajón anterior","Evaluación propioceptiva","RMN para descartar lesiones asociadas"],
-      p:"F1: Propiocepción básica, fortalecimiento peroneos.\nF2: Propiocepción avanzada, pliometría.\nF3: Deporte específico, estabilización.",
-      fases:[
-        {f:"Fase 1 — Propiocepción básica (0-4 sem)",ejs:["Monopodal ojos abiertos 3x30seg","Tabla wobble bilateral 3x30seg","Isométrico peroneos en 4 ángulos 5x10seg","Fortalecimiento tibial anterior y posterior"]},
-        {f:"Fase 2 — Propiocepción avanzada (4-8 sem)",ejs:["Monopodal ojos cerrados 3x30seg","Saltos con aterrizaje monopodal 3x10","BOSU bilateral a unilateral 3x30seg","Cambios de dirección con velocidad creciente"]},
-        {f:"Fase 3 — Deporte específico (8-16 sem)",ejs:["Entrenamiento reactivo con estímulo externo","Sprint y cambios de dirección al 100%","Gestos deportivos específicos","Vendaje funcional preventivo si necesario"]}
-      ],
-      rts:"CAIT≥24 · SEBT >90% · Sprint sin inestabilidad · Deporte sin episodios"},
+    
 
     { n:"Tendinopatía peroneal", z:"Tobillo",
       e:["Palpación retromaleolar lateral","Dolor en resistencia a eversión","Ecografía tendinosa","Test de single leg heel raise"],
@@ -3288,25 +3270,9 @@ const MAPEO_ZONAS = {
       ],
       rts:"Constant Score>70 · Elevación activa sin compensación · Fuerza ≥80% contralateral · 6 meses post-cirugía"},
 
-    { n:"Síndrome SLAP", z:"Hombro",
-      e:["Speed Test","Yergason test","O'Brien's test","Active Compression test","RMN artro-RM (gold standard)"],
-      p:"F1(0-6sem): Control dolor, ROM pasivo.\nF2(6-12sem): Fortalecimiento escapular y manguito.\nF3(12-24sem): Gestos deportivos, retorno.",
-      fases:[
-        {f:"Fase 1 — Control dolor (0-6 sem)",ejs:["Crioterapia y TENS","Péndulos de Codman 3x2min","ROM pasivo completo sin dolor","Movilidad escapular en descarga"]},
-        {f:"Fase 2 — Fortalecimiento (6-12 sem)",ejs:["Push up plus 3x15","Remo en T y en Y 3x12","Rotación externa en plano escapular 3x15","Estabilización dinámica con balón 3x10"]},
-        {f:"Fase 3 — Retorno (12-24 sem)",ejs:["Gestos de lanzamiento progresivos","Velocidades progresivas con pelota","Entrenamiento específico del deporte","Throwing program para lanzadores"]}
-      ],
-      rts:"O'Brien negativo · Lanzamiento sin dolor · ROM completo · Fuerza ≥90%"},
+    
 
-    { n:"Capsulitis adhesiva (hombro congelado)", z:"Hombro",
-      e:["ROM pasivo limitado en todos los planos","Patrón capsular: RE>Abducción>RI","Rx y ecografía (descartar causa)","Diagnóstico clínico principalmente","Apley scratchs test"],
-      p:"F1(fase congelante): Analgesia, ROM suave.\nF2(fase congelada): Movilización articular progresiva.\nF3(fase descongelante): Fortalecimiento y ROM completo.",
-      fases:[
-        {f:"Fase 1 — Analgesia (0-8 sem)",ejs:["TENS o ultrasonidos para analgesia","Péndulos de Codman 3x2min","Movilizaciones pasivas suaves grado I-II","Diatermia o termoterapia previa"]},
-        {f:"Fase 2 — Movilización (8-20 sem)",ejs:["Movilizaciones grado III (final de rango)","Estiramiento capsular posterior 3x30seg","ROM activo-asistido en todos los planos","Cinesioterapia en agua templada si disponible"]},
-        {f:"Fase 3 — Fortalecimiento (20-36 sem)",ejs:["Fortalecimiento manguito rotador completo 3x15","Fortalecimiento escapular 3x15","Actividades funcionales progresivas","Retorno al deporte o trabajo"]}
-      ],
-      rts:"ROM activo ≥90% · DASH<20 · Actividades cotidianas sin restricción"},
+    
 
     { n:"Luxación acromioclavicular", z:"Hombro",
       e:["Clasificación Rockwood (I-VI)","Rx bilateral en carga","Palpación ACJ","Cross-body adduction test","Piano key sign"],
@@ -3483,15 +3449,7 @@ const MAPEO_ZONAS = {
       rts:"Flexo-rot test simétrico · VAS cefalea <2 · Jornada laboral sin restricción"},
 
     // ===== 🦶 PIERNA — LESIONES ADICIONALES =====
-    { n:"Rotura parcial del Aquiles", z:"Tobillo",
-      e:["Test de Thompson","Ecografía del tendón Aquiles","RMN (extensión de la rotura)","ATRS cuestionario","Carga excéntrica con dinamómetro"],
-      p:"F1(0-6sem): Bota walker con talón elevado, descarga.\nF2(6-12sem): Carga progresiva, excéntrico suave.\nF3(12-24sem): Protocolo Alfredson, retorno.",
-      fases:[
-        {f:"Fase 1 — Protección (0-6 sem)",ejs:["Bota walker con tacón elevado 2cm","Sin carga de puntillas","Ejercicios rodilla, cadera y MMSS","Crioterapia y TENS para dolor"]},
-        {f:"Fase 2 — Carga progresiva (6-12 sem)",ejs:["Marcha normal progresiva","Elevación de talón bilateral sin dolor","Bicicleta estática con resistencia moderada","Isométrico tríceps sural en diferentes ángulos"]},
-        {f:"Fase 3 — Excéntrico (12-24 sem)",ejs:["Protocolo Alfredson (rodilla recta y flexionada) 3x15","Pliometría bilateral progresiva","Sprint suave al 50-75%","Gestos deportivos específicos"]}
-      ],
-      rts:"Thompson negativo · ATRS>80 · Carrera sin cojera · Elevación talón monopodal sin dolor"},
+    
 
     { n:"Rotura total del Aquiles (post-quirúrgico)", z:"Tobillo",
       e:["Evaluación post-operatoria","ATRS cuestionario","Single-leg heel rise test","Análisis de la marcha","Retorno deportivo criteria (RTS criteria)"],
