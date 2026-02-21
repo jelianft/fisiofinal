@@ -29,7 +29,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
         .then((res) => {
-          caches.open(CACHE_NAME).then(c => c.put(event.request, res.clone()));
+          // FIX línea 32: clonar PRIMERO antes de retornar
+          // Si se hace res.clone() después de return res, el body ya fue consumido → DataCloneError
+          const resParaCache = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, resParaCache));
           return res;
         })
         .catch(() => caches.match('./index.html'))
@@ -46,7 +49,9 @@ self.addEventListener('fetch', (event) => {
             (url.origin === self.location.origin ||
              url.hostname.includes('jsdelivr') ||
              url.hostname.includes('tailwindcss'))) {
-          caches.open(CACHE_NAME).then(c => c.put(event.request, res.clone()));
+          // FIX línea 49: clonar PRIMERO antes de retornar
+          const resParaCache = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, resParaCache));
         }
         return res;
       }).catch(() => {
