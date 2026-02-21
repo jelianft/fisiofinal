@@ -952,6 +952,10 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
                 <span id="sidebar-apikey-label">API Key IA</span>
             </button>
+            <button onclick="editarPlantillaWA()" class="w-full text-left px-4 py-2 text-xs hover:text-white transition-colors flex items-center gap-3">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Plantilla WhatsApp
+            </button>
         </div>
         <div class="p-6 pt-0">
             <button onclick="forceReload()" id="btn-reload-sidebar" title="Buscar actualizaciones" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-black text-slate-500 hover:text-white hover:bg-slate-700/50 transition-all group">
@@ -1217,6 +1221,34 @@
                     <button onclick="exportarCSVPaciente()" class="flex-1 bg-emerald-600 text-white px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-colors">📊 CSV</button>
                     <button onclick="window.print()" class="flex-1 bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-colors">Imprimir</button>
                     <button onclick="eliminarPaciente()" class="flex-1 bg-rose-50 text-rose-600 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-colors">Dar de Alta</button>
+                </div>
+            </div>
+
+            <!-- RESUMEN RÁPIDO DEL PACIENTE -->
+            <div id="resumen-rapido" class="bg-slate-900 rounded-2xl px-6 py-4 mb-6 flex flex-wrap gap-4 items-center no-print">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 text-[9px] font-black uppercase tracking-widest">Última sesión</span>
+                    <span id="rr-ultima" class="text-white text-xs font-black">—</span>
+                </div>
+                <div class="w-px h-4 bg-slate-700 hidden sm:block"></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 text-[9px] font-black uppercase tracking-widest">EVA actual</span>
+                    <span id="rr-eva" class="text-xs font-black">—</span>
+                </div>
+                <div class="w-px h-4 bg-slate-700 hidden sm:block"></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 text-[9px] font-black uppercase tracking-widest">Sesiones</span>
+                    <span id="rr-sesiones" class="text-white text-xs font-black">—</span>
+                </div>
+                <div class="w-px h-4 bg-slate-700 hidden sm:block"></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 text-[9px] font-black uppercase tracking-widest">Próxima cita</span>
+                    <span id="rr-cita" class="text-white text-xs font-black">—</span>
+                </div>
+                <div class="w-px h-4 bg-slate-700 hidden sm:block"></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 text-[9px] font-black uppercase tracking-widest">Tendencia EVA</span>
+                    <span id="rr-tendencia" class="text-xs font-black">—</span>
                 </div>
             </div>
 
@@ -4827,6 +4859,7 @@ function renderPacientes() { renderLista(); }
             // Detener y resetear cronómetro al cambiar de paciente
             if (chronoRunning) chronoToggle();
             chronoReset();
+            renderResumenRapido(p);
             renderSesiones();
             renderObjetivos();
             renderRTS();
@@ -7797,7 +7830,10 @@ async function updateDashboard() {
             }
 
             const nombre = p.nombre ? p.nombre.split(' ')[0] : 'paciente';
-            const texto = `Hola ${nombre} 👋, te recuerdo que tienes ${fechaCita} en Jelian FT. Si necesitas cambiar la cita, escríbeme. ¡Hasta pronto! 💪`;
+            const plantilla = _getPlantillaWA();
+            const texto = plantilla
+                .replace('{nombre}', nombre)
+                .replace('{cita}', fechaCita);
             const url = `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(texto)}`;
             window.open(url, '_blank');
         }
@@ -7933,6 +7969,119 @@ async function updateDashboard() {
                     _actualizarAsistenciaBtns();
                 };
             }
+        });
+
+                // ============================================================
+        // RESUMEN RÁPIDO DEL PACIENTE
+        // ============================================================
+        function renderResumenRapido(p) {
+            // Última sesión
+            const rrUltima = document.getElementById('rr-ultima');
+            const rrEva    = document.getElementById('rr-eva');
+            const rrSes    = document.getElementById('rr-sesiones');
+            const rrCita   = document.getElementById('rr-cita');
+            const rrTend   = document.getElementById('rr-tendencia');
+            if (!rrUltima) return;
+
+            // Última sesión hace X días
+            const dias = diasDesdeUltimaSesion(p);
+            if (dias === null)       rrUltima.innerHTML = '<span class="text-slate-500">Sin sesiones</span>';
+            else if (dias === 0)     rrUltima.innerHTML = '<span class="text-emerald-400">Hoy</span>';
+            else if (dias === 1)     rrUltima.innerHTML = '<span class="text-emerald-400">Ayer</span>';
+            else if (dias <= 7)      rrUltima.innerHTML = `<span class="text-amber-400">Hace ${dias} días</span>`;
+            else                     rrUltima.innerHTML = `<span class="text-rose-400">Hace ${dias} días</span>`;
+
+            // EVA actual (último registrado)
+            const ultimaS = p.evoluciones && p.evoluciones[0];
+            if (ultimaS && ultimaS.eva != null) {
+                const eva = ultimaS.eva;
+                const col = eva <= 3 ? 'text-emerald-400' : eva <= 6 ? 'text-amber-400' : 'text-rose-400';
+                rrEva.innerHTML = `<span class="${col} text-sm font-black">${eva}<span class="text-slate-600 text-[10px]">/10</span></span>`;
+            } else {
+                rrEva.innerHTML = '<span class="text-slate-500">Sin datos</span>';
+            }
+
+            // Total sesiones · este mes
+            const total = p.evoluciones ? p.evoluciones.length : 0;
+            const mes   = sesionesEsteMes(p);
+            rrSes.textContent = `${total} total · ${mes} este mes`;
+
+            // Próxima cita
+            const hoy = new Date().toISOString().split('T')[0];
+            const proxima = (window._eventosCalendario || []).find(ev => {
+                return String(ev.pacienteId || ev.paciente_id || '') === String(p.id) && (ev.fecha || '') >= hoy;
+            });
+            if (proxima) {
+                const d = new Date(proxima.fecha + 'T00:00:00');
+                let txt = d.toLocaleDateString('es-ES', { weekday:'short', day:'numeric', month:'short' });
+                if (proxima.hora) txt += ' ' + proxima.hora;
+                rrCita.innerHTML = `<span class="text-indigo-400">${txt}</span>`;
+            } else {
+                rrCita.innerHTML = '<span class="text-slate-500">Sin cita agendada</span>';
+            }
+
+            // Tendencia EVA (últimas 3 sesiones)
+            if (p.evoluciones && p.evoluciones.length >= 2) {
+                const evs = p.evoluciones.slice(0, 3).map(s => s.eva).filter(e => e != null);
+                if (evs.length >= 2) {
+                    const diff = evs[0] - evs[evs.length - 1];
+                    if (diff < 0)       rrTend.innerHTML = '<span class="text-rose-400">↑ Subiendo</span>';
+                    else if (diff > 0)  rrTend.innerHTML = '<span class="text-emerald-400">↓ Bajando</span>';
+                    else                rrTend.innerHTML = '<span class="text-slate-400">→ Estable</span>';
+                } else { rrTend.innerHTML = '<span class="text-slate-500">—</span>'; }
+            } else { rrTend.innerHTML = '<span class="text-slate-500">—</span>'; }
+        }
+
+        // ============================================================
+        // PLANTILLA WHATSAPP personalizable
+        // ============================================================
+        const WA_TEMPLATE_KEY = 'jelian_wa_template';
+        const WA_DEFAULT_TPL  = 'Hola {nombre} 👋, te recuerdo que tienes {cita} en Jelian FT. Si necesitas cambiar la cita, escríbeme. ¡Hasta pronto! 💪';
+
+        function _getPlantillaWA() {
+            return localStorage.getItem(WA_TEMPLATE_KEY) || WA_DEFAULT_TPL;
+        }
+
+        function editarPlantillaWA() {
+            const tpl = _getPlantillaWA();
+            const input = document.getElementById('wa-template-input');
+            if (input) input.value = tpl;
+            _previewPlantillaWA();
+            document.getElementById('modal-wa-template').classList.remove('hidden');
+            if (input) input.focus();
+        }
+
+        function cerrarModalWA() {
+            document.getElementById('modal-wa-template').classList.add('hidden');
+        }
+
+        function _previewPlantillaWA() {
+            const input = document.getElementById('wa-template-input');
+            const prev  = document.getElementById('wa-template-preview');
+            if (!input || !prev) return;
+            const txt = input.value
+                .replace('{nombre}', '<strong>Carlos</strong>')
+                .replace('{cita}', '<strong>lunes 24 de marzo a las 10:00</strong>');
+            prev.innerHTML = txt;
+        }
+
+        function guardarPlantillaWA() {
+            const val = (document.getElementById('wa-template-input') || {}).value || '';
+            if (!val.trim()) { showToast('La plantilla no puede estar vacía', true); return; }
+            localStorage.setItem(WA_TEMPLATE_KEY, val.trim());
+            cerrarModalWA();
+            showToast('✅ Plantilla de WhatsApp guardada');
+        }
+
+        // Preview en tiempo real mientras escribe
+        document.addEventListener('input', e => {
+            if (e.target && e.target.id === 'wa-template-input') _previewPlantillaWA();
+        });
+
+        // Cerrar modal al hacer clic fuera
+        document.addEventListener('click', e => {
+            const modal = document.getElementById('modal-wa-template');
+            if (modal && e.target === modal) cerrarModalWA();
         });
 
                 // ============================================================
@@ -8427,5 +8576,22 @@ async function updateDashboard() {
 
     </script>
 </div>
+    <!-- MODAL PLANTILLA WHATSAPP -->
+    <div id="modal-wa-template" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9997] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8">
+            <h3 class="text-xl font-extrabold text-slate-900 mb-2">💬 Plantilla de WhatsApp</h3>
+            <p class="text-xs text-slate-400 mb-6">Personaliza el mensaje. Usa <code class="bg-slate-100 px-1 rounded font-mono">{nombre}</code> para el nombre del paciente y <code class="bg-slate-100 px-1 rounded font-mono">{cita}</code> para la fecha de la cita.</p>
+            <textarea id="wa-template-input" class="w-full bg-slate-50 rounded-2xl p-5 text-sm font-medium h-36 outline-none border-2 border-transparent focus:border-indigo-500 focus:bg-white resize-none leading-relaxed mb-4"></textarea>
+            <div class="bg-slate-50 rounded-xl p-4 mb-6">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Vista previa</p>
+                <p id="wa-template-preview" class="text-xs text-slate-600 leading-relaxed"></p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="cerrarModalWA()" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">Cancelar</button>
+                <button onclick="guardarPlantillaWA()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all">Guardar plantilla</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
