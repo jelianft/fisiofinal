@@ -6,7 +6,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(['./index.html']).catch(() => {}))
   );
-  // NO skipWaiting aquí — lo controla index.html
 });
 
 self.addEventListener('activate', (event) => {
@@ -17,24 +16,20 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Recibe señal de index.html para activarse
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-
-  // APIs externas: sin caché
   if (url.hostname.includes('supabase.co') || url.hostname.includes('anthropic.com')) return;
 
-  // index.html → siempre red primero (para que chequearVersion() funcione)
+  // index.html → siempre red (para que el chequeo de versión funcione)
   if (url.pathname === '/' || url.pathname.endsWith('index.html')) {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
         .then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+          caches.open(CACHE_NAME).then(c => c.put(event.request, res.clone()));
           return res;
         })
         .catch(() => caches.match('./index.html'))

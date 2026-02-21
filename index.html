@@ -699,9 +699,8 @@
     <div class="lg:hidden p-4 bg-slate-900 flex justify-between items-center no-print z-[60]">
         <h1 class="text-white text-xl font-extrabold italic">JELIAN <span class="text-indigo-400">FT</span></h1>
         <div class="flex gap-2">
-            <button onclick="forceReload()" id="btn-reload" title="Recargar / Actualizar app" class="text-white p-2 bg-slate-700 rounded-xl active:scale-90 transition-transform relative">
-                <svg id="reload-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                <span id="reload-badge" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-slate-900"></span>
+            <button onclick="forceReload()" id="btn-reload" title="Buscar actualizaciones" class="text-white p-2 bg-slate-700 rounded-xl active:scale-90 transition-all relative">
+                <svg id="reload-icon" class="w-5 h-5 transition-transform duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             </button>
             <button onclick="openGlobalSearch()" class="text-white p-2 bg-slate-700 rounded-xl active:scale-90 transition-transform">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -7636,18 +7635,43 @@ async function updateDashboard() {
         // ============================================================
         // ACTUALIZACIÓN AUTOMÁTICA — Sistema híbrido iOS + Android
         // ============================================================
-        // Estrategia: al abrir la app, compara la versión del servidor
-        // con la versión local. Si son distintas → recarga automática.
-        // Esto funciona en iPhone Safari (PWA) porque ocurre al abrir,
-        // no en segundo plano. El SW sigue activo para modo offline.
-        // ============================================================
+        const APP_VERSION = 'v136'; // ← sube este número al desplegar
 
-        const APP_VERSION = 'v136'; // ← cambia esto al desplegar
-
-        function forceReload() {
+        // ── Animación del botón ──────────────────────────────────────
+        function _spinIcon(on) {
             const icon = document.getElementById('reload-icon');
-            if (icon) { icon.style.transition = 'transform 0.6s'; icon.style.transform = 'rotate(360deg)'; setTimeout(() => { icon.style.transform = ''; }, 700); }
-            // Limpiar caché del SW antes de recargar para forzar versión nueva
+            if (!icon) return;
+            if (on) {
+                icon.style.transition = 'transform 0.7s linear';
+                icon.style.transform = 'rotate(360deg)';
+            } else {
+                icon.style.transition = 'none';
+                icon.style.transform = '';
+            }
+        }
+
+        function _setBtnEstado(estado) {
+            // estado: 'checking' | 'ok' | 'updating'
+            const btn = document.getElementById('btn-reload');
+            if (!btn) return;
+            if (estado === 'checking') {
+                btn.style.background = '#334155'; // slate-700
+                btn.title = 'Buscando actualizaciones...';
+                _spinIcon(true);
+                setTimeout(() => _spinIcon(false), 700);
+            } else if (estado === 'ok') {
+                btn.style.background = '#16a34a'; // verde
+                btn.title = '✅ App al día';
+                setTimeout(() => { btn.style.background = ''; btn.title = 'Buscar actualizaciones'; }, 2500);
+            } else if (estado === 'updating') {
+                btn.style.background = '#6366f1'; // indigo
+                btn.title = '🔄 Actualizando...';
+                _spinIcon(true);
+            }
+        }
+
+        // ── Limpiar caché y recargar ──────────────────────────────────
+        function _limpiarYRecargar() {
             if ('caches' in window) {
                 caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).finally(() => location.reload());
             } else {
@@ -7655,45 +7679,59 @@ async function updateDashboard() {
             }
         }
 
-        // ── Chequeo de versión al abrir ──────────────────────────────
-        // Descarga index.html del servidor con cache-bust y extrae la versión.
-        // Si es distinta a APP_VERSION → recarga limpia automáticamente.
-        function chequearVersion() {
-            if (IS_SANDBOX) return;
-            fetch('./index.html?_=' + Date.now(), { cache: 'no-store' })
+        // ── Chequeo de versión (funciona en iPhone Safari) ────────────
+        let _chequeando = false;
+        function chequearVersion(silencioso) {
+            if (_chequeando || IS_SANDBOX) return;
+            _chequeando = true;
+            if (!silencioso) _setBtnEstado('checking');
+
+            fetch('./index.html?_v=' + Date.now(), { cache: 'no-store' })
                 .then(r => r.text())
                 .then(html => {
+                    _chequeando = false;
                     const match = html.match(/const APP_VERSION\s*=\s*'([^']+)'/);
                     if (match && match[1] !== APP_VERSION) {
-                        // Nueva versión detectada → limpiar caché y recargar
-                        if ('caches' in window) {
-                            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).finally(() => location.reload());
-                        } else {
-                            location.reload();
+                        // ¡Nueva versión! → actualizar automáticamente
+                        _setBtnEstado('updating');
+                        showToast('🔄 Nueva versión detectada, actualizando...');
+                        setTimeout(_limpiarYRecargar, 1200);
+                    } else {
+                        // Ya está al día
+                        if (!silencioso) {
+                            _setBtnEstado('ok');
+                            showToast('✅ Ya tienes la versión más reciente');
                         }
                     }
                 })
-                .catch(() => {}); // Sin red: no hacer nada, usar versión cacheada
+                .catch(() => {
+                    _chequeando = false;
+                    if (!silencioso) showToast('Sin conexión — usando versión local', true);
+                });
         }
 
-        // Chequear al abrir la app y cada vez que vuelva a primer plano
-        window.addEventListener('load', () => { setTimeout(chequearVersion, 2000); });
+        // ── Botón Recargar: chequeo inmediato al pulsar ───────────────
+        function forceReload() {
+            chequearVersion(false);
+        }
+
+        // ── Chequeo automático al abrir y al volver a la app ─────────
+        window.addEventListener('load', () => { setTimeout(() => chequearVersion(true), 2500); });
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') chequearVersion();
+            if (document.visibilityState === 'visible') chequearVersion(true);
         });
 
-        // ── Service Worker (offline + Android) ──────────────────────
+        // ── Service Worker (offline + Android automático) ─────────────
         if ('serviceWorker' in navigator && !IS_SANDBOX) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then(reg => {
-                    // Activar automáticamente cualquier SW nuevo sin esperar
-                    function activar(worker) { worker.postMessage({ type: 'SKIP_WAITING' }); }
-                    if (reg.waiting) activar(reg.waiting);
+                    function activarSW(worker) { worker.postMessage({ type: 'SKIP_WAITING' }); }
+                    if (reg.waiting) activarSW(reg.waiting);
                     reg.addEventListener('updatefound', () => {
                         const nw = reg.installing;
                         if (!nw) return;
                         nw.addEventListener('statechange', () => {
-                            if (nw.state === 'installed') activar(nw);
+                            if (nw.state === 'installed') activarSW(nw);
                         });
                     });
                 }).catch(() => {});
