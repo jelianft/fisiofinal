@@ -9307,7 +9307,7 @@ Generado por Jelian FT — Clinical Sport v136`;
             const s = getSb();
             try {
                 const { data, error } = await s.from('pacientes')
-                    .select('id,nombre,diag,diagnostico,estado').order('nombre');
+                    .select('id,nombre,diagnostico,estado').order('nombre');
                 if (error) throw error;
                 cpPacientes = data || [];
 
@@ -9371,7 +9371,7 @@ Generado por Jelian FT — Clinical Sport v136`;
                 const unread  = info ? info.unread : 0;
                 const isAct   = cpActual && cpActual.id === p.id;
                 // Serializar solo los campos seguros para onclick
-                const pData   = JSON.stringify({id:p.id, nombre:p.nombre, diag:p.diag||'', diagnostico:p.diagnostico||''});
+                const pData   = JSON.stringify({id:p.id, nombre:p.nombre, diag:p.diagnostico||'', diagnostico:p.diagnostico||''});
                 return `<div class="cp-pac-item${isAct?' active':''}" id="cppac-${p.id}"
                         onclick='cpAbrirConversacion(${pData.replace(/'/g,"&#39;")})'>
                     <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);
@@ -9411,7 +9411,7 @@ Generado por Jelian FT — Clinical Sport v136`;
             // Mostrar header
             cpById('cp-hdr-avatar').textContent = cpInitials(p.nombre);
             cpById('cp-hdr-name').textContent   = p.nombre;
-            cpById('cp-hdr-diag').textContent   = p.diag || p.diagnostico || 'Sin diagnóstico';
+            cpById('cp-hdr-diag').textContent   = p.diagnostico || p.diag || 'Sin diagnóstico';
 
             // Mostrar área de chat
             cpById('cp-empty').style.display = 'none';
