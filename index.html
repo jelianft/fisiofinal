@@ -4896,7 +4896,7 @@ function renderPacientes() { renderLista(); }
         }
 
         function ejecutarMotorIA() {
-            const eva = parseInt(document.getElementById('s-eva').value);
+            const eva = parseInt(document.getElementById('s-eva').value, 10);
             if(isNaN(eva)) { showToast("❌ Ingresa un valor EVA primero.", true); return; }
             
             const p = pacientes.find(x => String(x.id) === String(currentId));
@@ -4954,7 +4954,7 @@ function renderPacientes() { renderLista(); }
 
         async function agregarSesion() {
             const p = pacientes.find(x => String(x.id) === String(currentId));
-            const evaVal = parseInt(document.getElementById('s-eva').value);
+            const evaVal = parseInt(document.getElementById('s-eva').value, 10);
             if (isNaN(evaVal) || evaVal < 0 || evaVal > 10) {
                 showToast("❌ EVA debe ser un número entre 0 y 10.", true);
                 return;
@@ -4964,12 +4964,12 @@ function renderPacientes() { renderLista(); }
                 return;
             }
             const tecnicas = Array.from(document.querySelectorAll('#tecnicas-chips input:checked')).map(cb => cb.value);
-            const psfsVal = parseInt(document.getElementById('s-psfs').value);
+            const psfsVal = parseInt(document.getElementById('s-psfs').value, 10);
             const asistenciaVal = (document.querySelector('input[name="s-asistencia"]:checked') || {value:'vino'}).value;
             const s = {
                 fecha: document.getElementById('s-fecha').value,
                 eva: evaVal,
-                rpe: parseInt(document.getElementById('s-rpe').value) || 5,
+                rpe: parseInt(document.getElementById('s-rpe').value, 10) || 5,
                 fuerza: document.getElementById('s-fuerza').value || '--',
                 notas: document.getElementById('s-notas').value || 'Sin observaciones.',
                 duracion: chronoSeconds > 0 ? chronoSeconds : null,
@@ -5012,7 +5012,7 @@ function renderPacientes() { renderLista(); }
             document.getElementById('rpe-label').textContent = val + ' — ' + (labels[val] || '');
         }
         function updateEvaColor(input) {
-            const v = parseInt(input.value);
+            const v = parseInt(input.value, 10);
             if (isNaN(v)) { input.style.borderColor = ''; input.style.color = ''; return; }
             if (v >= 7) { input.style.borderColor = '#ef4444'; input.style.color = '#ef4444'; }
             else if (v >= 4) { input.style.borderColor = '#f59e0b'; input.style.color = '#f59e0b'; }
@@ -5111,14 +5111,14 @@ async function updateDashboard() {
                 if (s.fecha) {
                     const partes = s.fecha.split('-');
                     if (partes.length === 3) {
-                        const anioSesion = parseInt(partes[0]);
-                        const mesSesion = parseInt(partes[1]) - 1;
+                        const anioSesion = parseInt(partes[0], 10);
+                        const mesSesion = parseInt(partes[1], 10) - 1;
                         if (anioSesion === anioActual && mesSesion === mesActual) {
                             totalSesiones++;
                         }
                     }
                 }
-                const evaVal = parseInt(s.eva);
+                const evaVal = parseInt(s.eva, 10);
                 if (!isNaN(evaVal)) {
                     sumEva += evaVal;
                     countEva++;
@@ -5316,7 +5316,22 @@ Generado por Jelian FT — Clinical Sport v136`;
         }
 
         function copiarNotaAlta() {
-            navigator.clipboard.writeText(_notaAltaTexto).then(() => showToast('✓ Nota copiada al portapapeles.'));
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(_notaAltaTexto)
+                    .then(() => showToast('✓ Nota copiada al portapapeles.'))
+                    .catch(() => _copiarFallback());
+            } else {
+                _copiarFallback();
+            }
+        }
+        function _copiarFallback() {
+            const ta = document.createElement('textarea');
+            ta.value = _notaAltaTexto;
+            ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); showToast('✓ Nota copiada.'); }
+            catch(e) { showToast('No se pudo copiar. Selecciona el texto manualmente.', true); }
+            document.body.removeChild(ta);
         }
 
         function imprimirNotaAlta() {
@@ -5329,8 +5344,15 @@ Generado por Jelian FT — Clinical Sport v136`;
         }
 
         async function confirmarAlta() {
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p) return;
             cerrarModalAlta();
-            eliminarPaciente();
+            // Dar de alta directamente sin segundo confirm (ya se confirmó en el modal de nota)
+            try { await sb.from('pacientes').delete().eq('id', currentId); } catch(e) { console.error('[JelianFT] Error dando de alta:', e.message); }
+            pacientes = pacientes.filter(x => String(x.id) !== String(currentId));
+            showSection('lista-pacientes');
+            showToast('✓ Atleta dado de alta correctamente.');
+            updateDashboard();
         }
 
         // ============================================================
@@ -5405,7 +5427,7 @@ Generado por Jelian FT — Clinical Sport v136`;
             }
             const prioColor = { urgente: 'bg-rose-100 text-rose-700', normal: 'bg-amber-100 text-amber-700', rutina: 'bg-slate-100 text-slate-500' };
             const prioLabel = { urgente: '🔴 Urgente', normal: '🟡 Normal', rutina: '⚪ Rutina' };
-            lista.innerHTML = listaEspera.sort((a,b) => {
+            lista.innerHTML = [...listaEspera].sort((a,b) => {
                 const order = { urgente: 0, normal: 1, rutina: 2 };
                 return order[a.prioridad] - order[b.prioridad];
             }).map(e => {
@@ -5422,7 +5444,7 @@ Generado por Jelian FT — Clinical Sport v136`;
                         <p class="text-[10px] text-slate-300 mt-2">En espera desde: ${e.fecha} (${dias}d)</p>
                     </div>
                     <div class="flex gap-2 flex-shrink-0">
-                        ${e.tel ? `<a href="https://wa.me/593${e.tel.replace(/^0/,'').replace(/\D/g,'')}" target="_blank" class="bg-green-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-green-600 transition-all">WhatsApp</a>` : ''}
+                        ${e.tel ? `<a href="https://wa.me/${e.tel.replace(/\D/g,'')}" target="_blank" class="bg-green-500 text-white px-3 py-2 rounded-xl text-[10px] font-black hover:bg-green-600 transition-all">WhatsApp</a>` : ''}
                         <button onclick="eliminarEspera(${e.id})" class="bg-rose-50 text-rose-500 px-3 py-2 rounded-xl text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all">Quitar</button>
                     </div>
                 </div>`;
@@ -5434,33 +5456,171 @@ Generado por Jelian FT — Clinical Sport v136`;
         // ============================================================
         // Lookup table base (sesiones promedio estimadas por lesión conocida)
         const SESIONES_BASE = {
-            'Esguince de tobillo grado I': {min:6,max:12,prom:9},
-            'Esguince de tobillo grado II': {min:12,max:24,prom:18},
-            'Esguince de tobillo grado III': {min:24,max:48,prom:36},
-            'Rotura LCA': {min:60,max:100,prom:80},
-            'Rotura parcial LCA': {min:40,max:70,prom:55},
-            'Lesión meniscal': {min:20,max:40,prom:30},
-            'Tendinopatía rotuliana': {min:20,max:36,prom:28},
-            'Tendinopatía aquílea': {min:18,max:36,prom:27},
-            'Epicondilitis lateral': {min:16,max:30,prom:22},
-            'Epitrocleitis (codo golfista)': {min:16,max:28,prom:20},
-            'Hombro congelado (capsulitis adhesiva)': {min:30,max:60,prom:45},
-            'Síndrome del manguito rotador': {min:20,max:40,prom:30},
-            'Luxación de hombro': {min:24,max:48,prom:36},
-            'Hernia discal lumbar': {min:20,max:40,prom:30},
-            'Lumbalgia mecánica': {min:8,max:16,prom:12},
-            'Pubalgia del deportista': {min:24,max:48,prom:36},
-            'Desgarro grado I': {min:6,max:12,prom:9},
-            'Desgarro grado II': {min:12,max:24,prom:18},
-            'Desgarro grado III': {min:24,max:48,prom:36},
-            'Contusión muscular': {min:6,max:12,prom:9},
-            'Síndrome de banda iliotibial': {min:12,max:24,prom:18},
-            'Fascitis plantar': {min:16,max:32,prom:24},
-            'Fractura de clavícula': {min:20,max:36,prom:28},
-            'Fractura metatarsiana': {min:18,max:36,prom:27},
-            'Latigazo cervical': {min:12,max:24,prom:18},
-            'Conmoción cerebral': {min:6,max:20,prom:12},
-            'Condromalacia rotuliana': {min:20,max:36,prom:28},
+            // ─── PIE Y TOBILLO ───
+            'Fascitis plantar':                                  {min:16,max:32,prom:24},
+            'Fascitis plantar resistente (crónica)':             {min:24,max:48,prom:36},
+            'Espolón calcáneo':                                  {min:12,max:24,prom:18},
+            'Esguince de tobillo grado I':                       {min:6, max:12,prom:9 },
+            'Esguince grado II':                                 {min:12,max:24,prom:18},
+            'Esguince grado III':                                {min:24,max:48,prom:36},
+            'Tendinitis aquilea':                                {min:18,max:36,prom:27},
+            'Rotura parcial del Aquiles':                        {min:40,max:72,prom:56},
+            'Rotura total del Aquiles (post-quirúrgico)':        {min:60,max:100,prom:80},
+            'Inestabilidad crónica de tobillo (CAI)':            {min:16,max:32,prom:24},
+            'Síndrome de Achilles insertional':                  {min:16,max:32,prom:24},
+            'Esguince de la articulación de Lisfranc':           {min:24,max:48,prom:36},
+            'Sesamoiditis':                                      {min:12,max:24,prom:18},
+            'Neuroma de Morton':                                 {min:12,max:24,prom:18},
+            'Lesión condral de tobillo (OCD talar)':             {min:30,max:60,prom:45},
+            'Periostitis tibial':                                {min:12,max:24,prom:18},
+            'Periostitis tibial (Shin Splints)':                 {min:12,max:24,prom:18},
+            'Fractura metatarsiana':                             {min:16,max:32,prom:24},
+            'Fractura de Jones (5º metatarsiano)':               {min:20,max:40,prom:30},
+            'Tobillo del basquetbolista':                        {min:12,max:24,prom:18},
+            'Síndrome compartimental crónico':                   {min:12,max:24,prom:18},
+            // ─── RODILLA ───
+            'Tendinitis rotuliana':                              {min:20,max:36,prom:28},
+            'Rodilla del saltador':                              {min:20,max:36,prom:28},
+            'Rodilla del saltador (tendinopatía rotuliana)':     {min:20,max:36,prom:28},
+            'Condromalacia rotuliana':                           {min:20,max:36,prom:28},
+            'Síndrome patelofemoral':                            {min:16,max:30,prom:23},
+            'Rodilla del corredor':                              {min:12,max:24,prom:18},
+            'Rodilla del corredor (síndrome patelofemoral)':     {min:12,max:24,prom:18},
+            'Síndrome de banda iliotibial':                      {min:12,max:24,prom:18},
+            'Síndrome de banda iliotibial (ITBS)':               {min:12,max:24,prom:18},
+            'Síndrome del corredor (ITBS avanzado)':             {min:16,max:32,prom:24},
+            'Lesión LCA':                                        {min:60,max:100,prom:80},
+            'Rehabilitación post-LCA (6 meses)':                {min:60,max:100,prom:80},
+            'Lesión LCP':                                        {min:30,max:60,prom:45},
+            'Lesión LCP (ligamento cruzado posterior)':          {min:30,max:60,prom:45},
+            'Meniscopatía medial':                               {min:20,max:40,prom:30},
+            'Meniscopatía lateral':                              {min:20,max:40,prom:30},
+            'Bursitis prerrotuliana':                            {min:8, max:16,prom:12},
+            'Síndrome de Osgood-Schlatter':                      {min:16,max:36,prom:26},
+            'Síndrome de Sinding-Larsen-Johansson':              {min:12,max:24,prom:18},
+            'Artrosis temprana de rodilla':                      {min:20,max:40,prom:30},
+            'Edema óseo de rodilla':                             {min:20,max:40,prom:30},
+            'Desequilibrios musculares (rodilla)':               {min:12,max:24,prom:18},
+            'Pinzamiento articular de rodilla':                  {min:16,max:30,prom:23},
+            'Fractura por estrés tibial':                        {min:16,max:32,prom:24},
+            // ─── CADERA Y PELVIS ───
+            'Pubalgia':                                          {min:24,max:48,prom:36},
+            'Pubalgia futbolista':                               {min:24,max:48,prom:36},
+            'Hernia inguinal deportiva (Gilmore Groin)':         {min:24,max:48,prom:36},
+            'Osteítis de pubis':                                 {min:24,max:48,prom:36},
+            'Bursitis trocantérica':                             {min:12,max:24,prom:18},
+            'Bursitis iliopectínea':                             {min:12,max:24,prom:18},
+            'Síndrome piriforme':                                {min:12,max:24,prom:18},
+            'Lesión labrum acetabular':                          {min:30,max:60,prom:45},
+            'Síndrome cadera en resorte':                        {min:12,max:24,prom:18},
+            'Fractura por estrés de cadera (cuello femoral)':    {min:30,max:60,prom:45},
+            'Avulsión apofisaria isquiática (adolescente)':      {min:16,max:32,prom:24},
+            'Síndrome del ángulo isquio-femoral':                {min:12,max:24,prom:18},
+            'Síndrome de fricción ciático-isquiática':           {min:12,max:24,prom:18},
+            'Meralgia parestésica':                              {min:10,max:20,prom:15},
+            'Neuropatía del nervio femoral':                     {min:12,max:24,prom:18},
+            // ─── MUSLO Y PIERNA ───
+            'Desgarro grado I':                                  {min:6, max:12,prom:9 },
+            'Desgarro grado II':                                 {min:12,max:24,prom:18},
+            'Desgarro grado III':                                {min:24,max:48,prom:36},
+            'Desgarro isquiotibial':                             {min:12,max:24,prom:18},
+            'Desgarro proximal de isquiotibiales':               {min:20,max:40,prom:30},
+            'Desgarro aductores':                                {min:12,max:24,prom:18},
+            'Contractura de cuádriceps':                         {min:6, max:12,prom:8 },
+            'Contractura del aductor largo':                     {min:6, max:12,prom:8 },
+            'Contusión muscular':                                {min:6, max:14,prom:10},
+            'Tendinopatía proximal de isquiotibiales':           {min:20,max:40,prom:30},
+            'Tendinopatía del psoas-ilíaco':                     {min:12,max:24,prom:18},
+            'Tendinopatía peroneal':                             {min:16,max:32,prom:24},
+            'DOMS (dolor muscular de aparición tardía)':         {min:2, max:6, prom:4 },
+            // ─── COLUMNA LUMBAR ───
+            'Lumbalgia mecánica':                                {min:8, max:16,prom:12},
+            'Hernia discal lumbar':                              {min:20,max:40,prom:30},
+            'Ciatalgia':                                         {min:16,max:32,prom:24},
+            'Espondilolistesis':                                 {min:20,max:40,prom:30},
+            'Contractura paravertebral':                         {min:4, max:10,prom:7 },
+            'Lumbar del levantador':                             {min:12,max:24,prom:18},
+            'Dorsalgia postural':                                {min:8, max:16,prom:12},
+            'Síndrome de sobreentrenamiento':                    {min:12,max:24,prom:18},
+            // ─── COLUMNA CERVICAL ───
+            'Cervicalgia mecánica':                              {min:8, max:16,prom:12},
+            'Latigazo cervical':                                 {min:12,max:24,prom:18},
+            'Contractura cervical aguda (tortícolis)':           {min:4, max:10,prom:7 },
+            'Contractura cervical aguda (tortícolis)':           {min:4, max:10,prom:7 },
+            'Radiculopatía cervical':                            {min:16,max:32,prom:24},
+            'Cefalea cervicogénica':                             {min:12,max:20,prom:16},
+            'Miositis cervical del nadador':                     {min:8, max:16,prom:12},
+            'Síndrome de salida torácica':                       {min:16,max:32,prom:24},
+            'Síndrome miofascial':                               {min:10,max:20,prom:15},
+            'Calambre muscular':                                 {min:2, max:6, prom:4 },
+            'Calambres musculares':                              {min:2, max:6, prom:4 },
+            // ─── HOMBRO ───
+            'Síndrome de impingement subacromial (SIS)':         {min:16,max:32,prom:24},
+            'Bursitis subacromial':                              {min:12,max:24,prom:18},
+            'Bursitis subdeltoidea':                             {min:12,max:24,prom:18},
+            'Capsulitis adhesiva (hombro congelado)':            {min:30,max:60,prom:45},
+            'Capsulitis adhesiva (hombro congelado) fase aguda': {min:30,max:60,prom:45},
+            'Manguito rotador — tendinopatía global (todos los tendones)': {min:20,max:40,prom:30},
+            'Síndrome del manguito rotador':                     {min:20,max:40,prom:30},
+            'Rotura del manguito rotador (parcial)':             {min:24,max:48,prom:36},
+            'Rotura del manguito rotador (total, post-quirúrgico)': {min:48,max:80,prom:64},
+            'Supraespinoso — tendinopatía (arco doloroso)':      {min:16,max:32,prom:24},
+            'Infraespinoso — tendinopatía y debilidad de RE':    {min:16,max:32,prom:24},
+            'Subescapular — tendinopatía y debilidad de RI':     {min:16,max:32,prom:24},
+            'Redondo menor — tendinopatía (RE a 90° ABD)':       {min:12,max:24,prom:18},
+            'Rotura del supraespinoso (parcial — cara articular)':{min:20,max:40,prom:30},
+            'Rotura del infraespinoso y redondo menor':          {min:24,max:48,prom:36},
+            'Rotura del subescapular':                           {min:24,max:48,prom:36},
+            'Tendinitis calcificante del manguito rotador':      {min:16,max:32,prom:24},
+            'Luxación hombro':                                   {min:24,max:48,prom:36},
+            'Lesión de Bankart (labrum anterior)':               {min:36,max:60,prom:48},
+            'Inestabilidad glenohumeral anterior (TUBS)':        {min:24,max:48,prom:36},
+            'Inestabilidad glenohumeral multidireccional (AMBRI)':{min:24,max:48,prom:36},
+            'Lesión SLAP tipo II-IV':                            {min:30,max:60,prom:45},
+            'Síndrome SLAP':                                     {min:24,max:48,prom:36},
+            'Síndrome de hipomovilidad glenohumeral posterior':  {min:12,max:24,prom:18},
+            'Discinesia escapular':                              {min:12,max:24,prom:18},
+            'Síndrome escapulotorácico (escápula alada / crujido)':{min:16,max:32,prom:24},
+            "Hombro del lanzador (Thrower's shoulder)":         {min:20,max:40,prom:30},
+            'Hombro del nadador':                                {min:16,max:32,prom:24},
+            'Artritis glenohumeral (degenerativa/OA)':           {min:16,max:32,prom:24},
+            'Artritis reumatoide del hombro':                    {min:20,max:40,prom:30},
+            'Osteoartritis acromioclavicular':                   {min:12,max:24,prom:18},
+            'Artropatía acromioclavicular (AC)':                 {min:12,max:24,prom:18},
+            'Luxación acromioclavicular':                        {min:16,max:32,prom:24},
+            'Luxación esternoclavicular (anterior/posterior)':   {min:20,max:40,prom:30},
+            'Fractura de clavícula':                             {min:20,max:36,prom:28},
+            'Fractura de cabeza humeral (Garden/Neer)':          {min:30,max:60,prom:45},
+            'Fractura de escápula (cuerpo, cuello, glenoides)':  {min:24,max:48,prom:36},
+            'Osteólisis distal de clavícula (hombro del levantador)':{min:12,max:24,prom:18},
+            'Rotura del tendón del bíceps (porción larga)':      {min:24,max:48,prom:36},
+            'Tendinitis bíceps larga porción':                   {min:12,max:24,prom:18},
+            'Tendinopatía del bíceps (porción larga) — crónica': {min:16,max:32,prom:24},
+            'Parálisis del nervio axilar':                       {min:16,max:36,prom:26},
+            'Neuropatía del nervio supraescapular':              {min:16,max:32,prom:24},
+            'Neuropatía del supraescapular':                     {min:16,max:32,prom:24},
+            'Síndrome del pectoral menor (compresión subcoracoidea)':{min:12,max:24,prom:18},
+            'Síndrome del túnel cuadrilátero (nervio axilar)':   {min:12,max:24,prom:18},
+            // ─── CODO ───
+            'Epicondilitis (codo tenista)':                      {min:16,max:30,prom:22},
+            'Epitrocleitis (codo golfista)':                     {min:16,max:28,prom:20},
+            'Codo del lanzador (UCL medial)':                    {min:24,max:48,prom:36},
+            'Lesión tríceps (rotura distal)':                    {min:24,max:48,prom:36},
+            'Fractura de olécranon':                             {min:20,max:40,prom:30},
+            'Síndrome del nervio ulnar en codo (cubital tardío)':{min:16,max:32,prom:24},
+            'Síndrome del nervio interóseo posterior':           {min:12,max:24,prom:18},
+            // ─── MUÑECA Y MANO ───
+            'Esguince de muñeca':                                {min:8, max:16,prom:12},
+            'Muñeca del gimnasta':                               {min:16,max:32,prom:24},
+            'Tendinitis de De Quervain':                         {min:12,max:24,prom:18},
+            'Síndrome túnel carpiano':                           {min:12,max:24,prom:18},
+            'Síndrome del canal de Guyon':                       {min:10,max:20,prom:15},
+            'Artritis de la base del pulgar (rizartrosis)':      {min:16,max:32,prom:24},
+            'Dedo en gatillo (tenosinovitis flexora)':           {min:10,max:20,prom:15},
+            'Rotura del ligamento colateral cubital pulgar':     {min:16,max:32,prom:24},
+            'Fractura de escafoides':                            {min:20,max:48,prom:34},
+            // ─── CABEZA ───
+            'Conmoción cerebral':                                {min:6, max:20,prom:12},
         };
 
         function getSesionesPromedio(nombreLesion) {
@@ -5787,8 +5947,8 @@ Generado por Jelian FT — Clinical Sport v136`;
             const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const texto = document.getElementById('obj-texto').value.trim();
-            const evaObj = parseInt(document.getElementById('obj-eva').value);
-            const semanas = parseInt(document.getElementById('obj-semanas').value);
+            const evaObj = parseInt(document.getElementById('obj-eva').value, 10);
+            const semanas = parseInt(document.getElementById('obj-semanas').value, 10);
             if (!texto || isNaN(evaObj) || isNaN(semanas)) { showToast("❌ Completa todos los campos del objetivo.", true); return; }
             if (!p.objetivos) p.objetivos = [];
             p.objetivos.push({ texto, evaObj, semanas, fechaCreacion: new Date().toISOString().split('T')[0], completado: false });
@@ -5845,7 +6005,7 @@ Generado por Jelian FT — Clinical Sport v136`;
             if (!p.evoluciones || p.evoluciones.length < 2) return null;
             const evos = [...p.evoluciones].reverse();
             const n = evos.length;
-            const evaValues = evos.map(e => parseInt(e.eva));
+            const evaValues = evos.map(e => parseInt(e.eva, 10));
             const promCambio = (evaValues[n-1] - evaValues[0]) / n;
             if (promCambio >= 0) return null;
             const semanasRestantes = Math.ceil(evaValues[n-1] / Math.abs(promCambio));
@@ -5927,7 +6087,7 @@ Generado por Jelian FT — Clinical Sport v136`;
             return (p.evoluciones || []).filter(s => {
                 if (!s.fecha) return false;
                 const partes = s.fecha.split('-');
-                return partes.length === 3 && parseInt(partes[0]) === ahora.getFullYear() && parseInt(partes[1])-1 === ahora.getMonth();
+                return partes.length === 3 && parseInt(partes[0], 10) === ahora.getFullYear() && parseInt(partes[1], 10)-1 === ahora.getMonth();
             }).length;
         }
 
@@ -6077,7 +6237,7 @@ Generado por Jelian FT — Clinical Sport v136`;
             const citas = (await getCitas()).filter(c => c.fecha === fechaStr);
             const [año,mes,dia] = fechaStr.split('-');
             const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-            document.getElementById('cal-dia-titulo').textContent = `${dia} de ${meses[parseInt(mes)-1]} de ${año}`;
+            document.getElementById('cal-dia-titulo').textContent = `${dia} de ${meses[parseInt(mes, 10)-1]} de ${año}`;
             const cont = document.getElementById('cal-citas-dia');
             if (citas.length === 0) { cont.innerHTML = '<p class="text-xs text-slate-400 italic">Sin citas para este día.</p>'; return; }
             cont.innerHTML = citas.map((c,i) => `
@@ -6829,7 +6989,7 @@ Generado por Jelian FT — Clinical Sport v136`;
         async function updateEjercicio(idx, campo, valor) {
             const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.ejerciciosHoja) return;
-            p.ejerciciosHoja[idx][campo] = campo === 'series' ? parseInt(valor) : valor;
+            p.ejerciciosHoja[idx][campo] = campo === 'series' ? parseInt(valor, 10) : valor;
             await save();
         }
         async function eliminarEjercicio(idx) {
@@ -7026,7 +7186,7 @@ Generado por Jelian FT — Clinical Sport v136`;
             setCalView('mes');
             // Navigate to the right month
             const [y, m] = fecha.split('-');
-            calFecha = new Date(parseInt(y), parseInt(m)-1, 1);
+            calFecha = new Date(parseInt(y, 10), parseInt(m, 10)-1, 1);
             renderCalendario();
             selDia(fecha);
         }
@@ -8017,6 +8177,7 @@ Generado por Jelian FT — Clinical Sport v136`;
             renderBiblioteca();
             updateDashboard();
             loadNotes();
+            try { renderEspera(); } catch(e) {}
         })();
 
 
@@ -8673,11 +8834,11 @@ Generado por Jelian FT — Clinical Sport v136`;
         function cerrarModalInventario() { document.getElementById('modal-inventario').classList.add('hidden'); }
         function guardarInventario() {
             const nombre=document.getElementById('inv-nombre').value.trim();
-            const stock=parseInt(document.getElementById('inv-stock').value);
+            const stock=parseInt(document.getElementById('inv-stock').value, 10);
             if(!nombre||isNaN(stock)){showToast('Completa nombre y stock',true);return;}
-            const editId=parseInt(document.getElementById('inv-edit-id').value);
+            const editId=parseInt(document.getElementById('inv-edit-id').value, 10);
             const data={nombre,cat:document.getElementById('inv-cat').value,unidad:document.getElementById('inv-unidad').value||'unidades',
-                stock,min:parseInt(document.getElementById('inv-min').value)||0,notas:document.getElementById('inv-notas').value};
+                stock,min:parseInt(document.getElementById('inv-min').value, 10)||0,notas:document.getElementById('inv-notas').value};
             if(editId){const i=inventario.findIndex(x=>x.id===editId);if(i>=0)inventario[i]={...inventario[i],...data};}
             else{inventario.push({id:Date.now(),...data});}
             saveInventario();cerrarModalInventario();renderInventario();showToast('Material guardado');
@@ -8813,7 +8974,7 @@ Generado por Jelian FT — Clinical Sport v136`;
         }
         function calcOswestry(){
             let total=0,count=0;
-            OSW_ITEMS.forEach((_,i)=>{const sel=document.querySelector('input[name=osw'+i+']:checked');if(sel){total+=parseInt(sel.value);count++;}});
+            OSW_ITEMS.forEach((_,i)=>{const sel=document.querySelector('input[name=osw'+i+']:checked');if(sel){total+=parseInt(sel.value, 10);count++;}});
             if(count<10){showToast('Responde todas las preguntas',true);return;}
             const pct = count > 0 ? (total / (count * 5)) * 100 : 0; // FIX: divisor correcto ODI (preguntas respondidas × 5)
             document.getElementById('oswestry-resultado').classList.remove('hidden');
@@ -8834,7 +8995,7 @@ Generado por Jelian FT — Clinical Sport v136`;
         }
         function calcDASH(){
             let total=0,count=0;
-            DASH_ITEMS_LIST.forEach((_,i)=>{const sel=document.querySelector('input[name=dash'+i+']:checked');if(sel){total+=parseInt(sel.value);count++;}});
+            DASH_ITEMS_LIST.forEach((_,i)=>{const sel=document.querySelector('input[name=dash'+i+']:checked');if(sel){total+=parseInt(sel.value, 10);count++;}});
             if(count<11){showToast('Responde todas las preguntas',true);return;}
             const score=((total/count)-1)/4*100;
             document.getElementById('dash-resultado').classList.remove('hidden');
