@@ -1319,14 +1319,6 @@
                         <!-- Predicción de alta -->
                         <div id="p-prediccion" class="mt-6 hidden"></div>
 
-                        <!-- Bienestar del Paciente (datos desde app móvil) -->
-                        <div id="p-bienestar-card" class="mt-6 hidden">
-                            <div class="bg-violet-50 border border-violet-100 p-5 rounded-2xl">
-                                <h4 class="text-[9px] font-black text-violet-400 uppercase tracking-widest mb-3">📱 Bienestar · Último registro</h4>
-                                <div id="p-bienestar-content" class="space-y-2"></div>
-                            </div>
-                        </div>
-
                         <div class="mt-10 pt-10 border-t border-slate-50">
                             <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Hallazgos Iniciales</h4>
                             <div id="p-eval-list" class="space-y-3"></div>
@@ -1556,6 +1548,33 @@
 
                         <div id="fotos-clinicas-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
                         <p id="fotos-empty" class="text-xs text-slate-400 italic">Sin fotografías clínicas. Agrega fotos para seguimiento visual de la evolución.</p>
+                    </div>
+
+                    <!-- FOTOS DE PROGRESO DEL PACIENTE (app móvil) -->
+                    <div class="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-sm border border-slate-100 mt-8" id="seccion-fotos-paciente">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h4 class="text-xl font-extrabold text-slate-900">📱 Fotos de Progreso del Paciente</h4>
+                                <p class="text-xs text-slate-400 mt-1">Fotos subidas por el paciente desde su app móvil</p>
+                            </div>
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-full">Solo lectura</span>
+                        </div>
+                        <div id="fotos-paciente-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+                        <p id="fotos-paciente-empty" class="text-xs text-slate-400 italic hidden">El paciente aún no ha subido fotos desde su app.</p>
+                    </div>
+
+                    <!-- MODAL FOTOS PACIENTE -->
+                    <div id="modal-foto-paciente" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9995] hidden items-center justify-center p-4" onclick="cerrarModalFotoPaciente(event)">
+                        <div class="relative max-w-2xl w-full" onclick="event.stopPropagation()">
+                            <button onclick="cerrarModalFotoPaciente()" class="absolute -top-10 right-0 text-white font-black text-2xl hover:text-slate-300">✕</button>
+                            <img id="modal-foto-paciente-img" src="" class="w-full rounded-[2rem] object-contain max-h-[80vh] shadow-2xl">
+                            <div class="bg-white rounded-2xl p-4 mt-3 flex items-center justify-between">
+                                <div>
+                                    <p id="modal-foto-paciente-tipo" class="text-xs font-black text-slate-800 uppercase tracking-widest"></p>
+                                    <p id="modal-foto-paciente-fecha" class="text-xs text-slate-400 mt-0.5"></p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- MODAL AGREGAR FOTO -->
@@ -4436,6 +4455,7 @@ const MAPEO_ZONAS = {
                 status: p.estado || 'activo',
                 foto: p.foto_avatar || null,
                 objetivos: p.objetivos || [],
+                fotos_progreso: p.fotos_progreso || [],
                 _supaId: p.id
             }));
             renderPacientes();
@@ -4886,34 +4906,6 @@ function renderPacientes() { renderLista(); }
                 predEl.innerHTML = `<div class="prediction-chip">🔮 Alta estimada en ~${pred} sesiones</div>`;
             } else { predEl.classList.add('hidden'); }
 
-            // Bienestar del paciente (datos registrados desde la app móvil)
-            const bienCard = document.getElementById('p-bienestar-card');
-            const bienContent = document.getElementById('p-bienestar-content');
-            if (bienCard && bienContent) {
-                // Buscar el último registro de bienestar en evoluciones
-                const ultBien = (p.evoluciones || []).find(e =>
-                    e.rpe != null || e.sleep || e.agua != null
-                );
-                if (ultBien) {
-                    bienCard.classList.remove('hidden');
-                    const sleepLabel = { '<5h':'< 5h', '5-6h':'5-6h', '6-7h':'6-7h', '+8h':'+8h' };
-                    bienContent.innerHTML = `
-                        <div class="text-[9px] font-black text-slate-400 uppercase mb-2">${ultBien.fecha || ''}</div>
-                        <div class="flex flex-wrap gap-2">
-                            ${ultBien.rpe != null ? `<span class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-[10px] font-black">💪 Esfuerzo ${ultBien.rpe}/5</span>` : ''}
-                            ${ultBien.sleep ? `<span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-black">💤 Sueño ${ultBien.sleep}</span>` : ''}
-                            ${ultBien.agua != null ? `<span class="bg-sky-100 text-sky-700 px-3 py-1 rounded-full text-[10px] font-black">💧 ${ultBien.agua}/8 vasos</span>` : ''}
-                        </div>
-                        <div class="mt-3">
-                            <p class="text-[9px] text-violet-400 font-bold">Racha de registros (EVA)</p>
-                            <p class="text-sm font-black text-violet-600 mt-0.5">${calcularRacha(p)} días consecutivos 🔥</p>
-                        </div>
-                    `;
-                } else {
-                    bienCard.classList.add('hidden');
-                }
-            }
-
             document.getElementById('p-eval-list').innerHTML = p.valoracion.map(v => `
                 <div class="flex justify-between items-center bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                     <span class="text-[9px] font-black text-slate-400 uppercase">${v.p}</span>
@@ -4925,6 +4917,8 @@ function renderPacientes() { renderLista(); }
             planIAEl.style.display = '';
             // Establecer fecha de hoy por defecto
             document.getElementById('s-fecha').value = new Date().toISOString().split('T')[0];
+            // Renderizar fotos del paciente
+            renderFotosPaciente(p);
             // Detener y resetear cronómetro al cambiar de paciente
             if (chronoRunning) chronoToggle();
             chronoReset();
@@ -5035,6 +5029,8 @@ function renderPacientes() { renderLista(); }
             document.getElementById('s-rpe').value = 5;
             updateRPELabel(5);
             document.getElementById('s-fecha').value = new Date().toISOString().split('T')[0];
+            // Renderizar fotos del paciente
+            renderFotosPaciente(p);
             // uncheck all técnicas
             document.querySelectorAll('#tecnicas-chips input').forEach(cb => cb.checked = false);
             // Reset asistencia a "vino"
@@ -5096,15 +5092,6 @@ function renderPacientes() { renderLista(); }
                     </div>
                     <p class="text-sm font-medium text-slate-600 italic border-l-2 border-indigo-200 pl-4">"${escHtml(s.notas || '')}"</p>
                     ${s.bodymap && s.bodymap.length > 0 ? `<div class="mt-4 flex flex-wrap gap-1.5">${s.bodymap.map(p=>`<span class="text-[9px] font-bold px-2 py-1 rounded-full bg-rose-50 text-rose-500">📍 ${escHtml(p.zona)} (${escHtml(p.vista)})</span>`).join('')}</div>` : ''}
-                    ${(s.rpe != null && s.registradoPorPaciente) || s.sleep || s.agua != null ? `
-                    <div class="mt-4 pt-4 border-t border-slate-50">
-                        <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2">📱 Registrado por el paciente</p>
-                        <div class="flex flex-wrap gap-2">
-                            ${s.rpe != null ? `<span class="bg-violet-50 text-violet-600 px-3 py-1 rounded-full text-[10px] font-black">💪 Esfuerzo RPE ${escHtml(s.rpe)}/5</span>` : ''}
-                            ${s.sleep ? `<span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded-full text-[10px] font-black">💤 Sueño ${escHtml(s.sleep)}</span>` : ''}
-                            ${s.agua != null ? `<span class="bg-sky-50 text-sky-500 px-3 py-1 rounded-full text-[10px] font-black">💧 ${escHtml(s.agua)}/8 vasos</span>` : ''}
-                        </div>
-                    </div>` : ''}
                 </div>
             `).join('');
         }
@@ -6054,20 +6041,6 @@ Generado por Jelian FT — Clinical Sport v136`;
         // ============================================================
         // PREDICTION
         // ============================================================
-        // Calcula racha de días consecutivos con registro EVA
-        function calcularRacha(p) {
-            const evo = p.evoluciones || [];
-            const fechasSet = new Set(evo.map(e => e.fecha));
-            let racha = 0;
-            let d = new Date();
-            while (true) {
-                const f = d.toISOString().split('T')[0];
-                if (fechasSet.has(f)) { racha++; d.setDate(d.getDate() - 1); }
-                else break;
-            }
-            return racha;
-        }
-
         function calcularPrediccion(p) {
             if (!p.evoluciones || p.evoluciones.length < 2) return null;
             const evos = [...p.evoluciones].reverse();
@@ -8657,7 +8630,87 @@ Generado por Jelian FT — Clinical Sport v136`;
         }
 
         if ('serviceWorker' in navigator && !IS_SANDBOX) {
-            window.addEventListener('load', async () => {
+            // ============================================================
+        // FOTOS DE PROGRESO DEL PACIENTE
+        // ============================================================
+        function renderFotosPaciente(p) {
+            const grid = document.getElementById('fotos-paciente-grid');
+            const empty = document.getElementById('fotos-paciente-empty');
+            if (!grid) return;
+
+            const fotos = (p && p.fotos_progreso) || [];
+
+            if (!fotos.length) {
+                grid.innerHTML = '';
+                if (empty) empty.classList.remove('hidden');
+                return;
+            }
+
+            if (empty) empty.classList.add('hidden');
+
+            const tipoLabel = {
+                'frontal': 'Vista frontal',
+                'lateral': 'Vista lateral',
+                'zona': 'Zona lesionada',
+                'ejercicio': 'En ejercicio'
+            };
+
+            const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+            function fmtFecha(f) {
+                if (!f) return '—';
+                const [,m,d] = f.split('-');
+                return `${parseInt(d)} ${meses[+m-1]}`;
+            }
+
+            grid.innerHTML = fotos.map((f, i) => `
+                <div class="relative group cursor-pointer rounded-[1.5rem] overflow-hidden bg-slate-50 border border-slate-100 aspect-[3/4] shadow-sm hover:shadow-md transition-all"
+                     onclick="abrirFotoPaciente(${i})">
+                    <img src="${f.url}" alt="${tipoLabel[f.tipo] || f.tipo || 'Foto'}"
+                         class="w-full h-full object-cover"
+                         onerror="this.parentElement.innerHTML='<div class='flex items-center justify-center h-full text-slate-300 text-xs font-bold'>⚠️ Error</div>'">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-3">
+                        <p class="text-white text-[10px] font-black uppercase tracking-widest drop-shadow">${tipoLabel[f.tipo] || f.tipo || 'Foto'}</p>
+                        <p class="text-white/70 text-[9px] font-bold">${fmtFecha(f.fecha)}</p>
+                    </div>
+                    ${i === 0 ? '<span class="absolute top-2 right-2 bg-indigo-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full">ÚLTIMA</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function abrirFotoPaciente(idx) {
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p) return;
+            const fotos = p.fotos_progreso || [];
+            const f = fotos[idx];
+            if (!f) return;
+            const modal = document.getElementById('modal-foto-paciente');
+            const img = document.getElementById('modal-foto-paciente-img');
+            const tipo = document.getElementById('modal-foto-paciente-tipo');
+            const fecha = document.getElementById('modal-foto-paciente-fecha');
+            const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+            const tipoLabel = { 'frontal':'Vista frontal','lateral':'Vista lateral','zona':'Zona lesionada','ejercicio':'En ejercicio' };
+            img.src = f.url;
+            tipo.textContent = tipoLabel[f.tipo] || f.tipo || 'Foto';
+            if (f.fecha) {
+                const [,m,d] = f.fecha.split('-');
+                fecha.textContent = `${parseInt(d)} ${meses[+m-1]}`;
+            } else {
+                fecha.textContent = '';
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function cerrarModalFotoPaciente(e) {
+            if (e && e.target !== document.getElementById('modal-foto-paciente')) return;
+            const modal = document.getElementById('modal-foto-paciente');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('modal-foto-paciente-img').src = '';
+        }
+
+        window.addEventListener('load', async () => {
                 // Limpiar SW viejo con bug de clone
                 try {
                     const regs = await navigator.serviceWorker.getRegistrations();
