@@ -3,6 +3,8 @@
 const CACHE_NAME = 'jelianft-v136';
 
 self.addEventListener('install', (event) => {
+  // Forzar activación inmediata sin esperar a que cierren las tabs
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(['./index.html']).catch(() => {}))
   );
@@ -22,41 +24,71 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  if (url.hostname.includes('supabase.co') || url.hostname.includes('anthropic.com')) return;
 
-  // index.html → siempre red (para que el chequeo de versión funcione)
-  if (url.pathname === '/' || url.pathname.endsWith('index.html')) {
+  // No interceptar peticiones externas (Supabase, APIs, etc.)
+  if (url.hostname.includes('supabase.co')) return;
+  if (url.hostname.includes('anthropic.com')) return;
+  if (url.hostname.includes('fonts.googleapis.com')) return;
+  if (url.hostname.includes('fonts.gstatic.com')) return;
+
+  // index.html y raíz → siempre red primero (chequeo de versión)
+  if (url.pathname === '/' || url.pathname.endsWith('index.html') || url.pathname.endsWith('paciente.html') || url.pathname.endsWith('fisiofinal/')) {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
         .then((res) => {
-          // FIX línea 32: clonar PRIMERO antes de retornar
-          // Si se hace res.clone() después de return res, el body ya fue consumido → DataCloneError
-          const resParaCache = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, resParaCache));
+          // FIX: clone ANTES de cualquier otra operación
+          try {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(event.request, copy)).catch(() => {});
+          } catch (_) {}
           return res;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // Resto → cache-first
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((res) => {
-        if (res && res.status === 200 &&
-            (url.origin === self.location.origin ||
-             url.hostname.includes('jsdelivr') ||
-             url.hostname.includes('tailwindcss'))) {
-          // FIX línea 49: clonar PRIMERO antes de retornar
-          const resParaCache = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, resParaCache));
-        }
-        return res;
-      }).catch(() => {
-        if (event.request.mode === 'navigate') return caches.match('./index.html');
-      });
-    })
-  );
+  // CDN libs (jsdelivr, tailwind, etc.) → cache-first
+  if (url.hostname.includes('jsdelivr') || url.hostname.includes('tailwindcss') || url.hostname.includes('cdnjs')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((res) => {
+          if (res && res.status === 200) {
+            // FIX: clone ANTES de retornar
+            try {
+              const copy = res.clone();
+              caches.open(CACHE_NAME).then(c => c.put(event.request, copy)).catch(() => {});
+            } catch (_) {}
+          }
+          return res;
+        }).catch(() => { /* sin red, sin caché: nada */ });
+      })
+    );
+    return;
+  }
+
+  // Resto de recursos del mismo origen → network-first con fallback a caché
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res && res.status === 200) {
+            // FIX: clone ANTES de retornar
+            try {
+              const copy = res.clone();
+              caches.open(CACHE_NAME).then(c => c.put(event.request, copy)).catch(() => {});
+            } catch (_) {}
+          }
+          return res;
+        })
+        .catch(() => caches.match(event.request).then(cached => {
+          if (cached) return cached;
+          if (event.request.mode === 'navigate') return caches.match('./index.html');
+        }))
+    );
+    return;
+  }
+
+  // Cualquier otra petición: dejar pasar sin interceptar
 });
