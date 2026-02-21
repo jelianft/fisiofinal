@@ -69,9 +69,11 @@
       // En ese caso NO se hacen llamadas de red para evitar DataCloneError de Supabase.
       const IS_SANDBOX = (function() {
         try {
+          // Solo activar mock en preview de Claude (srcdoc/about:blank),
+          // NO en file:// local ni en servidores reales
           return location.href === 'about:srcdoc' ||
                  location.href === 'about:blank' ||
-                 window.self !== window.top && !location.hostname;
+                 (window.self !== window.top && !location.hostname && !location.href.startsWith('file://'));
         } catch(e) { return true; }
       })();
 
@@ -79,6 +81,7 @@
 
       // Cliente Supabase real o mock según entorno
       let sb;
+      window.sb = null; // asegurar acceso global
       if (IS_SANDBOX) {
         // Mock con cadena infinita: soporta cualquier combinacion de metodos Supabase
         // sb.from().select().order().order().limit().eq() etc.
@@ -108,6 +111,7 @@
           realtime: { params: { eventsPerSecond: -1 } }
         });
       }
+      window.sb = sb; // exponer globalmente para chat panel
     </script>
        <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -6711,13 +6715,16 @@ Generado por Jelian FT — Clinical Sport v136`;
             const pct = total > 0 ? Math.round((cumplidos / total) * 100) : 0;
             if (pct === 100) {
                 semaforo.className = 'text-xs font-black px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700';
-                semaforo.textContent = '✅ APTO para vuelta al deporte';
+                const fechaStr = p.rts_aprobado_fecha
+                    ? ` · ${new Date(p.rts_aprobado_fecha + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                    : '';
+                semaforo.innerHTML = `🏆 APTO para vuelta al deporte${fechaStr} — <span style="font-weight:900">¡Notificado al paciente!</span>`;
             } else if (pct >= 60) {
                 semaforo.className = 'text-xs font-black px-4 py-2 rounded-xl bg-amber-100 text-amber-700';
-                semaforo.textContent = `⚠️ En progreso — ${pct}% completado`;
+                semaforo.textContent = `⚠️ En progreso — ${cumplidos}/${total} criterios (${pct}%)`;
             } else {
                 semaforo.className = 'text-xs font-black px-4 py-2 rounded-xl bg-rose-100 text-rose-700';
-                semaforo.textContent = `🔴 No apto — ${pct}% completado`;
+                semaforo.textContent = `🔴 No apto — ${cumplidos}/${total} criterios (${pct}%)`;
             }
             cont.innerHTML = p.rts.map((c, i) => `
                 <div class="rts-item ${c.cumplido ? 'bg-emerald-50' : 'bg-white'}">
@@ -6736,7 +6743,47 @@ Generado por Jelian FT — Clinical Sport v136`;
             const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.rts) return;
             p.rts[idx].cumplido = !p.rts[idx].cumplido;
-            await save();
+
+            // ── Verificar si acaba de llegar al 100% ──
+            const total    = p.rts.length;
+            const cumplidos = p.rts.filter(c => c.cumplido).length;
+            const era100   = p.rts_aprobado === true;
+            const ahora100 = total > 0 && cumplidos === total;
+
+            if (ahora100 && !era100) {
+                // Primera vez que completa todos los criterios
+                p.rts_aprobado      = true;
+                p.rts_aprobado_fecha = new Date().toISOString().split('T')[0];
+                // Guardar directamente en Supabase para que el paciente lo vea
+                try {
+                    await sb.from('pacientes').update({
+                        rts:              p.rts,
+                        rts_aprobado:     true,
+                        rts_aprobado_fecha: p.rts_aprobado_fecha
+                    }).eq('id', p.id);
+                    // Mensaje automático al paciente por el chat
+                    await sb.from('mensajes').insert({
+                        paciente_id:     p.id,
+                        paciente_nombre: p.nombre,
+                        texto: `🏆 ¡${p.nombre.split(' ')[0]}, has completado todos los criterios de vuelta al deporte! Tu fisio ha marcado que estás LISTO/A para volver a la actividad deportiva. ¡Enhorabuena por tu recuperación! 🎉`,
+                        autor: 'fisio'
+                    });
+                    showToast('🏆 ¡Paciente aprobado para volver al deporte! Se le ha notificado.');
+                } catch(e) {
+                    console.error('[RTS] Error guardando aprobación:', e.message);
+                }
+            } else if (!ahora100 && era100) {
+                // Desmarcó un criterio → quitar aprobación
+                p.rts_aprobado = false;
+                p.rts_aprobado_fecha = null;
+                try {
+                    await sb.from('pacientes').update({
+                        rts: p.rts, rts_aprobado: false, rts_aprobado_fecha: null
+                    }).eq('id', p.id);
+                } catch(e) {}
+            } else {
+                await save();
+            }
             renderRTS();
         }
         async function agregarCriterioRTS() {
@@ -9054,17 +9101,20 @@ Generado por Jelian FT — Clinical Sport v136`;
 
 
     <!-- ═══════════════════════════════════════════════════
-         PANEL CHAT PACIENTES — slide-in desde la derecha
+         PANEL CHAT PACIENTES — VERSIÓN CORREGIDA
+         FIX 1: z-index elevado para no quedar bajo overlays
+         FIX 2: usa sb global, sin segundo createClient
+         FIX 3: manejo graceful si tabla mensajes no existe
     ════════════════════════════════════════════════════ -->
     <div id="chat-panel-overlay" onclick="cerrarChatPanel()" style="
-        display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45);
-        z-index:9990; backdrop-filter:blur(2px); transition:opacity 0.3s;"></div>
+        display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+        z-index:99990; backdrop-filter:blur(2px);"></div>
 
     <div id="chat-panel" style="
-        position:fixed; top:0; right:0; height:100dvh; width:min(520px,100vw);
-        background:#fff; z-index:9991; display:flex; flex-direction:column;
+        position:fixed; top:0; right:0; height:100%; width:min(520px,100vw);
+        background:#fff; z-index:99991; display:flex; flex-direction:column;
         transform:translateX(100%); transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
-        box-shadow:-20px 0 60px rgba(0,0,0,0.15); border-left:1px solid #e2e8f0;">
+        box-shadow:-20px 0 60px rgba(0,0,0,0.2); border-left:1px solid #e2e8f0;">
 
         <!-- Panel header -->
         <div style="display:flex;align-items:center;justify-content:space-between;
@@ -9078,30 +9128,33 @@ Generado por Jelian FT — Clinical Sport v136`;
                     </svg>
                 </div>
                 <div>
-                    <div style="font-weight:800;font-size:0.9rem;color:#f1f5f9;font-family:'Plus Jakarta Sans',sans-serif;">Chat Pacientes</div>
-                    <div style="font-size:0.65rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;" id="chat-panel-status">Cargando...</div>
+                    <div style="font-weight:800;font-size:0.9rem;color:#f1f5f9;">Chat Pacientes</div>
+                    <div id="chat-panel-status" style="font-size:0.65rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Cargando...</div>
                 </div>
             </div>
             <button onclick="cerrarChatPanel()" style="background:rgba(255,255,255,0.07);border:none;border-radius:8px;
                     width:32px;height:32px;cursor:pointer;color:#94a3b8;font-size:1.1rem;
-                    display:flex;align-items:center;justify-content:center;transition:all 0.15s;"
-                onmouseover="this.style.background='rgba(255,255,255,0.12)'"
-                onmouseout="this.style.background='rgba(255,255,255,0.07)'">✕</button>
+                    display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+
+        <!-- Aviso tabla no creada -->
+        <div id="cp-no-tabla" style="display:none;background:#fef3c7;border-bottom:1px solid #fde68a;
+             padding:0.6rem 1rem;font-size:0.72rem;color:#92400e;font-weight:600;flex-shrink:0;">
+            ⚠️ La tabla <code>mensajes</code> no existe en Supabase. Ejecuta el archivo
+            <strong>SETUP_SUPABASE.sql</strong> para activar el chat.
         </div>
 
         <!-- Layout: lista izq + chat der -->
         <div style="flex:1;display:flex;overflow:hidden;">
 
             <!-- Lista de pacientes -->
-            <div id="cp-lista" style="width:200px;flex-shrink:0;border-right:1px solid #e2e8f0;
-                         overflow-y:auto;background:#f8fafc;">
+            <div style="width:200px;flex-shrink:0;border-right:1px solid #e2e8f0;overflow-y:auto;background:#f8fafc;">
                 <div style="padding:0.6rem;border-bottom:1px solid #e2e8f0;">
                     <input id="cp-search" placeholder="🔍 Buscar…" oninput="cpFiltrar(this.value)"
                         style="width:100%;background:white;border:1px solid #e2e8f0;border-radius:8px;
-                               padding:0.4rem 0.6rem;font-size:0.75rem;font-family:'Plus Jakarta Sans',sans-serif;
-                               outline:none;color:#0f172a;">
+                               padding:0.4rem 0.6rem;font-size:0.75rem;outline:none;color:#0f172a;">
                 </div>
-                <div id="cp-pacientes-list" style="font-size:0.78rem;"></div>
+                <div id="cp-pacientes-list"></div>
             </div>
 
             <!-- Área de chat -->
@@ -9112,12 +9165,11 @@ Generado por Jelian FT — Clinical Sport v136`;
                              justify-content:center;color:#94a3b8;text-align:center;padding:2rem;">
                     <div style="font-size:2.5rem;margin-bottom:0.75rem;opacity:0.4;">💬</div>
                     <div style="font-weight:700;font-size:0.85rem;color:#0f172a;margin-bottom:0.3rem;">Selecciona un paciente</div>
-                    <div style="font-size:0.75rem;line-height:1.6;">Elige un paciente de la lista<br>para ver y responder sus mensajes.</div>
+                    <div style="font-size:0.75rem;line-height:1.6;">Elige un paciente para ver su conversación.</div>
                 </div>
 
                 <!-- Chat activo -->
                 <div id="cp-chat-activo" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
-                    <!-- Header del paciente -->
                     <div id="cp-chat-header" style="padding:0.75rem 1rem;border-bottom:1px solid #e2e8f0;
                                  background:white;display:flex;align-items:center;gap:0.6rem;flex-shrink:0;">
                         <div id="cp-hdr-avatar" style="width:32px;height:32px;border-radius:50%;
@@ -9125,19 +9177,16 @@ Generado por Jelian FT — Clinical Sport v136`;
                                      display:flex;align-items:center;justify-content:center;
                                      font-weight:800;font-size:0.7rem;color:white;flex-shrink:0;"></div>
                         <div style="min-width:0;">
-                            <div id="cp-hdr-name" style="font-weight:800;font-size:0.82rem;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-                            <div id="cp-hdr-diag" style="font-size:0.65rem;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+                            <div id="cp-hdr-name" style="font-weight:800;font-size:0.82rem;color:#0f172a;"></div>
+                            <div id="cp-hdr-diag" style="font-size:0.65rem;color:#94a3b8;"></div>
                         </div>
-                        <div style="margin-left:auto;width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;" title="En línea"></div>
+                        <div style="margin-left:auto;width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
                     </div>
 
-                    <!-- Mensajes -->
                     <div id="cp-messages" style="flex:1;overflow-y:auto;padding:0.85rem;
                                  display:flex;flex-direction:column;gap:0.4rem;scroll-behavior:smooth;
-                                 background:#f8fafc;">
-                    </div>
+                                 background:#f8fafc;"></div>
 
-                    <!-- Respuestas rápidas -->
                     <div style="padding:0.4rem 0.75rem;background:white;border-top:1px solid #f1f5f9;
                                 display:flex;gap:0.3rem;flex-wrap:wrap;flex-shrink:0;">
                         <button onclick="cpQuick('¡Hola! ¿Cómo te has sentido?')" class="cp-quick">👋 Saludo</button>
@@ -9146,95 +9195,70 @@ Generado por Jelian FT — Clinical Sport v136`;
                         <button onclick="cpQuick('Si el dolor aumenta, descansa y avísame.')" class="cp-quick">⚠️ Alerta</button>
                     </div>
 
-                    <!-- Input -->
                     <div style="padding:0.6rem 0.75rem;background:white;border-top:1px solid #e2e8f0;
                                 display:flex;gap:0.5rem;align-items:flex-end;flex-shrink:0;">
                         <textarea id="cp-input" rows="1" placeholder="Escribe como fisio…"
                             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();cpEnviar();}"
                             oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"
                             style="flex:1;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;
-                                   padding:0.55rem 0.75rem;font-family:'Plus Jakarta Sans',sans-serif;
-                                   font-size:0.82rem;color:#0f172a;outline:none;resize:none;
-                                   max-height:100px;min-height:36px;line-height:1.4;transition:border-color 0.2s;"
+                                   padding:0.55rem 0.75rem;font-size:0.82rem;color:#0f172a;outline:none;
+                                   resize:none;max-height:100px;min-height:36px;line-height:1.4;transition:border-color 0.2s;"
                             onfocus="this.style.borderColor='#6366f1';this.style.background='white'"
                             onblur="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'"></textarea>
                         <button onclick="cpEnviar()" id="cp-btn-send"
                             style="background:#6366f1;border:none;border-radius:10px;width:36px;height:36px;
-                                   cursor:pointer;display:flex;align-items:center;justify-content:center;
-                                   flex-shrink:0;transition:all 0.15s;"
-                            onmouseover="this.style.background='#4f46e5'"
-                            onmouseout="this.style.background='#6366f1'">
+                                   cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                             <svg width="15" height="15" fill="none" stroke="white" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                             </svg>
                         </button>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
     <style>
-        #chat-panel.open { transform: translateX(0); }
-        .cp-quick {
-            background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2);
-            border-radius: 99px; padding: 0.22rem 0.65rem;
-            font-size: 0.68rem; font-weight: 700; color: #6366f1;
-            cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
-            transition: all 0.15s; white-space: nowrap;
-        }
-        .cp-quick:hover { background: rgba(99,102,241,0.15); }
-        .cp-pac-item {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding: 0.6rem 0.75rem; cursor: pointer;
-            border-bottom: 1px solid #f1f5f9; transition: background 0.12s;
-        }
-        .cp-pac-item:hover { background: #f1f5f9; }
-        .cp-pac-item.active { background: rgba(99,102,241,0.08); border-left: 3px solid #6366f1; }
+        #chat-panel.open { transform: translateX(0) !important; }
+        .cp-quick { background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:99px; padding:0.22rem 0.65rem; font-size:0.68rem; font-weight:700; color:#6366f1; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+        .cp-quick:hover { background:rgba(99,102,241,0.15); }
+        .cp-pac-item { display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem; cursor:pointer; border-bottom:1px solid #f1f5f9; transition:background 0.12s; }
+        .cp-pac-item:hover { background:#f1f5f9; }
+        .cp-pac-item.active { background:rgba(99,102,241,0.08); border-left:3px solid #6366f1; }
         .cp-msg-fisio { display:flex; justify-content:flex-end; }
-        .cp-msg-pac  { display:flex; justify-content:flex-start; }
-        .cp-bubble {
-            max-width: 80%; padding: 0.5rem 0.75rem;
-            font-size: 0.8rem; line-height: 1.5; border-radius: 14px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
+        .cp-msg-pac { display:flex; justify-content:flex-start; }
+        .cp-bubble { max-width:80%; padding:0.5rem 0.75rem; font-size:0.8rem; line-height:1.5; border-radius:14px; }
         .cp-bubble.fisio { background:#6366f1; color:white; border-radius:14px 14px 3px 14px; }
         .cp-bubble.paciente { background:white; color:#0f172a; border:1px solid #e2e8f0; border-radius:14px 14px 14px 3px; }
         .cp-bubble-time { font-size:0.6rem; opacity:0.55; text-align:right; margin-top:2px; }
         .cp-pac-label { font-size:0.62rem; font-weight:800; color:#6366f1; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:2px; }
-        .cp-day-div { text-align:center; font-size:0.65rem; font-weight:700; color:#94a3b8;
-                      text-transform:uppercase; letter-spacing:0.08em; padding:0.4rem 0;
-                      display:flex; align-items:center; gap:0.5rem; }
+        .cp-day-div { text-align:center; font-size:0.65rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; padding:0.4rem 0; display:flex; align-items:center; gap:0.5rem; flex-shrink:0; }
         .cp-day-div::before,.cp-day-div::after { content:''; flex:1; height:1px; background:#e2e8f0; }
         #cp-messages::-webkit-scrollbar { width:3px; }
         #cp-messages::-webkit-scrollbar-thumb { background:#e2e8f0; border-radius:3px; }
     </style>
 
     <script>
-    // ═══════════════════════════════════════════════
-    // CHAT PANEL — integrado en Jelian FT
-    // ═══════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════
+    // CHAT PANEL — VERSIÓN CORREGIDA
+    // FIX 1: Reutiliza `sb` global (sin segundo GoTrueClient)
+    // FIX 2: z-index 99991 para aparecer sobre todo
+    // FIX 3: Detecta tabla inexistente y muestra aviso claro
+    // FIX 4: Inicialización segura con espera a que `sb` exista
+    // ═══════════════════════════════════════════════════════
     (function() {
-        const SUPA_URL = 'https://autdqxqlhxpibleqjvbu.supabase.co';
-        const SUPA_KEY = 'sb_publishable_iIunAaNnuIWfNhBgd7kjJQ_ykOJxuCn';
-
-        let cpSb = null;
-        let cpPacientes = [];
-        let cpActual = null;
-        let cpSub = null;
-        let cpSubGlobal = null;
-        let cpUnread = {};
+        let cpPacientes   = [];
+        let cpActual      = null;
+        let cpSub         = null;
+        let cpSubGlobal   = null;
+        let cpUnread      = {};
         let cpPanelAbierto = false;
         let cpInicializado = false;
+        let cpTablaOk     = true; // asume que existe hasta saber lo contrario
 
-        function getCpSb() {
-            if (!cpSb && window.supabase) {
-                cpSb = window.supabase.createClient(SUPA_URL, SUPA_KEY, {
-                    auth: { autoRefreshToken:false, persistSession:false, detectSessionInUrl:false }
-                });
-            }
-            return cpSb;
+        // ── Usar el sb global de Jelian FT (no crear uno nuevo) ──
+        function getSb() {
+            return window.sb || null;
         }
 
         function cpEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -9242,64 +9266,114 @@ Generado por Jelian FT — Clinical Sport v136`;
         function cpHora(iso) { return iso ? new Date(iso).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : ''; }
         function cpDia(iso) {
             if (!iso) return '';
-            const d = new Date(iso), h = new Date(), a = new Date(h);
+            const d=new Date(iso), h=new Date(), a=new Date(h);
             a.setDate(a.getDate()-1);
             if (d.toDateString()===h.toDateString()) return 'Hoy';
             if (d.toDateString()===a.toDateString()) return 'Ayer';
             return d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
         }
+        function cpById(id) { return document.getElementById(id); }
 
-        // ── Abrir / cerrar panel ──
+        // ── Abrir panel ──
         window.abrirChatPanel = async function() {
-            document.getElementById('chat-panel').classList.add('open');
-            document.getElementById('chat-panel-overlay').style.display = 'block';
+            cpById('chat-panel').classList.add('open');
+            cpById('chat-panel-overlay').style.display = 'block';
             cpPanelAbierto = true;
-            if (!cpInicializado) { cpInicializado = true; await cpCargarPacientes(); cpSuscribirGlobal(); }
+            if (!cpInicializado) {
+                cpInicializado = true;
+                // Esperar a que `sb` esté disponible (puede estar cargando)
+                let intentos = 0;
+                while (!getSb() && intentos < 20) {
+                    await new Promise(r => setTimeout(r, 200));
+                    intentos++;
+                }
+                if (!getSb()) {
+                    cpById('chat-panel-status').textContent = 'Error: sin conexión BD';
+                    return;
+                }
+                await cpCargarPacientes();
+                if (cpTablaOk) cpSuscribirGlobal();
+            }
         };
 
         window.cerrarChatPanel = function() {
-            document.getElementById('chat-panel').classList.remove('open');
-            document.getElementById('chat-panel-overlay').style.display = 'none';
+            cpById('chat-panel').classList.remove('open');
+            cpById('chat-panel-overlay').style.display = 'none';
             cpPanelAbierto = false;
         };
 
-        // ── Cargar lista ──
+        // ── Cargar lista de pacientes ──
         async function cpCargarPacientes() {
-            const s = getCpSb(); if (!s) return;
+            const s = getSb();
             try {
-                const { data } = await s.from('pacientes').select('id,nombre,diag,diagnostico,estado').order('nombre');
+                const { data, error } = await s.from('pacientes')
+                    .select('id,nombre,diag,diagnostico,estado').order('nombre');
+                if (error) throw error;
                 cpPacientes = data || [];
 
-                // Último mensaje por paciente (preview + unread)
-                const { data: msgs } = await s.from('mensajes').select('paciente_id,autor,texto,created_at').order('created_at',{ascending:false});
+                // Intentar cargar mensajes — detectar si la tabla existe
+                let msgs = [];
+                try {
+                    const { data: mdata, error: merr } = await s
+                        .from('mensajes')
+                        .select('paciente_id,autor,texto,created_at')
+                        .order('created_at', { ascending: false });
+                    if (merr) {
+                        // 404 = tabla no existe, 400 = error de sintaxis/permisos
+                        if (merr.code === '42P01' || merr.message?.includes('does not exist') || merr.status === 404 || merr.status === 400) {
+                            cpTablaOk = false;
+                            cpById('cp-no-tabla').style.display = 'block';
+                        }
+                    } else {
+                        msgs = mdata || [];
+                    }
+                } catch(me) {
+                    cpTablaOk = false;
+                    cpById('cp-no-tabla').style.display = 'block';
+                }
+
+                // Calcular unread y previews
                 const byPac = {};
-                (msgs||[]).forEach(m => {
+                msgs.forEach(m => {
                     if (!byPac[m.paciente_id]) byPac[m.paciente_id] = { last: m, unread: 0 };
                     const seen = parseInt(localStorage.getItem('jft_fisio_seen_'+m.paciente_id)||'0');
-                    if (m.autor==='paciente' && new Date(m.created_at).getTime() > seen) byPac[m.paciente_id].unread++;
+                    if (m.autor === 'paciente' && new Date(m.created_at).getTime() > seen) {
+                        byPac[m.paciente_id].unread++;
+                    }
                 });
                 cpUnread = byPac;
 
-                const totalUnread = Object.values(cpUnread).reduce((a,b)=>a+(b.unread||0),0);
-                const badge = document.getElementById('chat-nav-badge');
-                if (badge) { badge.classList.toggle('hidden', totalUnread === 0); }
+                const totalUnread = Object.values(cpUnread).reduce((a,b) => a+(b.unread||0), 0);
+                const badge = cpById('chat-nav-badge');
+                if (badge) badge.classList.toggle('hidden', totalUnread === 0);
 
-                document.getElementById('chat-panel-status').textContent = cpPacientes.length + ' pacientes';
+                cpById('chat-panel-status').textContent = cpPacientes.length + ' pacientes';
                 cpRenderLista(cpPacientes);
+
             } catch(e) {
-                document.getElementById('chat-panel-status').textContent = 'Error conexión';
+                cpById('chat-panel-status').textContent = 'Error al cargar';
+                cpById('cp-pacientes-list').innerHTML =
+                    `<div style="padding:1rem;color:#ef4444;font-size:0.72rem;text-align:center;">Error: ${cpEsc(e.message)}</div>`;
             }
         }
 
         function cpRenderLista(lista) {
-            const cont = document.getElementById('cp-pacientes-list');
-            if (!lista.length) { cont.innerHTML = '<div style="padding:1rem;color:#94a3b8;font-size:0.75rem;text-align:center;">Sin pacientes</div>'; return; }
+            const cont = cpById('cp-pacientes-list');
+            if (!lista || !lista.length) {
+                cont.innerHTML = '<div style="padding:1rem;color:#94a3b8;font-size:0.75rem;text-align:center;">Sin pacientes</div>';
+                return;
+            }
             cont.innerHTML = lista.map(p => {
-                const info = cpUnread[p.id];
-                const preview = info&&info.last ? cpEsc(info.last.texto.substring(0,28))+(info.last.texto.length>28?'…':'') : '<span style="color:#cbd5e1">Sin mensajes</span>';
-                const unread = info ? info.unread : 0;
-                const isAct = cpActual && cpActual.id===p.id;
-                return `<div class="cp-pac-item${isAct?' active':''}" id="cppac-${p.id}" onclick="cpAbrirConversacion(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+                const info    = cpUnread[p.id];
+                const preview = (info && info.last)
+                    ? cpEsc(info.last.texto.substring(0,28)) + (info.last.texto.length > 28 ? '…' : '')
+                    : '<span style="color:#cbd5e1;font-style:italic">Sin mensajes</span>';
+                const unread  = info ? info.unread : 0;
+                const isAct   = cpActual && cpActual.id === p.id;
+                // Serializar solo los campos seguros para onclick
+                const pData   = JSON.stringify({id:p.id, nombre:p.nombre, diag:p.diag||'', diagnostico:p.diagnostico||''});
+                return `<div class="cp-pac-item${isAct?' active':''}" id="cppac-${p.id}"
+                        onclick='cpAbrirConversacion(${pData.replace(/'/g,"&#39;")})'>
                     <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);
                                 display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.6rem;color:white;flex-shrink:0;">
                         ${cpInitials(p.nombre)}</div>
@@ -9307,7 +9381,7 @@ Generado por Jelian FT — Clinical Sport v136`;
                         <div style="font-weight:700;font-size:0.75rem;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cpEsc(p.nombre)}</div>
                         <div style="font-size:0.65rem;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${preview}</div>
                     </div>
-                    ${unread>0 ? `<span style="background:#6366f1;color:white;border-radius:99px;font-size:0.6rem;font-weight:800;padding:1px 6px;flex-shrink:0;">${unread}</span>` : ''}
+                    ${unread > 0 ? `<span style="background:#6366f1;color:white;border-radius:99px;font-size:0.6rem;font-weight:800;padding:1px 6px;flex-shrink:0;">${unread}</span>` : ''}
                 </div>`;
             }).join('');
         }
@@ -9318,79 +9392,102 @@ Generado por Jelian FT — Clinical Sport v136`;
 
         // ── Abrir conversación ──
         window.cpAbrirConversacion = async function(p) {
+            // p puede llegar como objeto (desde realtime) o string (desde onclick)
+            if (typeof p === 'string') { try { p = JSON.parse(p); } catch(e) { return; } }
             cpActual = p;
             localStorage.setItem('jft_fisio_seen_'+p.id, Date.now());
             if (cpUnread[p.id]) cpUnread[p.id].unread = 0;
 
-            // Actualizar lista
+            // Resaltar en lista
             document.querySelectorAll('.cp-pac-item').forEach(el => el.classList.remove('active'));
-            const item = document.getElementById('cppac-'+p.id);
-            if (item) { item.classList.add('active'); const b=item.querySelector('[style*="background:#6366f1"]'); if(b&&b.style.padding) b.remove(); }
+            const item = cpById('cppac-'+p.id);
+            if (item) {
+                item.classList.add('active');
+                // Quitar badge de no leídos
+                const b = item.querySelector('span[style*="background:#6366f1"]');
+                if (b && !b.style.borderRadius?.includes('50%')) b.remove();
+            }
 
-            // Header
-            document.getElementById('cp-hdr-avatar').textContent = cpInitials(p.nombre);
-            document.getElementById('cp-hdr-name').textContent = p.nombre;
-            document.getElementById('cp-hdr-diag').textContent = p.diag||p.diagnostico||'Sin diagnóstico';
+            // Mostrar header
+            cpById('cp-hdr-avatar').textContent = cpInitials(p.nombre);
+            cpById('cp-hdr-name').textContent   = p.nombre;
+            cpById('cp-hdr-diag').textContent   = p.diag || p.diagnostico || 'Sin diagnóstico';
 
-            // Mostrar chat
-            document.getElementById('cp-empty').style.display = 'none';
-            const chatEl = document.getElementById('cp-chat-activo');
-            chatEl.style.display = 'flex';
+            // Mostrar área de chat
+            cpById('cp-empty').style.display = 'none';
+            const chatEl = cpById('cp-chat-activo');
+            chatEl.style.display      = 'flex';
             chatEl.style.flexDirection = 'column';
 
             await cpCargarMensajes(p.id);
 
-            // Realtime paciente activo
-            const s = getCpSb();
-            if (cpSub) { s.removeChannel(cpSub); cpSub=null; }
-            cpSub = s.channel('jft-chat-fisio-'+p.id)
-                .on('postgres_changes',{ event:'INSERT', schema:'public', table:'mensajes', filter:`paciente_id=eq.${p.id}` }, payload => {
-                    cpAgregarBurbuja(payload.new);
-                    cpScrollDown();
-                    localStorage.setItem('jft_fisio_seen_'+p.id, Date.now());
-                }).subscribe();
+            // Realtime — desuscribir anterior y suscribir nuevo
+            const s = getSb();
+            if (cpSub) { try { s.removeChannel(cpSub); } catch(e){} cpSub = null; }
+            if (cpTablaOk) {
+                cpSub = s.channel('jft-cp-' + p.id)
+                    .on('postgres_changes', {
+                        event: 'INSERT', schema: 'public',
+                        table: 'mensajes', filter: `paciente_id=eq.${p.id}`
+                    }, payload => {
+                        cpAgregarBurbuja(payload.new);
+                        cpScrollDown();
+                        localStorage.setItem('jft_fisio_seen_'+p.id, Date.now());
+                    }).subscribe();
+            }
 
-            document.getElementById('cp-input').focus();
+            setTimeout(() => cpById('cp-input').focus(), 100);
         };
 
         async function cpCargarMensajes(pid) {
-            const area = document.getElementById('cp-messages');
+            const area = cpById('cp-messages');
             area.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;font-size:0.8rem;">Cargando…</div>';
-            const s = getCpSb();
+
+            if (!cpTablaOk) {
+                area.innerHTML = '<div style="text-align:center;padding:2rem;color:#f59e0b;font-size:0.78rem;">⚠️ Tabla de mensajes no configurada.<br>Ejecuta el SQL de setup primero.</div>';
+                return;
+            }
+
+            const s = getSb();
             try {
-                const { data, error } = await s.from('mensajes').select('*').eq('paciente_id',pid).order('created_at',{ascending:true});
+                const { data, error } = await s.from('mensajes').select('*')
+                    .eq('paciente_id', pid).order('created_at', { ascending: true });
                 if (error) throw error;
                 area.innerHTML = '';
-                if (!data||data.length===0) {
-                    area.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;font-size:0.78rem;">Sin mensajes aún.<br>¡Sé el primero en escribir!</div>';
+                if (!data || data.length === 0) {
+                    area.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;font-size:0.78rem;">Sin mensajes aún.<br>¡Escríbele primero! 👋</div>';
                     return;
                 }
                 let lastDay = '';
                 data.forEach(m => {
                     const d = cpDia(m.created_at);
-                    if (d!==lastDay) {
-                        const div=document.createElement('div'); div.className='cp-day-div'; div.textContent=d;
-                        area.appendChild(div); lastDay=d;
+                    if (d !== lastDay) {
+                        const sep = document.createElement('div');
+                        sep.className = 'cp-day-div';
+                        sep.textContent = d;
+                        area.appendChild(sep);
+                        lastDay = d;
                     }
                     cpAgregarBurbuja(m);
                 });
                 cpScrollDown();
             } catch(e) {
-                area.innerHTML = `<div style="text-align:center;padding:1rem;color:#ef4444;font-size:0.75rem;">Error: ${cpEsc(e.message)}</div>`;
+                area.innerHTML = `<div style="text-align:center;padding:1rem;color:#ef4444;font-size:0.75rem;">Error al cargar: ${cpEsc(e.message)}</div>`;
             }
         }
 
         function cpAgregarBurbuja(m) {
-            const area = document.getElementById('cp-messages');
-            const loading = area.querySelector('div[style*="Cargando"]') || area.querySelector('div[style*="Sin mensajes"]');
-            if (loading) loading.remove();
-
-            const esFisio = m.autor==='fisio';
+            const area = cpById('cp-messages');
+            // Limpiar estados vacíos/loading
+            ['Cargando', 'Sin mensajes', 'Error al cargar', 'Tabla de mensajes'].forEach(txt => {
+                const el = area.querySelector(`div[style*="text-align:center"]`);
+                if (el && el.textContent.includes(txt)) el.remove();
+            });
+            const esFisio = m.autor === 'fisio';
             const row = document.createElement('div');
             row.className = esFisio ? 'cp-msg-fisio' : 'cp-msg-pac';
-            row.dataset.msgId = m.id;
-            row.innerHTML = `<div class="cp-bubble ${esFisio?'fisio':'paciente'}">
-                ${!esFisio ? `<div class="cp-pac-label">${cpEsc(m.paciente_nombre||'Paciente')}</div>` : ''}
+            row.innerHTML = `<div class="cp-bubble ${esFisio ? 'fisio' : 'paciente'}">
+                ${!esFisio ? `<div class="cp-pac-label">${cpEsc(m.paciente_nombre || 'Paciente')}</div>` : ''}
                 ${cpEsc(m.texto)}
                 <div class="cp-bubble-time">${cpHora(m.created_at)}</div>
             </div>`;
@@ -9398,60 +9495,74 @@ Generado por Jelian FT — Clinical Sport v136`;
         }
 
         function cpScrollDown() {
-            const a = document.getElementById('cp-messages');
-            if (a) setTimeout(() => a.scrollTop=a.scrollHeight, 50);
+            const a = cpById('cp-messages');
+            if (a) setTimeout(() => a.scrollTop = a.scrollHeight, 50);
         }
 
-        // ── Enviar ──
+        // ── Enviar mensaje ──
         window.cpEnviar = async function() {
             if (!cpActual) return;
-            const input = document.getElementById('cp-input');
-            const texto = (input.value||'').trim();
+            if (!cpTablaOk) {
+                if (window.showToast) showToast('⚠️ Tabla de mensajes no configurada', true);
+                return;
+            }
+            const input = cpById('cp-input');
+            const texto = (input.value || '').trim();
             if (!texto) return;
-            const btn = document.getElementById('cp-btn-send');
-            btn.style.opacity='0.5'; input.value=''; input.style.height='36px';
-            const s = getCpSb();
+            const btn = cpById('cp-btn-send');
+            btn.style.opacity = '0.5';
+            input.value = '';
+            input.style.height = '36px';
+            const s = getSb();
             try {
                 const { error } = await s.from('mensajes').insert({
-                    paciente_id: cpActual.id,
+                    paciente_id:     cpActual.id,
                     paciente_nombre: cpActual.nombre,
-                    texto, autor:'fisio'
+                    texto,
+                    autor: 'fisio'
                 });
                 if (error) throw error;
             } catch(e) {
-                if (window.showToast) showToast('Error al enviar: '+e.message, true);
+                if (window.showToast) showToast('Error al enviar: ' + e.message, true);
                 input.value = texto;
             }
-            btn.style.opacity='1'; input.focus();
+            btn.style.opacity = '1';
+            setTimeout(() => input.focus(), 50);
         };
 
         window.cpQuick = function(txt) {
-            const inp=document.getElementById('cp-input'); inp.value=txt; inp.focus();
-            inp.style.height='auto'; inp.style.height=Math.min(inp.scrollHeight,100)+'px';
+            const inp = cpById('cp-input');
+            inp.value = txt; inp.focus();
+            inp.style.height = 'auto';
+            inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
         };
 
-        // ── Suscripción global para badges ──
+        // ── Realtime global para badges del sidebar ──
         function cpSuscribirGlobal() {
-            const s = getCpSb(); if (!s) return;
-            cpSubGlobal = s.channel('jft-global-msgs-fisio')
-                .on('postgres_changes',{event:'INSERT',schema:'public',table:'mensajes'}, payload => {
+            const s = getSb(); if (!s) return;
+            cpSubGlobal = s.channel('jft-global-chat-' + Date.now())
+                .on('postgres_changes', { event:'INSERT', schema:'public', table:'mensajes' }, payload => {
                     const m = payload.new;
-                    if (m.autor==='paciente') {
-                        // Badge nav
-                        const badge = document.getElementById('chat-nav-badge');
-                        if (badge && (!cpPanelAbierto || !cpActual || m.paciente_id!==cpActual.id)) {
-                            badge.classList.remove('hidden');
-                        }
-                        // Badge en lista si no es el activo
-                        if (!cpActual || m.paciente_id!==cpActual.id) {
-                            const item = document.getElementById('cppac-'+m.paciente_id);
-                            if (item) {
-                                const prev = item.querySelector('[style*="color:#94a3b8"]');
-                                if (prev) prev.textContent = m.texto.substring(0,28)+(m.texto.length>28?'…':'');
-                                let b=item.querySelector('[style*="background:#6366f1"]');
-                                if (!b) { b=document.createElement('span'); b.style.cssText='background:#6366f1;color:white;border-radius:99px;font-size:0.6rem;font-weight:800;padding:1px 6px;flex-shrink:0;'; item.appendChild(b); b.textContent='0'; }
-                                b.textContent = (parseInt(b.textContent||'0')+1);
+                    if (m.autor !== 'paciente') return;
+                    // Badge en botón sidebar
+                    const badge = cpById('chat-nav-badge');
+                    if (badge && (!cpPanelAbierto || !cpActual || m.paciente_id !== cpActual.id)) {
+                        badge.classList.remove('hidden');
+                    }
+                    // Badge en item de lista
+                    if (!cpActual || m.paciente_id !== cpActual.id) {
+                        const item = cpById('cppac-' + m.paciente_id);
+                        if (item) {
+                            const prev = item.querySelectorAll('div')[1]?.querySelector('div:last-child');
+                            if (prev) prev.textContent = m.texto.substring(0, 28) + (m.texto.length > 28 ? '…' : '');
+                            let b = item.querySelector('span[style*="border-radius:99px"]');
+                            if (!b) {
+                                b = document.createElement('span');
+                                b.style.cssText = 'background:#6366f1;color:white;border-radius:99px;font-size:0.6rem;font-weight:800;padding:1px 6px;flex-shrink:0;';
+                                item.appendChild(b);
+                                b.textContent = '0';
                             }
+                            b.textContent = (parseInt(b.textContent || '0') + 1);
                         }
                     }
                 }).subscribe();
