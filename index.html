@@ -7634,52 +7634,73 @@ async function updateDashboard() {
             });
         }
         // ============================================================
-        // SERVICE WORKER — Registro + detección de actualizaciones
+        // ACTUALIZACIÓN AUTOMÁTICA — Sistema híbrido iOS + Android
         // ============================================================
-        // ── Botón recargar manual (simple recarga) ──────────────────
+        // Estrategia: al abrir la app, compara la versión del servidor
+        // con la versión local. Si son distintas → recarga automática.
+        // Esto funciona en iPhone Safari (PWA) porque ocurre al abrir,
+        // no en segundo plano. El SW sigue activo para modo offline.
+        // ============================================================
+
+        const APP_VERSION = 'v136'; // ← cambia esto al desplegar
+
         function forceReload() {
             const icon = document.getElementById('reload-icon');
             if (icon) { icon.style.transition = 'transform 0.6s'; icon.style.transform = 'rotate(360deg)'; setTimeout(() => { icon.style.transform = ''; }, 700); }
-            window.location.reload();
+            // Limpiar caché del SW antes de recargar para forzar versión nueva
+            if ('caches' in window) {
+                caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).finally(() => location.reload());
+            } else {
+                location.reload();
+            }
         }
 
-        // ── Service Worker: actualización AUTOMÁTICA ─────────────────
-        // Cuando el SW detecta una nueva versión la activa sola y recarga.
-        // El usuario no necesita tocar nada.
+        // ── Chequeo de versión al abrir ──────────────────────────────
+        // Descarga index.html del servidor con cache-bust y extrae la versión.
+        // Si es distinta a APP_VERSION → recarga limpia automáticamente.
+        function chequearVersion() {
+            if (IS_SANDBOX) return;
+            fetch('./index.html?_=' + Date.now(), { cache: 'no-store' })
+                .then(r => r.text())
+                .then(html => {
+                    const match = html.match(/const APP_VERSION\s*=\s*'([^']+)'/);
+                    if (match && match[1] !== APP_VERSION) {
+                        // Nueva versión detectada → limpiar caché y recargar
+                        if ('caches' in window) {
+                            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).finally(() => location.reload());
+                        } else {
+                            location.reload();
+                        }
+                    }
+                })
+                .catch(() => {}); // Sin red: no hacer nada, usar versión cacheada
+        }
+
+        // Chequear al abrir la app y cada vez que vuelva a primer plano
+        window.addEventListener('load', () => { setTimeout(chequearVersion, 2000); });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') chequearVersion();
+        });
+
+        // ── Service Worker (offline + Android) ──────────────────────
         if ('serviceWorker' in navigator && !IS_SANDBOX) {
             window.addEventListener('load', () => {
-
                 navigator.serviceWorker.register('sw.js').then(reg => {
-
-                    // Chequear actualizaciones cada 2 minutos
-                    setInterval(() => { reg.update().catch(() => {}); }, 2 * 60 * 1000);
-
-                    // Función que activa el SW nuevo automáticamente
-                    function activarSWNuevo(worker) {
-                        worker.postMessage({ type: 'SKIP_WAITING' });
-                    }
-
-                    // Si al cargar ya hay un SW esperando → activarlo de inmediato
-                    if (reg.waiting) { activarSWNuevo(reg.waiting); }
-
-                    // Cuando se encuentre una nueva versión durante la sesión
+                    // Activar automáticamente cualquier SW nuevo sin esperar
+                    function activar(worker) { worker.postMessage({ type: 'SKIP_WAITING' }); }
+                    if (reg.waiting) activar(reg.waiting);
                     reg.addEventListener('updatefound', () => {
                         const nw = reg.installing;
                         if (!nw) return;
                         nw.addEventListener('statechange', () => {
-                            if (nw.state === 'installed') {
-                                // Hay nueva versión lista → activar automáticamente
-                                activarSWNuevo(nw);
-                            }
+                            if (nw.state === 'installed') activar(nw);
                         });
                     });
-
                 }).catch(() => {});
 
-                // Cuando el SW nuevo toma el control → recargar la página
                 let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) { refreshing = true; window.location.reload(); }
+                    if (!refreshing) { refreshing = true; location.reload(); }
                 });
             });
         }
