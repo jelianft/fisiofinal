@@ -870,6 +870,11 @@
                 Anatomía
                 <span class="ml-auto text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
             </button>
+            <button onclick="showSection('documentos')" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Documentos
+                <span class="ml-auto text-[8px] font-black bg-rose-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
+            </button>
             <button onclick="openGlobalSearch()" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 Búsqueda Global
@@ -877,6 +882,10 @@
             
             <div class="mt-8 pt-8 border-t border-slate-800/50">
                 <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Mantenimiento</p>
+                <button id="pwa-install-btn" onclick="instalarPWA()" class="w-full text-left px-4 py-2 text-xs hover:text-white transition-colors flex items-center gap-3 hidden">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Instalar App
+                </button>
                 <button onclick="exportarBackup()" class="w-full text-left px-4 py-2 text-xs hover:text-white transition-colors flex items-center gap-3">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     Exportar DB
@@ -1873,6 +1882,144 @@
             <div class="mt-10 glass-card rounded-[2rem] p-8">
                 <h3 class="text-lg font-extrabold text-slate-900 mb-6">🔬 Tests Clínicos de Referencia</h3>
                 <div id="anat-tests-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+        </section>
+
+        <!-- ===== SECCIÓN DOCUMENTOS ===== -->
+        <section id="documentos" class="hidden max-w-5xl mx-auto pb-20">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+                <div>
+                    <span class="text-rose-500 font-bold text-xs uppercase tracking-widest">Documentos Clínicos</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-1">Documentos</h2>
+                    <p class="text-slate-500 text-sm mt-1">Consentimientos informados y fichas de valoracion para imprimir o guardar en PDF</p>
+                </div>
+            </div>
+            <div class="flex gap-3 mb-8 flex-wrap">
+                <button onclick="docTab('consentimiento')" id="doc-tab-consentimiento" class="px-6 py-2.5 rounded-2xl text-xs font-black bg-indigo-600 text-white transition-all">Consentimiento Informado</button>
+                <button onclick="docTab('ficha')" id="doc-tab-ficha" class="px-6 py-2.5 rounded-2xl text-xs font-black bg-slate-100 text-slate-600 transition-all">Ficha de Valoracion Inicial</button>
+            </div>
+
+            <!-- CONSENTIMIENTO -->
+            <div id="doc-panel-consentimiento">
+                <div class="glass-card rounded-[2rem] p-6 mb-6 no-print">
+                    <h3 class="font-extrabold text-slate-900 text-sm mb-4">Datos del documento</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Paciente</label>
+                        <select id="cons-paciente-sel" onchange="llenarConsentimiento()" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold"><option value="">Seleccionar paciente</option></select></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Tipo de tratamiento</label>
+                        <select id="cons-tipo" onchange="llenarConsentimiento()" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold">
+                            <option>Fisioterapia deportiva general</option>
+                            <option>Rehabilitacion post-quirurgica</option>
+                            <option>Terapia manual y movilizacion</option>
+                            <option>Electroterapia y agentes fisicos</option>
+                            <option>Puncion seca</option>
+                            <option>Vendaje funcional / kinesiotape</option>
+                            <option>Retorno al deporte (RTS)</option>
+                        </select></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Fisioterapeuta</label>
+                        <input id="cons-fisio" type="text" placeholder="Dr./Lic. Nombre Apellido" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" oninput="llenarConsentimiento()"></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Ciudad y fecha</label>
+                        <input id="cons-ciudad" type="text" placeholder="Quito, 20 de febrero de 2026" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" oninput="llenarConsentimiento()"></div>
+                    </div>
+                    <div class="flex gap-3 mt-5">
+                        <button onclick="imprimirDoc('cons-preview')" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all">Imprimir / PDF</button>
+                        <button onclick="llenarConsentimiento()" class="bg-slate-100 text-slate-700 px-6 py-2.5 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">Actualizar</button>
+                    </div>
+                </div>
+                <div id="cons-preview" class="bg-white rounded-[2rem] shadow border border-slate-100 p-10 print-area" style="font-family:Georgia,serif;line-height:1.8;">
+                    <div style="text-align:center;border-bottom:2px solid #6366f1;padding-bottom:16px;margin-bottom:24px;">
+                        <div style="font-size:22px;font-weight:900;color:#6366f1;font-family:Arial,sans-serif;">JELIAN FT - Clinical Sport</div>
+                        <div style="font-size:13px;color:#64748b;margin-top:4px;font-family:Arial,sans-serif;">Fisioterapia y Rehabilitacion Deportiva</div>
+                    </div>
+                    <h2 style="text-align:center;font-size:17px;font-weight:900;color:#0f172a;margin-bottom:24px;font-family:Arial,sans-serif;letter-spacing:1px;">CONSENTIMIENTO INFORMADO</h2>
+                    <p id="cons-intro" style="margin-bottom:16px;font-size:14px;color:#1e293b;"></p>
+                    <p style="font-size:13px;font-weight:900;color:#0f172a;margin:20px 0 6px;font-family:Arial,sans-serif;">1. DESCRIPCION DEL TRATAMIENTO</p>
+                    <p id="cons-desc" style="font-size:13px;color:#334155;margin-bottom:12px;"></p>
+                    <p style="font-size:13px;font-weight:900;color:#0f172a;margin:20px 0 6px;font-family:Arial,sans-serif;">2. BENEFICIOS ESPERADOS</p>
+                    <p style="font-size:13px;color:#334155;margin-bottom:12px;">La intervencion tiene como objetivo la reduccion del dolor, recuperacion funcional, mejora del rendimiento deportivo y prevencion de recidivas, adaptando la progresion a la respuesta individual del paciente.</p>
+                    <p style="font-size:13px;font-weight:900;color:#0f172a;margin:20px 0 6px;font-family:Arial,sans-serif;">3. POSIBLES RIESGOS</p>
+                    <p style="font-size:13px;color:#334155;margin-bottom:12px;">Los riesgos son generalmente leves y transitorios: molestia local post-sesion, hematomas superficiales, fatiga muscular o reaccion vasovagal. El profesional adoptara todas las medidas de seguridad para minimizarlos.</p>
+                    <p style="font-size:13px;font-weight:900;color:#0f172a;margin:20px 0 6px;font-family:Arial,sans-serif;">4. DERECHO A RETIRARSE Y CONFIDENCIALIDAD</p>
+                    <p style="font-size:13px;color:#334155;margin-bottom:20px;">El paciente puede en cualquier momento retirar este consentimiento. Los datos clinicos seran tratados con estricta confidencialidad conforme a la normativa vigente.</p>
+                    <p style="font-size:13px;color:#1e293b;margin-bottom:36px;">He leido y comprendido la informacion anterior. Doy mi consentimiento libre e informado para la realizacion del tratamiento descrito.</p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:40px;">
+                        <div style="text-align:center;"><div style="border-top:1.5px solid #94a3b8;padding-top:10px;">
+                            <div id="cons-sig-paciente" style="font-size:12px;color:#475569;font-weight:700;font-family:Arial,sans-serif;"></div>
+                            <div style="font-size:11px;color:#94a3b8;font-family:Arial,sans-serif;">Firma del Paciente / Representante</div>
+                        </div></div>
+                        <div style="text-align:center;"><div style="border-top:1.5px solid #94a3b8;padding-top:10px;">
+                            <div id="cons-sig-fisio" style="font-size:12px;color:#475569;font-weight:700;font-family:Arial,sans-serif;"></div>
+                            <div style="font-size:11px;color:#94a3b8;font-family:Arial,sans-serif;">Firma del Fisioterapeuta</div>
+                        </div></div>
+                    </div>
+                    <div id="cons-fecha-lugar" style="text-align:right;font-size:12px;color:#94a3b8;margin-top:24px;font-family:Arial,sans-serif;"></div>
+                </div>
+            </div>
+
+            <!-- FICHA VALORACION -->
+            <div id="doc-panel-ficha" class="hidden">
+                <div class="glass-card rounded-[2rem] p-6 mb-6 no-print">
+                    <h3 class="font-extrabold text-slate-900 text-sm mb-4">Datos para la ficha</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Cargar desde paciente</label>
+                        <select id="ficha-paciente-sel" onchange="llenarFicha()" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold"><option value="">Seleccionar paciente</option></select></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Fisioterapeuta</label>
+                        <input id="ficha-fisio" type="text" placeholder="Dr./Lic. Nombre Apellido" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" oninput="llenarFicha()"></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Motivo de consulta</label>
+                        <input id="ficha-motivo" type="text" placeholder="Dolor rodilla derecha post-ACL..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" oninput="llenarFicha()"></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Fecha de valoracion</label>
+                        <input id="ficha-fecha" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" oninput="llenarFicha()"></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Antecedentes relevantes</label>
+                        <textarea id="ficha-antecedentes" rows="2" placeholder="Cirugias, patologias previas, medicacion..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm resize-none" oninput="llenarFicha()"></textarea></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Exploracion fisica</label>
+                        <textarea id="ficha-exploracion" rows="2" placeholder="ROM, fuerza, tests especiales..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm resize-none" oninput="llenarFicha()"></textarea></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">EVA inicial (0-10)</label>
+                        <input id="ficha-eva" type="number" min="0" max="10" placeholder="7" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" oninput="llenarFicha()"></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Objetivos terapeuticos</label>
+                        <input id="ficha-objetivos-doc" type="text" placeholder="Retorno al deporte en 12 semanas" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" oninput="llenarFicha()"></div>
+                    </div>
+                    <div class="flex gap-3 mt-5">
+                        <button onclick="imprimirDoc('ficha-preview')" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all">Imprimir / PDF</button>
+                        <button onclick="llenarFicha()" class="bg-slate-100 text-slate-700 px-6 py-2.5 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">Actualizar</button>
+                    </div>
+                </div>
+                <div id="ficha-preview" class="bg-white rounded-[2rem] shadow border border-slate-100 p-10 print-area" style="font-family:Georgia,serif;line-height:1.7;">
+                    <div style="text-align:center;border-bottom:2px solid #6366f1;padding-bottom:16px;margin-bottom:24px;">
+                        <div style="font-size:22px;font-weight:900;color:#6366f1;font-family:Arial,sans-serif;">JELIAN FT - Clinical Sport</div>
+                        <div style="font-size:13px;color:#64748b;margin-top:4px;font-family:Arial,sans-serif;">Fisioterapia y Rehabilitacion Deportiva</div>
+                    </div>
+                    <h2 style="text-align:center;font-size:17px;font-weight:900;color:#0f172a;margin-bottom:20px;font-family:Arial,sans-serif;letter-spacing:1px;">FICHA DE VALORACION INICIAL</h2>
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px;font-family:Arial,sans-serif;">
+                        <tr style="background:#f8fafc;"><td style="padding:8px 12px;font-weight:700;color:#475569;width:25%;border:1px solid #e2e8f0;">Paciente</td><td id="fv-nombre" style="padding:8px 12px;border:1px solid #e2e8f0;"></td><td style="padding:8px 12px;font-weight:700;color:#475569;width:20%;border:1px solid #e2e8f0;">Edad</td><td id="fv-edad" style="padding:8px 12px;border:1px solid #e2e8f0;"></td></tr>
+                        <tr><td style="padding:8px 12px;font-weight:700;color:#475569;border:1px solid #e2e8f0;">Deporte</td><td id="fv-deporte" style="padding:8px 12px;border:1px solid #e2e8f0;"></td><td style="padding:8px 12px;font-weight:700;color:#475569;border:1px solid #e2e8f0;">Sexo</td><td id="fv-sexo" style="padding:8px 12px;border:1px solid #e2e8f0;"></td></tr>
+                        <tr style="background:#f8fafc;"><td style="padding:8px 12px;font-weight:700;color:#475569;border:1px solid #e2e8f0;">Diagnostico / Zona</td><td id="fv-diag" style="padding:8px 12px;border:1px solid #e2e8f0;" colspan="3"></td></tr>
+                        <tr><td style="padding:8px 12px;font-weight:700;color:#475569;border:1px solid #e2e8f0;">Motivo consulta</td><td id="fv-motivo" style="padding:8px 12px;border:1px solid #e2e8f0;" colspan="3"></td></tr>
+                        <tr style="background:#f8fafc;"><td style="padding:8px 12px;font-weight:700;color:#475569;border:1px solid #e2e8f0;">Fecha</td><td id="fv-fecha" style="padding:8px 12px;border:1px solid #e2e8f0;"></td><td style="padding:8px 12px;font-weight:700;color:#475569;border:1px solid #e2e8f0;">Fisioterapeuta</td><td id="fv-fisio-out" style="padding:8px 12px;border:1px solid #e2e8f0;"></td></tr>
+                    </table>
+                    <p style="font-size:13px;font-weight:900;color:#0f172a;margin:14px 0 4px;font-family:Arial,sans-serif;">ESCALA DE DOLOR EVA</p>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;font-family:Arial,sans-serif;">
+                        <span style="font-size:11px;color:#64748b;">0</span>
+                        <div style="flex:1;height:10px;background:#e2e8f0;border-radius:99px;overflow:hidden;"><div id="fv-eva-bar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444);width:0%;transition:width 0.4s;"></div></div>
+                        <span style="font-size:11px;color:#64748b;">10</span>
+                        <span id="fv-eva-num" style="font-size:22px;font-weight:900;color:#ef4444;min-width:28px;text-align:right;"></span>
+                    </div>
+                    <p style="font-size:13px;font-weight:900;color:#0f172a;margin:14px 0 4px;font-family:Arial,sans-serif;">ANTECEDENTES RELEVANTES</p>
+                    <div id="fv-antecedentes" style="font-size:13px;color:#334155;min-height:44px;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:12px;"></div>
+                    <p style="font-size:13px;font-weight:900;color:#0f172a;margin:14px 0 4px;font-family:Arial,sans-serif;">EXPLORACION FISICA</p>
+                    <div id="fv-exploracion" style="font-size:13px;color:#334155;min-height:44px;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:12px;"></div>
+                    <p style="font-size:13px;font-weight:900;color:#0f172a;margin:14px 0 4px;font-family:Arial,sans-serif;">OBJETIVOS TERAPEUTICOS</p>
+                    <div id="fv-objetivos" style="font-size:13px;color:#334155;min-height:36px;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:28px;"></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:36px;">
+                        <div style="text-align:center;"><div style="border-top:1.5px solid #94a3b8;padding-top:10px;">
+                            <div id="fv-sig-paciente" style="font-size:12px;color:#475569;font-weight:700;font-family:Arial,sans-serif;"></div>
+                            <div style="font-size:11px;color:#94a3b8;font-family:Arial,sans-serif;">Firma del Paciente</div>
+                        </div></div>
+                        <div style="text-align:center;"><div style="border-top:1.5px solid #94a3b8;padding-top:10px;">
+                            <div id="fv-sig-fisio2" style="font-size:12px;color:#475569;font-weight:700;font-family:Arial,sans-serif;"></div>
+                            <div style="font-size:11px;color:#94a3b8;font-family:Arial,sans-serif;">Firma del Fisioterapeuta</div>
+                        </div></div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -5319,7 +5466,7 @@ async function updateDashboard() {
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             const sectionNavMap = {
                 'dashboard': 0, 'calendario': 1, 'lista-pacientes': 2,
-                'biblioteca': 3, 'plantillas': 4, 'reportes': 5, 'imagen-ia': 6, 'anatomia': 7
+                'biblioteca': 3, 'plantillas': 4, 'reportes': 5, 'imagen-ia': 6, 'anatomia': 7, 'documentos': 8
             };
             const navBtns = document.querySelectorAll('nav .nav-btn');
             if (sectionNavMap[id] !== undefined && navBtns[sectionNavMap[id]]) {
@@ -5333,6 +5480,7 @@ async function updateDashboard() {
             if(id === 'reportes') setTimeout(renderReportes, 100);
             if(id === 'imagen-ia') setTimeout(() => { initImgTipoChips(); renderHistorialImg(); }, 50);
             if(id === 'anatomia') setTimeout(() => renderAnatomia('rodilla'), 50);
+            if(id === 'documentos') { _poblarSelectPacientes('cons-paciente-sel'); _poblarSelectPacientes('ficha-paciente-sel'); llenarConsentimiento(); }
         }
 
         // ============================================================
@@ -6881,6 +7029,140 @@ async function updateDashboard() {
             updateDashboard();
             loadNotes();
         })();
+
+
+        // ============================================================
+        // PWA — INSTALL PROMPT
+        // ============================================================
+        let _pwaPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            _pwaPrompt = e;
+            const btn = document.getElementById('pwa-install-btn');
+            if (btn) btn.classList.remove('hidden');
+        });
+        function instalarPWA() {
+            if (!_pwaPrompt) { showToast('Para instalar: abre el menu del navegador y selecciona "Agregar a pantalla de inicio"'); return; }
+            _pwaPrompt.prompt();
+            _pwaPrompt.userChoice.then(r => {
+                if (r.outcome === 'accepted') {
+                    showToast('App instalada correctamente');
+                    const btn = document.getElementById('pwa-install-btn');
+                    if (btn) btn.classList.add('hidden');
+                }
+                _pwaPrompt = null;
+            });
+        }
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator && !IS_SANDBOX) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+
+        // ============================================================
+        // DOCUMENTOS — TABS, CONSENTIMIENTO, FICHA VALORACION
+        // ============================================================
+        function docTab(tab) {
+            ['consentimiento','ficha'].forEach(t => {
+                const panel = document.getElementById('doc-panel-' + t);
+                const btn = document.getElementById('doc-tab-' + t);
+                if (!panel || !btn) return;
+                if (t === tab) {
+                    panel.classList.remove('hidden');
+                    btn.className = 'px-6 py-2.5 rounded-2xl text-xs font-black bg-indigo-600 text-white transition-all';
+                } else {
+                    panel.classList.add('hidden');
+                    btn.className = 'px-6 py-2.5 rounded-2xl text-xs font-black bg-slate-100 text-slate-600 transition-all';
+                }
+            });
+            if (tab === 'consentimiento') llenarConsentimiento();
+            if (tab === 'ficha') llenarFicha();
+        }
+
+        function _poblarSelectPacientes(selId) {
+            const sel = document.getElementById(selId);
+            if (!sel) return;
+            const current = sel.value;
+            sel.innerHTML = '<option value="">Seleccionar paciente</option>';
+            (pacientes || []).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.nombre + (p.edad ? ', ' + p.edad + ' anos' : '');
+                sel.appendChild(opt);
+            });
+            if (current) sel.value = current;
+        }
+
+        function llenarConsentimiento() {
+            _poblarSelectPacientes('cons-paciente-sel');
+            const selId = document.getElementById('cons-paciente-sel')?.value;
+            const p = (pacientes || []).find(x => String(x.id) === String(selId));
+            const fisio = document.getElementById('cons-fisio')?.value || 'el/la fisioterapeuta';
+            const tipo = document.getElementById('cons-tipo')?.value || 'Fisioterapia deportiva general';
+            const ciudad = document.getElementById('cons-ciudad')?.value || '';
+
+            const nombre = p ? p.nombre : 'el/la paciente';
+            const edad = p ? (p.edad || '') : '';
+
+            const intro = document.getElementById('cons-intro');
+            if (intro) intro.textContent = 'Yo, ' + nombre + (edad ? ', de ' + edad + ' anos de edad,' : ',') + ' con plena capacidad legal, declaro haber sido informado/a de manera clara y comprensible por ' + fisio + ' sobre el siguiente procedimiento terapeutico:';
+
+            const desc = document.getElementById('cons-desc');
+            if (desc) desc.textContent = tipo + (p && p.diag ? '. Diagnostico de referencia: ' + p.diag + '.' : '.');
+
+            const sigP = document.getElementById('cons-sig-paciente');
+            if (sigP) sigP.textContent = nombre;
+            const sigF = document.getElementById('cons-sig-fisio');
+            if (sigF) sigF.textContent = fisio;
+            const fecha = document.getElementById('cons-fecha-lugar');
+            if (fecha) fecha.textContent = ciudad || ('Fecha: ' + new Date().toLocaleDateString('es-ES', {day:'numeric',month:'long',year:'numeric'}));
+        }
+
+        function llenarFicha() {
+            _poblarSelectPacientes('ficha-paciente-sel');
+            const selId = document.getElementById('ficha-paciente-sel')?.value;
+            const p = (pacientes || []).find(x => String(x.id) === String(selId));
+            const fisio = document.getElementById('ficha-fisio')?.value || '';
+            const motivo = document.getElementById('ficha-motivo')?.value || '';
+            const fecha = document.getElementById('ficha-fecha')?.value || new Date().toISOString().split('T')[0];
+            const antec = document.getElementById('ficha-antecedentes')?.value || '';
+            const explor = document.getElementById('ficha-exploracion')?.value || '';
+            const evaVal = document.getElementById('ficha-eva')?.value || '';
+            const objDoc = document.getElementById('ficha-objetivos-doc')?.value || '';
+
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || ''; };
+            set('fv-nombre', p ? p.nombre : '');
+            set('fv-edad', p ? (p.edad || '') : '');
+            set('fv-deporte', p ? (p.deporte || '') : '');
+            set('fv-sexo', p ? (p.sexo || '') : '');
+            set('fv-diag', p ? ((p.diag || '') + (p.zona ? ' — ' + p.zona : '')) : '');
+            set('fv-motivo', motivo);
+            set('fv-fecha', fecha ? new Date(fecha + 'T12:00:00').toLocaleDateString('es-ES', {day:'numeric',month:'long',year:'numeric'}) : '');
+            set('fv-fisio-out', fisio);
+            set('fv-antecedentes', antec);
+            set('fv-exploracion', explor);
+            set('fv-objetivos', objDoc || (p && p.objetivos && p.objetivos.length ? p.objetivos.map(o=>o.texto).join(', ') : ''));
+            set('fv-sig-paciente', p ? p.nombre : '');
+            set('fv-sig-fisio2', fisio);
+
+            // EVA bar
+            const eva = parseFloat(evaVal) || (p && p.valoracion && p.valoracion.length ? p.valoracion[p.valoracion.length-1].eva : 0) || 0;
+            const bar = document.getElementById('fv-eva-bar');
+            const num = document.getElementById('fv-eva-num');
+            if (bar) bar.style.width = (eva * 10) + '%';
+            if (num) num.textContent = eva || '';
+        }
+
+        function imprimirDoc(previewId) {
+            const el = document.getElementById(previewId);
+            if (!el) return;
+            const w = window.open('', '_blank', 'width=800,height=900');
+            w.document.write('<html><head><title>Jelian FT - Documento</title><style>body{margin:32px;font-family:Georgia,serif;line-height:1.7;color:#1e293b}table{border-collapse:collapse;width:100%}td{border:1px solid #e2e8f0;padding:8px 12px}</style></head><body>' + el.innerHTML + '</body></html>');
+            w.document.close();
+            w.focus();
+            setTimeout(() => { w.print(); }, 400);
+        }
 
     </script>
 </div>
