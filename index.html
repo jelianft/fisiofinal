@@ -8598,8 +8598,18 @@ Generado por Jelian FT — Clinical Sport v136`;
         }
 
         if ('serviceWorker' in navigator && !IS_SANDBOX) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(reg => {
+            window.addEventListener('load', async () => {
+                // Limpiar SW viejo con bug de clone
+                try {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    for (const r of regs) {
+                        const swUrl = r.active?.scriptURL || '';
+                        // Si el SW activo no tiene el fix, desregistrar
+                        if (swUrl && !swUrl.includes('sw.js')) await r.unregister();
+                    }
+                } catch(e) {}
+
+                navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
                     _swRegistration = reg;
                     if (reg.waiting) { _swWaiting = reg.waiting; _markUpdateReady(); }
                     reg.addEventListener('updatefound', () => {
@@ -9351,7 +9361,8 @@ Generado por Jelian FT — Clinical Sport v136`;
                 cpRenderLista(cpPacientes);
 
             } catch(e) {
-                cpById('chat-panel-status').textContent = 'Error al cargar';
+                const isOffline = e.message?.includes('fetch') || e.message?.includes('Failed') || e.message?.includes('ERR_CONNECTION');
+                cpById('chat-panel-status').textContent = isOffline ? 'Sin conexión' : 'Error al cargar';
                 cpById('cp-pacientes-list').innerHTML =
                     `<div style="padding:1rem;color:#ef4444;font-size:0.72rem;text-align:center;">Error: ${cpEsc(e.message)}</div>`;
             }
