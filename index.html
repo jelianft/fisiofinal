@@ -883,6 +883,26 @@
                 Documentos
                 <span class="ml-auto text-[8px] font-black bg-rose-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
             </button>
+            <button onclick="showSection('facturacion')" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Facturación
+                <span class="ml-auto text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
+            </button>
+            <button onclick="showSection('inventario')" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                Inventario
+                <span class="ml-auto text-[8px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
+            </button>
+            <button onclick="showSection('calculadoras')" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                Calculadoras
+                <span class="ml-auto text-[8px] font-black bg-violet-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
+            </button>
+            <button onclick="showSection('vista-paciente')" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                QR Paciente
+                <span class="ml-auto text-[8px] font-black bg-sky-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
+            </button>
             <button onclick="openGlobalSearch()" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 Búsqueda Global
@@ -2026,6 +2046,304 @@
                             <div id="fv-sig-fisio2" style="font-size:12px;color:#475569;font-weight:700;font-family:Arial,sans-serif;"></div>
                             <div style="font-size:11px;color:#94a3b8;font-family:Arial,sans-serif;">Firma del Fisioterapeuta</div>
                         </div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== FACTURACIÓN ===== -->
+        <section id="facturacion" class="hidden max-w-7xl mx-auto pb-20">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+                <div>
+                    <span class="text-emerald-500 font-bold text-xs uppercase tracking-widest">Gestión Financiera</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-1">Facturación</h2>
+                    <p class="text-slate-500 text-sm mt-1">Registro de cobros y pagos por sesión</p>
+                </div>
+                <button onclick="abrirModalFactura()" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100">+ Nueva Factura</button>
+            </div>
+            <!-- Métricas -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="glass-card rounded-2xl p-5">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Este Mes</p>
+                    <p id="fact-mes" class="text-2xl font-extrabold text-emerald-600">$0</p>
+                </div>
+                <div class="glass-card rounded-2xl p-5">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pendientes</p>
+                    <p id="fact-pendiente" class="text-2xl font-extrabold text-amber-500">$0</p>
+                </div>
+                <div class="glass-card rounded-2xl p-5">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Sesiones Cobradas</p>
+                    <p id="fact-sesiones" class="text-2xl font-extrabold text-slate-800">0</p>
+                </div>
+                <div class="glass-card rounded-2xl p-5">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total General</p>
+                    <p id="fact-total" class="text-2xl font-extrabold text-indigo-600">$0</p>
+                </div>
+            </div>
+            <!-- Filtros -->
+            <div class="flex gap-3 mb-6 flex-wrap">
+                <select id="fact-filtro-estado" onchange="renderFacturas()" class="bg-slate-50 border-none rounded-xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="todos">Todos</option>
+                    <option value="pagado">Pagado</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+                <select id="fact-filtro-paciente" onchange="renderFacturas()" class="bg-slate-50 border-none rounded-xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="">Todos los pacientes</option>
+                </select>
+                <button onclick="exportarFacturasCSV()" class="ml-auto bg-slate-100 text-slate-700 px-4 py-2.5 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">📊 Exportar CSV</button>
+            </div>
+            <!-- Tabla -->
+            <div class="glass-card rounded-3xl overflow-hidden">
+                <div id="fact-tabla" class="divide-y divide-slate-100"></div>
+            </div>
+            <!-- Modal nueva factura -->
+            <div id="modal-factura" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-6">Nueva Factura</h3>
+                    <div class="space-y-4">
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Paciente</label>
+                        <select id="fact-pac" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold"><option value="">Seleccionar...</option></select></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-xs font-bold text-slate-500 block mb-1">Monto ($)</label>
+                            <input id="fact-monto" type="number" placeholder="50" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>
+                            <div><label class="text-xs font-bold text-slate-500 block mb-1">Fecha</label>
+                            <input id="fact-fecha" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>
+                        </div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Tipo de sesión</label>
+                        <select id="fact-tipo" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold">
+                            <option>Sesión de fisioterapia</option>
+                            <option>Evaluación inicial</option>
+                            <option>Rehabilitación deportiva</option>
+                            <option>Terapia manual</option>
+                            <option>Punción seca</option>
+                            <option>Vendaje funcional</option>
+                            <option>Control / seguimiento</option>
+                            <option>Otro</option>
+                        </select></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Estado de pago</label>
+                        <div class="flex gap-2">
+                            <button onclick="setFactEstado('pagado')" id="fest-pagado" class="flex-1 py-2 rounded-xl text-xs font-black bg-emerald-600 text-white transition-all">Pagado</button>
+                            <button onclick="setFactEstado('pendiente')" id="fest-pendiente" class="flex-1 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-600 transition-all">Pendiente</button>
+                        </div></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Método de pago</label>
+                        <select id="fact-metodo" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold">
+                            <option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option>
+                        </select></div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Notas</label>
+                        <input id="fact-notas" type="text" placeholder="Opcional..." class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="cerrarModalFactura()" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">Cancelar</button>
+                        <button onclick="guardarFactura()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl text-xs font-black hover:bg-emerald-700 transition-all">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== INVENTARIO ===== -->
+        <section id="inventario" class="hidden max-w-7xl mx-auto pb-20">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+                <div>
+                    <span class="text-amber-500 font-bold text-xs uppercase tracking-widest">Materiales Clínicos</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-1">Inventario</h2>
+                    <p class="text-slate-500 text-sm mt-1">Control de materiales y equipamiento</p>
+                </div>
+                <button onclick="abrirModalInventario()" class="bg-amber-500 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-amber-600 transition-all shadow-lg shadow-amber-100">+ Agregar Material</button>
+            </div>
+            <!-- Alertas stock bajo -->
+            <div id="inv-alertas" class="mb-6"></div>
+            <!-- Filtro categoría -->
+            <div class="flex gap-2 mb-6 flex-wrap">
+                <button onclick="filtrarInv('todos')" id="inv-cat-todos" class="px-4 py-2 rounded-xl text-xs font-black bg-indigo-600 text-white transition-all">Todos</button>
+                <button onclick="filtrarInv('consumible')" id="inv-cat-consumible" class="px-4 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-600 transition-all">Consumibles</button>
+                <button onclick="filtrarInv('equipo')" id="inv-cat-equipo" class="px-4 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-600 transition-all">Equipos</button>
+                <button onclick="filtrarInv('accesorio')" id="inv-cat-accesorio" class="px-4 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-600 transition-all">Accesorios</button>
+            </div>
+            <!-- Grid de items -->
+            <div id="inv-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <!-- Modal agregar -->
+            <div id="modal-inventario" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-6" id="inv-modal-titulo">Nuevo Material</h3>
+                    <input type="hidden" id="inv-edit-id">
+                    <div class="space-y-4">
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Nombre</label>
+                        <input id="inv-nombre" type="text" placeholder="Ej: Kinesiotape azul" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-xs font-bold text-slate-500 block mb-1">Categoría</label>
+                            <select id="inv-cat" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold">
+                                <option value="consumible">Consumible</option>
+                                <option value="equipo">Equipo</option>
+                                <option value="accesorio">Accesorio</option>
+                            </select></div>
+                            <div><label class="text-xs font-bold text-slate-500 block mb-1">Unidad</label>
+                            <input id="inv-unidad" type="text" placeholder="rollos, unidades..." class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-xs font-bold text-slate-500 block mb-1">Stock actual</label>
+                            <input id="inv-stock" type="number" min="0" placeholder="10" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>
+                            <div><label class="text-xs font-bold text-slate-500 block mb-1">Stock mínimo</label>
+                            <input id="inv-min" type="number" min="0" placeholder="3" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>
+                        </div>
+                        <div><label class="text-xs font-bold text-slate-500 block mb-1">Notas</label>
+                        <input id="inv-notas" type="text" placeholder="Proveedor, ubicación..." class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="cerrarModalInventario()" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">Cancelar</button>
+                        <button onclick="guardarInventario()" class="flex-1 bg-amber-500 text-white py-3 rounded-xl text-xs font-black hover:bg-amber-600 transition-all">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== CALCULADORAS CLÍNICAS ===== -->
+        <section id="calculadoras" class="hidden max-w-5xl mx-auto pb-20">
+            <div class="mb-10">
+                <span class="text-violet-500 font-bold text-xs uppercase tracking-widest">Herramientas Clínicas</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-1">Calculadoras</h2>
+                <p class="text-slate-500 text-sm mt-1">Escalas y cálculos para apoyo diagnóstico y seguimiento</p>
+            </div>
+            <!-- Tabs calculadoras -->
+            <div class="flex gap-2 mb-8 flex-wrap">
+                <button onclick="calcTab('imc')" id="calc-tab-imc" class="px-5 py-2.5 rounded-2xl text-xs font-black bg-indigo-600 text-white transition-all">IMC</button>
+                <button onclick="calcTab('carga')" id="calc-tab-carga" class="px-5 py-2.5 rounded-2xl text-xs font-black bg-slate-100 text-slate-600 transition-all">Carga Entrenamiento</button>
+                <button onclick="calcTab('karvonen')" id="calc-tab-karvonen" class="px-5 py-2.5 rounded-2xl text-xs font-black bg-slate-100 text-slate-600 transition-all">FC Objetivo (Karvonen)</button>
+                <button onclick="calcTab('rpe')" id="calc-tab-rpe" class="px-5 py-2.5 rounded-2xl text-xs font-black bg-slate-100 text-slate-600 transition-all">Escala RPE</button>
+                <button onclick="calcTab('oswestry')" id="calc-tab-oswestry" class="px-5 py-2.5 rounded-2xl text-xs font-black bg-slate-100 text-slate-600 transition-all">Oswestry (columna)</button>
+                <button onclick="calcTab('dash')" id="calc-tab-dash" class="px-5 py-2.5 rounded-2xl text-xs font-black bg-slate-100 text-slate-600 transition-all">QuickDASH (hombro/brazo)</button>
+            </div>
+
+            <!-- IMC -->
+            <div id="calc-panel-imc" class="glass-card rounded-3xl p-8">
+                <h3 class="text-xl font-extrabold text-slate-900 mb-6">Índice de Masa Corporal (IMC)</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                    <div><label class="text-xs font-bold text-slate-500 block mb-2">Peso (kg)</label>
+                    <input id="imc-peso" type="number" placeholder="70" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-lg font-bold" oninput="calcIMC()"></div>
+                    <div><label class="text-xs font-bold text-slate-500 block mb-2">Altura (cm)</label>
+                    <input id="imc-altura" type="number" placeholder="175" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-lg font-bold" oninput="calcIMC()"></div>
+                </div>
+                <div id="imc-resultado" class="hidden bg-slate-50 rounded-2xl p-6 text-center">
+                    <p class="text-5xl font-black" id="imc-valor">0</p>
+                    <p class="text-sm font-bold text-slate-500 mt-1" id="imc-categoria"></p>
+                    <div class="mt-4 h-3 bg-slate-200 rounded-full overflow-hidden"><div id="imc-bar" class="h-full rounded-full transition-all duration-500"></div></div>
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400 mt-1"><span>16</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+                    <p class="text-[10px] text-slate-400 mt-3">Bajo peso &lt;18.5 · Normal 18.5–24.9 · Sobrepeso 25–29.9 · Obesidad ≥30</p>
+                </div>
+            </div>
+
+            <!-- Carga de entrenamiento -->
+            <div id="calc-panel-carga" class="hidden glass-card rounded-3xl p-8">
+                <h3 class="text-xl font-extrabold text-slate-900 mb-2">Carga de Entrenamiento (Session RPE)</h3>
+                <p class="text-sm text-slate-500 mb-6">Multiplica la duración por el esfuerzo percibido para obtener la carga interna de sesión.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                    <div><label class="text-xs font-bold text-slate-500 block mb-2">Duración sesión (min)</label>
+                    <input id="carga-min" type="number" placeholder="60" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-lg font-bold" oninput="calcCarga()"></div>
+                    <div><label class="text-xs font-bold text-slate-500 block mb-2">RPE percibido (1–10)</label>
+                    <input id="carga-rpe" type="number" min="1" max="10" placeholder="6" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-lg font-bold" oninput="calcCarga()"></div>
+                </div>
+                <div id="carga-resultado" class="hidden bg-slate-50 rounded-2xl p-6 text-center">
+                    <p class="text-5xl font-black text-indigo-600" id="carga-valor">0</p>
+                    <p class="text-sm font-bold text-slate-500 mt-1">UA (Unidades de Carga)</p>
+                    <p class="text-sm font-bold mt-3" id="carga-nivel"></p>
+                    <p class="text-[10px] text-slate-400 mt-2">Baja &lt;300 · Moderada 300–500 · Alta 500–700 · Muy alta &gt;700</p>
+                </div>
+            </div>
+
+            <!-- Karvonen FC -->
+            <div id="calc-panel-karvonen" class="hidden glass-card rounded-3xl p-8">
+                <h3 class="text-xl font-extrabold text-slate-900 mb-2">FC Objetivo — Método Karvonen</h3>
+                <p class="text-sm text-slate-500 mb-6">Calcula la zona de frecuencia cardíaca de entrenamiento personalizada.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
+                    <div><label class="text-xs font-bold text-slate-500 block mb-2">Edad (años)</label>
+                    <input id="karv-edad" type="number" placeholder="30" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-lg font-bold" oninput="calcKarvonen()"></div>
+                    <div><label class="text-xs font-bold text-slate-500 block mb-2">FC Reposo (lpm)</label>
+                    <input id="karv-reposo" type="number" placeholder="60" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-lg font-bold" oninput="calcKarvonen()"></div>
+                    <div><label class="text-xs font-bold text-slate-500 block mb-2">Intensidad (%)</label>
+                    <div class="flex gap-2">
+                        <input id="karv-int-min" type="number" placeholder="60" class="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm font-bold" oninput="calcKarvonen()">
+                        <span class="self-center text-slate-400 font-bold">–</span>
+                        <input id="karv-int-max" type="number" placeholder="80" class="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm font-bold" oninput="calcKarvonen()">
+                    </div></div>
+                </div>
+                <div id="karv-resultado" class="hidden bg-slate-50 rounded-2xl p-6">
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">FC Máx</p><p class="text-3xl font-black text-slate-800" id="karv-fcmax">0</p><p class="text-xs text-slate-400">lpm</p></div>
+                        <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">FC Mínima</p><p class="text-3xl font-black text-indigo-600" id="karv-min">0</p><p class="text-xs text-slate-400">lpm</p></div>
+                        <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">FC Máxima</p><p class="text-3xl font-black text-indigo-600" id="karv-max">0</p><p class="text-xs text-slate-400">lpm</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RPE Borg -->
+            <div id="calc-panel-rpe" class="hidden glass-card rounded-3xl p-8">
+                <h3 class="text-xl font-extrabold text-slate-900 mb-2">Escala de Esfuerzo Percibido (RPE / Borg)</h3>
+                <p class="text-sm text-slate-500 mb-6">Selecciona el nivel de esfuerzo del paciente.</p>
+                <div id="rpe-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
+                <div id="rpe-resultado" class="hidden mt-6 bg-slate-50 rounded-2xl p-6">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Interpretación</p>
+                    <p class="text-xl font-extrabold text-slate-900" id="rpe-desc"></p>
+                    <p class="text-sm text-slate-500 mt-2" id="rpe-recom"></p>
+                </div>
+            </div>
+
+            <!-- Oswestry -->
+            <div id="calc-panel-oswestry" class="hidden glass-card rounded-3xl p-8">
+                <h3 class="text-xl font-extrabold text-slate-900 mb-2">Índice de Discapacidad de Oswestry</h3>
+                <p class="text-sm text-slate-500 mb-6">Evalúa el impacto del dolor lumbar en las actividades de la vida diaria. Selecciona la opción que mejor describe al paciente en cada ítem.</p>
+                <div id="oswestry-items" class="space-y-6"></div>
+                <button onclick="calcOswestry()" class="mt-8 w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all">Calcular Índice</button>
+                <div id="oswestry-resultado" class="hidden mt-6 bg-slate-50 rounded-2xl p-6 text-center">
+                    <p class="text-5xl font-black" id="oswestry-valor">0%</p>
+                    <p class="text-sm font-bold mt-2" id="oswestry-nivel"></p>
+                    <p class="text-xs text-slate-400 mt-2" id="oswestry-desc"></p>
+                </div>
+            </div>
+
+            <!-- QuickDASH -->
+            <div id="calc-panel-dash" class="hidden glass-card rounded-3xl p-8">
+                <h3 class="text-xl font-extrabold text-slate-900 mb-2">QuickDASH — Hombro, Brazo y Mano</h3>
+                <p class="text-sm text-slate-500 mb-6">11 preguntas sobre la capacidad funcional del miembro superior (1 = sin dificultad, 5 = imposible).</p>
+                <div id="dash-items" class="space-y-4"></div>
+                <button onclick="calcDASH()" class="mt-8 w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all">Calcular QuickDASH</button>
+                <div id="dash-resultado" class="hidden mt-6 bg-slate-50 rounded-2xl p-6 text-center">
+                    <p class="text-5xl font-black" id="dash-valor">0</p>
+                    <p class="text-sm font-bold text-slate-500 mt-1">/ 100 puntos</p>
+                    <p class="text-sm font-bold mt-2" id="dash-nivel"></p>
+                    <p class="text-xs text-slate-400 mt-1">0 = sin discapacidad · 100 = máxima discapacidad</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== VISTA / QR PACIENTE ===== -->
+        <section id="vista-paciente" class="hidden max-w-4xl mx-auto pb-20">
+            <div class="mb-10">
+                <span class="text-sky-500 font-bold text-xs uppercase tracking-widest">Acceso Paciente</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-1">QR Paciente</h2>
+                <p class="text-slate-500 text-sm mt-1">Genera un código QR para que el paciente acceda a su plan de ejercicios desde su celular</p>
+            </div>
+            <div class="glass-card rounded-3xl p-8 mb-6">
+                <div class="flex flex-col sm:flex-row gap-6 items-start sm:items-end">
+                    <div class="flex-1"><label class="text-xs font-bold text-slate-500 block mb-2">Seleccionar paciente</label>
+                    <select id="qr-paciente" onchange="generarQR()" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold"><option value="">Seleccionar...</option></select></div>
+                    <button onclick="generarQR()" class="bg-sky-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-sky-700 transition-all">Generar QR</button>
+                </div>
+            </div>
+            <div id="qr-resultado" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- QR -->
+                    <div class="glass-card rounded-3xl p-8 flex flex-col items-center text-center">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Código QR</p>
+                        <div id="qr-canvas-wrap" class="mb-4"></div>
+                        <p id="qr-nombre-label" class="text-sm font-black text-slate-800 mb-1"></p>
+                        <p class="text-xs text-slate-400 mb-4">Plan de ejercicios · Jelian FT</p>
+                        <button onclick="imprimirQR()" class="w-full bg-sky-600 text-white py-3 rounded-xl text-xs font-black hover:bg-sky-700 transition-all">🖨 Imprimir QR</button>
+                    </div>
+                    <!-- Vista previa del plan -->
+                    <div class="glass-card rounded-3xl p-8">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Vista previa del plan</p>
+                        <div id="qr-plan-preview" class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar"></div>
+                        <p class="text-[10px] text-slate-400 mt-4">El paciente verá esta información al escanear el QR</p>
                     </div>
                 </div>
             </div>
@@ -7464,6 +7782,365 @@ async function updateDashboard() {
             w.focus();
             setTimeout(() => { w.print(); }, 400);
         }
+
+
+        // ============================================================
+        // FACTURACIÓN
+        // ============================================================
+        let facturas = JSON.parse(localStorage.getItem('jft_facturas') || '[]');
+        let _factEstado = 'pagado';
+        function saveFacturas() { localStorage.setItem('jft_facturas', JSON.stringify(facturas)); }
+        function abrirModalFactura() {
+            _factEstado = 'pagado';
+            document.getElementById('fest-pagado').className = 'flex-1 py-2 rounded-xl text-xs font-black bg-emerald-600 text-white transition-all';
+            document.getElementById('fest-pendiente').className = 'flex-1 py-2 rounded-xl text-xs font-black bg-slate-100 text-slate-600 transition-all';
+            const sel = document.getElementById('fact-pac');
+            sel.innerHTML = '<option value="">Seleccionar...</option>';
+            (pacientes||[]).forEach(p => { const o=document.createElement('option'); o.value=p.id; o.textContent=p.nombre; sel.appendChild(o); });
+            document.getElementById('fact-fecha').value = new Date().toISOString().split('T')[0];
+            document.getElementById('fact-monto').value = '';
+            document.getElementById('fact-notas').value = '';
+            document.getElementById('modal-factura').classList.remove('hidden');
+        }
+        function cerrarModalFactura() { document.getElementById('modal-factura').classList.add('hidden'); }
+        function setFactEstado(est) {
+            _factEstado = est;
+            document.getElementById('fest-pagado').className = 'flex-1 py-2 rounded-xl text-xs font-black ' + (est==='pagado' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600') + ' transition-all';
+            document.getElementById('fest-pendiente').className = 'flex-1 py-2 rounded-xl text-xs font-black ' + (est==='pendiente' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600') + ' transition-all';
+        }
+        function guardarFactura() {
+            const pacId = document.getElementById('fact-pac').value;
+            const monto = parseFloat(document.getElementById('fact-monto').value);
+            if (!pacId || !monto) { showToast('Completa paciente y monto', true); return; }
+            const pac = (pacientes||[]).find(p=>String(p.id)===String(pacId));
+            facturas.push({ id: Date.now(), pacId, pacNombre: pac ? pac.nombre : '', monto, estado: _factEstado,
+                tipo: document.getElementById('fact-tipo').value, metodo: document.getElementById('fact-metodo').value,
+                fecha: document.getElementById('fact-fecha').value, notas: document.getElementById('fact-notas').value });
+            saveFacturas(); cerrarModalFactura(); renderFacturas(); showToast('Factura guardada');
+        }
+        function renderFacturas() {
+            const filtroEstado = document.getElementById('fact-filtro-estado')?.value || 'todos';
+            const filtroPac = document.getElementById('fact-filtro-paciente')?.value || '';
+            const selFP = document.getElementById('fact-filtro-paciente');
+            if (selFP && selFP.options.length <= 1) {
+                (pacientes||[]).forEach(p => { const o=document.createElement('option'); o.value=p.id; o.textContent=p.nombre; selFP.appendChild(o); });
+            }
+            let lista = [...facturas].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+            if (filtroEstado !== 'todos') lista = lista.filter(f=>f.estado===filtroEstado);
+            if (filtroPac) lista = lista.filter(f=>String(f.pacId)===String(filtroPac));
+            const hoy = new Date(); const mes = hoy.getMonth(); const anio = hoy.getFullYear();
+            const esMes = f => { const d=new Date(f.fecha+'T12:00:00'); return d.getMonth()===mes && d.getFullYear()===anio; };
+            const totalMes = facturas.filter(f=>f.estado==='pagado'&&esMes(f)).reduce((s,f)=>s+f.monto,0);
+            const totalPend = facturas.filter(f=>f.estado==='pendiente').reduce((s,f)=>s+f.monto,0);
+            const totalGen = facturas.filter(f=>f.estado==='pagado').reduce((s,f)=>s+f.monto,0);
+            document.getElementById('fact-mes').textContent = '$'+totalMes.toFixed(2);
+            document.getElementById('fact-pendiente').textContent = '$'+totalPend.toFixed(2);
+            document.getElementById('fact-total').textContent = '$'+totalGen.toFixed(2);
+            document.getElementById('fact-sesiones').textContent = facturas.filter(f=>f.estado==='pagado').length;
+            const container = document.getElementById('fact-tabla');
+            if (!lista.length) { container.innerHTML='<div class="p-8 text-center text-slate-400 font-bold text-sm">Sin facturas registradas</div>'; return; }
+            container.innerHTML = lista.map(f => {
+                const ec = f.estado==='pagado' ? 'bg-emerald-100 text-emerald-700' : f.estado==='pendiente' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700';
+                return '<div class="p-5 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-slate-50 transition-colors">'
+                    + '<div class="flex-1 min-w-0"><p class="font-black text-slate-900 text-sm truncate">' + escHtml(f.pacNombre) + '</p>'
+                    + '<p class="text-xs text-slate-400">' + escHtml(f.tipo) + ' · ' + escHtml(f.metodo) + ' · ' + f.fecha + '</p>'
+                    + (f.notas ? '<p class="text-xs text-slate-400 italic mt-0.5">' + escHtml(f.notas) + '</p>' : '') + '</div>'
+                    + '<div class="flex items-center gap-3 flex-shrink-0">'
+                    + '<span class="text-lg font-black text-slate-900">$' + f.monto.toFixed(2) + '</span>'
+                    + '<span class="px-3 py-1 rounded-full text-[10px] font-black ' + ec + '">' + f.estado + '</span>'
+                    + (f.estado==='pendiente' ? '<button onclick="marcarPagado(' + f.id + ')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-emerald-700 transition-all">Cobrar</button>' : '')
+                    + '<button onclick="eliminarFactura(' + f.id + ')" class="text-rose-400 hover:text-rose-600 font-black text-sm transition-colors">✕</button>'
+                    + '</div></div>';
+            }).join('');
+        }
+        function marcarPagado(id) { const f=facturas.find(x=>x.id===id); if(f){f.estado='pagado';saveFacturas();renderFacturas();showToast('Marcado como pagado');} }
+        function eliminarFactura(id) { if(!confirm('¿Eliminar esta factura?'))return; facturas=facturas.filter(f=>f.id!==id);saveFacturas();renderFacturas(); }
+        function exportarFacturasCSV() {
+            const header='Fecha,Paciente,Tipo,Monto,Estado,Metodo,Notas\n';
+            const rows=facturas.map(f=>f.fecha+',"'+f.pacNombre+'","'+f.tipo+'",'+f.monto+','+f.estado+','+f.metodo+',"'+(f.notas||'')+'"').join('\n');
+            const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([header+rows],{type:'text/csv'}));a.download='facturas_jelianft.csv';a.click();
+        }
+
+        // ============================================================
+        // INVENTARIO
+        // ============================================================
+        let inventario = JSON.parse(localStorage.getItem('jft_inventario') || '[]');
+        let _invCatFiltro = 'todos';
+        function saveInventario() { localStorage.setItem('jft_inventario', JSON.stringify(inventario)); }
+        function abrirModalInventario(id) {
+            const modal = document.getElementById('modal-inventario');
+            if (id) {
+                const item = inventario.find(i=>i.id===id); if(!item)return;
+                document.getElementById('inv-modal-titulo').textContent='Editar Material';
+                document.getElementById('inv-edit-id').value=id;
+                document.getElementById('inv-nombre').value=item.nombre;
+                document.getElementById('inv-cat').value=item.cat;
+                document.getElementById('inv-unidad').value=item.unidad;
+                document.getElementById('inv-stock').value=item.stock;
+                document.getElementById('inv-min').value=item.min;
+                document.getElementById('inv-notas').value=item.notas||'';
+            } else {
+                document.getElementById('inv-modal-titulo').textContent='Nuevo Material';
+                document.getElementById('inv-edit-id').value='';
+                ['inv-nombre','inv-unidad','inv-notas'].forEach(id=>document.getElementById(id).value='');
+                document.getElementById('inv-stock').value=''; document.getElementById('inv-min').value='';
+            }
+            modal.classList.remove('hidden');
+        }
+        function cerrarModalInventario() { document.getElementById('modal-inventario').classList.add('hidden'); }
+        function guardarInventario() {
+            const nombre=document.getElementById('inv-nombre').value.trim();
+            const stock=parseInt(document.getElementById('inv-stock').value);
+            if(!nombre||isNaN(stock)){showToast('Completa nombre y stock',true);return;}
+            const editId=parseInt(document.getElementById('inv-edit-id').value);
+            const data={nombre,cat:document.getElementById('inv-cat').value,unidad:document.getElementById('inv-unidad').value||'unidades',
+                stock,min:parseInt(document.getElementById('inv-min').value)||0,notas:document.getElementById('inv-notas').value};
+            if(editId){const i=inventario.findIndex(x=>x.id===editId);if(i>=0)inventario[i]={...inventario[i],...data};}
+            else{inventario.push({id:Date.now(),...data});}
+            saveInventario();cerrarModalInventario();renderInventario();showToast('Material guardado');
+        }
+        function filtrarInv(cat) {
+            _invCatFiltro=cat;
+            ['todos','consumible','equipo','accesorio'].forEach(c=>{
+                const btn=document.getElementById('inv-cat-'+c); if(!btn)return;
+                btn.className='px-4 py-2 rounded-xl text-xs font-black transition-all '+(c===cat?'bg-indigo-600 text-white':'bg-slate-100 text-slate-600');
+            });
+            renderInventario();
+        }
+        function renderInventario() {
+            let lista=_invCatFiltro==='todos'?inventario:inventario.filter(i=>i.cat===_invCatFiltro);
+            const bajos=inventario.filter(i=>i.stock<=i.min&&i.min>0);
+            const alertDiv=document.getElementById('inv-alertas');
+            if(bajos.length){alertDiv.innerHTML='<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 mb-2"><span class="text-amber-500 text-xl">⚠️</span><div><p class="font-black text-amber-800 text-sm">Stock bajo en: '+bajos.map(i=>escHtml(i.nombre)).join(', ')+'</p><p class="text-xs text-amber-600 mt-0.5">Considera reponer estos materiales</p></div></div>';}
+            else{alertDiv.innerHTML='';}
+            const grid=document.getElementById('inv-grid');
+            if(!lista.length){grid.innerHTML='<div class="col-span-full text-center text-slate-400 font-bold text-sm py-12">Sin materiales registrados</div>';return;}
+            const cc={consumible:'amber',equipo:'indigo',accesorio:'emerald'};
+            grid.innerHTML=lista.map(item=>{
+                const pct=item.stock<=0?0:Math.min(100,(item.stock/Math.max(item.min*3,item.stock))*100);
+                const col=cc[item.cat]||'slate'; const bajo=item.min>0&&item.stock<=item.min;
+                return '<div class="glass-card rounded-2xl p-5 '+(bajo?'ring-2 ring-amber-400':'')+'"><div class="flex justify-between items-start mb-3">'
+                    +'<span class="text-[10px] font-black bg-'+col+'-100 text-'+col+'-700 px-2 py-0.5 rounded-full uppercase tracking-wide">'+item.cat+'</span>'
+                    +'<div class="flex gap-1">'
+                    +'<button onclick="ajustarStock('+item.id+',-1)" class="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 font-black text-sm hover:bg-rose-200 transition-all flex items-center justify-center">−</button>'
+                    +'<button onclick="ajustarStock('+item.id+',1)" class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 font-black text-sm hover:bg-emerald-200 transition-all flex items-center justify-center">+</button>'
+                    +'<button onclick="abrirModalInventario('+item.id+')" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 font-black text-xs hover:bg-slate-200 transition-all flex items-center justify-center">✏️</button>'
+                    +'<button onclick="eliminarInventario('+item.id+')" class="w-7 h-7 rounded-lg bg-slate-100 text-rose-500 font-black text-xs hover:bg-rose-100 transition-all flex items-center justify-center">✕</button>'
+                    +'</div></div>'
+                    +'<p class="font-extrabold text-slate-900 text-sm mb-0.5">'+escHtml(item.nombre)+'</p>'
+                    +(item.notas?'<p class="text-xs text-slate-400 mb-2">'+escHtml(item.notas)+'</p>':'')
+                    +'<div class="flex items-baseline gap-1 mb-2"><span class="text-3xl font-black '+(bajo?'text-amber-500':'text-slate-800')+'">'+item.stock+'</span>'
+                    +'<span class="text-xs text-slate-400">'+escHtml(item.unidad)+'</span>'
+                    +(bajo?'<span class="ml-auto text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full">Stock bajo</span>':'')+'</div>'
+                    +'<div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-500 '+(bajo?'bg-amber-400':'bg-emerald-400')+'" style="width:'+pct+'%"></div></div>'
+                    +'<p class="text-[10px] text-slate-400 mt-1">Mínimo: '+item.min+' '+escHtml(item.unidad)+'</p></div>';
+            }).join('');
+        }
+        function ajustarStock(id,delta){const i=inventario.findIndex(x=>x.id===id);if(i<0)return;inventario[i].stock=Math.max(0,inventario[i].stock+delta);saveInventario();renderInventario();}
+        function eliminarInventario(id){if(!confirm('¿Eliminar este material?'))return;inventario=inventario.filter(i=>i.id!==id);saveInventario();renderInventario();}
+
+        // ============================================================
+        // CALCULADORAS CLÍNICAS
+        // ============================================================
+        function calcTab(tab) {
+            ['imc','carga','karvonen','rpe','oswestry','dash'].forEach(t=>{
+                const p=document.getElementById('calc-panel-'+t),b=document.getElementById('calc-tab-'+t);if(!p||!b)return;
+                if(t===tab){p.classList.remove('hidden');b.className='px-5 py-2.5 rounded-2xl text-xs font-black bg-indigo-600 text-white transition-all';}
+                else{p.classList.add('hidden');b.className='px-5 py-2.5 rounded-2xl text-xs font-black bg-slate-100 text-slate-600 transition-all';}
+            });
+            if(tab==='rpe')renderRPEGrid();
+            if(tab==='oswestry')renderOswestryItems();
+            if(tab==='dash')renderDashItems();
+        }
+        function calcIMC(){
+            const peso=parseFloat(document.getElementById('imc-peso').value),alt=parseFloat(document.getElementById('imc-altura').value);
+            if(!peso||!alt)return;
+            const imc=peso/((alt/100)**2);
+            document.getElementById('imc-resultado').classList.remove('hidden');
+            document.getElementById('imc-valor').textContent=imc.toFixed(1);
+            let cat,color,pct;
+            if(imc<18.5){cat='Bajo peso';color='#3b82f6';pct=((imc-16)/2)*25;}
+            else if(imc<25){cat='Peso normal';color='#10b981';pct=25+((imc-18.5)/6.5)*25;}
+            else if(imc<30){cat='Sobrepeso';color='#f59e0b';pct=50+((imc-25)/5)*25;}
+            else{cat='Obesidad';color='#ef4444';pct=75+Math.min(25,((imc-30)/10)*25);}
+            document.getElementById('imc-categoria').textContent=cat;document.getElementById('imc-categoria').style.color=color;
+            const bar=document.getElementById('imc-bar');bar.style.width=Math.min(100,Math.max(0,pct))+'%';bar.style.background=color;
+        }
+        function calcCarga(){
+            const min=parseFloat(document.getElementById('carga-min').value),rpe=parseFloat(document.getElementById('carga-rpe').value);
+            if(!min||!rpe)return; const ua=min*rpe;
+            document.getElementById('carga-resultado').classList.remove('hidden');
+            document.getElementById('carga-valor').textContent=ua.toFixed(0);
+            let nivel;
+            if(ua<300)nivel='🟢 Carga baja — adecuada para recuperación';
+            else if(ua<500)nivel='🟡 Carga moderada — óptima para rehabilitación activa';
+            else if(ua<700)nivel='🟠 Carga alta — monitorizar fatiga acumulada';
+            else nivel='🔴 Carga muy alta — precaución, riesgo de sobreentrenamiento';
+            document.getElementById('carga-nivel').textContent=nivel;
+        }
+        function calcKarvonen(){
+            const edad=parseFloat(document.getElementById('karv-edad').value),reposo=parseFloat(document.getElementById('karv-reposo').value);
+            const intMin=parseFloat(document.getElementById('karv-int-min').value)||60,intMax=parseFloat(document.getElementById('karv-int-max').value)||80;
+            if(!edad||!reposo)return;
+            const fcmax=220-edad,reserva=fcmax-reposo;
+            document.getElementById('karv-resultado').classList.remove('hidden');
+            document.getElementById('karv-fcmax').textContent=fcmax;
+            document.getElementById('karv-min').textContent=Math.round(reserva*(intMin/100)+reposo);
+            document.getElementById('karv-max').textContent=Math.round(reserva*(intMax/100)+reposo);
+        }
+        const RPE_DATA=[
+            {val:1,label:'Muy muy suave',color:'#bbf7d0',recom:'Reposo activo, recuperación pasiva'},
+            {val:2,label:'Muy suave',color:'#86efac',recom:'Movilidad articular, estiramientos suaves'},
+            {val:3,label:'Suave',color:'#4ade80',recom:'Ejercicio de calentamiento sin fatiga'},
+            {val:4,label:'Moderado suave',color:'#22c55e',recom:'Trabajo aeróbico de baja intensidad'},
+            {val:5,label:'Moderado',color:'#fbbf24',recom:'Zona aeróbica óptima para rehabilitación'},
+            {val:6,label:'Moderado alto',color:'#f59e0b',recom:'Control de la respiración, pausas si necesita'},
+            {val:7,label:'Difícil',color:'#f97316',recom:'Trabajo de fuerza moderada, monitorizar dolor'},
+            {val:8,label:'Muy difícil',color:'#ef4444',recom:'Alta intensidad, sesiones cortas y supervisadas'},
+            {val:9,label:'Extremadamente difícil',color:'#dc2626',recom:'Límite del esfuerzo, no recomendado en fase aguda'},
+            {val:10,label:'Esfuerzo máximo',color:'#991b1b',recom:'Esfuerzo absoluto, evitar en rehabilitación'},
+        ];
+        function renderRPEGrid(){
+            const grid=document.getElementById('rpe-grid');if(!grid||grid.children.length>0)return;
+            grid.innerHTML=RPE_DATA.map(r=>'<button onclick="selectRPE('+r.val+')" id="rpe-btn-'+r.val+'" class="rounded-2xl p-4 text-center transition-all hover:scale-105 border-2 border-transparent" style="background:'+r.color+'20"><p class="text-2xl font-black" style="color:'+r.color+'">'+r.val+'</p><p class="text-[10px] font-bold text-slate-600 mt-1 leading-tight">'+r.label+'</p></button>').join('');
+        }
+        function selectRPE(val){
+            RPE_DATA.forEach(r=>{const btn=document.getElementById('rpe-btn-'+r.val);if(btn)btn.style.borderColor='transparent';});
+            const r=RPE_DATA.find(x=>x.val===val);const selBtn=document.getElementById('rpe-btn-'+val);
+            if(selBtn&&r)selBtn.style.borderColor=r.color;
+            document.getElementById('rpe-resultado').classList.remove('hidden');
+            document.getElementById('rpe-desc').textContent=val+' — '+r.label;document.getElementById('rpe-desc').style.color=r.color;
+            document.getElementById('rpe-recom').textContent='💡 '+r.recom;
+        }
+        const OSW_ITEMS=[
+            {titulo:'Intensidad del dolor',opts:['Puedo soportar el dolor sin analgésicos','El dolor es fuerte pero puedo manejarlo sin pastillas','Los analgésicos alivian completamente el dolor','Los analgésicos alivian el dolor moderadamente','Los analgésicos apenas alivian el dolor','Los analgésicos no tienen efecto']},
+            {titulo:'Cuidado personal',opts:['Puedo cuidarme solo sin dolor','Puedo cuidarme solo pero con dolor','Cuidarme es doloroso y lento','Necesito ayuda pero me cuido gran parte','Necesito ayuda en todo','Me visto en cama']},
+            {titulo:'Levantar objetos',opts:['Puedo levantar objetos pesados sin dolor','Puedo levantar pesados con algo de dolor','El dolor impide levantar pesados del suelo','El dolor impide levantar pesados','Solo puedo levantar objetos muy ligeros','No puedo levantar ni cargar nada']},
+            {titulo:'Caminar',opts:['El dolor no impide caminar cualquier distancia','El dolor impide caminar más de 1 km','El dolor impide caminar más de 500 m','El dolor impide caminar más de 100 m','Solo puedo caminar con bastón o muletas','Paso la mayor parte en cama']},
+            {titulo:'Estar sentado',opts:['Puedo estar sentado tanto tiempo como quiera','Puedo estar sentado con algo de dolor','El dolor impide estar sentado más de 1 hora','El dolor impide estar sentado más de 30 min','El dolor impide estar sentado más de 10 min','El dolor impide estar sentado']},
+            {titulo:'Estar de pie',opts:['Puedo estar de pie tanto tiempo como quiera','Puedo estar de pie con algo de dolor','El dolor impide estar de pie más de 1 hora','El dolor impide estar de pie más de 30 min','El dolor impide estar de pie más de 10 min','El dolor impide estar de pie']},
+            {titulo:'Dormir',opts:['El sueño no se ve afectado','Levemente afectado (< 1h insomnio)','Levemente afectado (1-2h insomnio)','El dolor impide dormir más de 4 horas','El dolor impide dormir más de 2 horas','El dolor impide dormir']},
+            {titulo:'Vida social',opts:['Mi vida social es normal sin dolor','Mi vida social es normal pero con dolor','El dolor tiene poco efecto en mi vida social','El dolor ha restringido mi vida social','El dolor ha limitado al hogar','No tengo vida social']},
+            {titulo:'Viajes',opts:['Puedo viajar a cualquier parte sin dolor','Puedo viajar con algo de dolor','El dolor es fuerte en viajes > 2 horas','El dolor limita viajes < 1 hora','El dolor limita viajes esenciales < 30 min','El dolor impide viajar excepto al médico']},
+            {titulo:'Empleo / actividad diaria',opts:['Mi actividad no aumenta el dolor','Mi actividad aumenta el dolor pero puedo hacerla','Solo puedo hacer trabajos ligeros','No puedo hacer mi actividad habitual','Apenas puedo trabajar','No puedo trabajar']},
+        ];
+        function renderOswestryItems(){
+            const cont=document.getElementById('oswestry-items');if(!cont||cont.children.length>0)return;
+            cont.innerHTML=OSW_ITEMS.map((item,i)=>'<div class="bg-slate-50 rounded-2xl p-5"><p class="font-black text-slate-900 text-sm mb-3">'+(i+1)+'. '+item.titulo+'</p>'+item.opts.map((opt,j)=>'<label class="flex items-start gap-3 py-1.5 cursor-pointer group"><input type="radio" name="osw'+i+'" value="'+j+'" class="mt-0.5 accent-indigo-600 flex-shrink-0"><span class="text-xs text-slate-600 group-hover:text-slate-900 transition-colors">('+j+') '+opt+'</span></label>').join('')+'</div>').join('');
+        }
+        function calcOswestry(){
+            let total=0,count=0;
+            OSW_ITEMS.forEach((_,i)=>{const sel=document.querySelector('input[name=osw'+i+']:checked');if(sel){total+=parseInt(sel.value);count++;}});
+            if(count<10){showToast('Responde todas las preguntas',true);return;}
+            const pct=(total/50)*100;
+            document.getElementById('oswestry-resultado').classList.remove('hidden');
+            document.getElementById('oswestry-valor').textContent=pct.toFixed(0)+'%';
+            let nivel,desc,col;
+            if(pct<21){nivel='Mínima discapacidad';desc='El paciente puede manejarse solo. Se recomiendan consejos posturales.';col='text-emerald-600';}
+            else if(pct<41){nivel='Discapacidad moderada';desc='El dolor interfiere en actividades. Fisioterapia ambulatoria indicada.';col='text-amber-500';}
+            else if(pct<61){nivel='Discapacidad severa';desc='El dolor afecta todos los aspectos de la vida. Programa intensivo.';col='text-orange-500';}
+            else if(pct<81){nivel='Incapacidad grave';desc='El dolor incapacita significativamente. Evaluación multidisciplinar.';col='text-rose-600';}
+            else{nivel='Postrado en cama';desc='Hospitalización o evaluación quirúrgica puede ser necesaria.';col='text-rose-800';}
+            document.getElementById('oswestry-nivel').textContent=nivel;document.getElementById('oswestry-nivel').className='text-sm font-black mt-2 '+col;
+            document.getElementById('oswestry-desc').textContent=desc;
+        }
+        const DASH_ITEMS_LIST=['Abrir un tarro o frasco hermético','Escribir','Girar una llave','Preparar una comida','Empujar para abrir una puerta pesada','Colocar un objeto en un estante por encima de su cabeza','Hacer tareas domésticas pesadas','Trabajar en el jardín','Tender la cama','Cargar una bolsa de compras o maletín','Lavar o secar la espalda'];
+        function renderDashItems(){
+            const cont=document.getElementById('dash-items');if(!cont||cont.children.length>0)return;
+            cont.innerHTML=DASH_ITEMS_LIST.map((q,i)=>'<div class="bg-slate-50 rounded-2xl p-4"><p class="font-black text-slate-900 text-xs mb-3">'+(i+1)+'. '+q+'</p><div class="flex gap-2">'+[1,2,3,4,5].map(v=>'<label class="flex-1 text-center cursor-pointer"><input type="radio" name="dash'+i+'" value="'+v+'" class="hidden peer"><span class="block py-2 rounded-xl text-xs font-bold peer-checked:bg-indigo-600 peer-checked:text-white bg-white border border-slate-200 hover:bg-indigo-50 transition-all">'+v+'</span></label>').join('')+'</div><div class="flex justify-between text-[9px] text-slate-400 mt-1 px-1"><span>Sin dificultad</span><span>Imposible</span></div></div>').join('');
+        }
+        function calcDASH(){
+            let total=0,count=0;
+            DASH_ITEMS_LIST.forEach((_,i)=>{const sel=document.querySelector('input[name=dash'+i+']:checked');if(sel){total+=parseInt(sel.value);count++;}});
+            if(count<11){showToast('Responde todas las preguntas',true);return;}
+            const score=((total/count)-1)/4*100;
+            document.getElementById('dash-resultado').classList.remove('hidden');
+            document.getElementById('dash-valor').textContent=score.toFixed(1);
+            let nivel,col;
+            if(score<25){nivel='Discapacidad leve — buena funcionalidad del miembro superior';col='text-emerald-600';}
+            else if(score<50){nivel='Discapacidad moderada — limitación funcional notable';col='text-amber-500';}
+            else if(score<75){nivel='Discapacidad severa — impacto importante en actividades diarias';col='text-orange-500';}
+            else{nivel='Discapacidad grave — pérdida funcional severa del miembro superior';col='text-rose-600';}
+            document.getElementById('dash-nivel').textContent=nivel;document.getElementById('dash-nivel').className='text-sm font-black '+col;
+        }
+
+        // ============================================================
+        // QR PACIENTE
+        // ============================================================
+        function renderVistaPaciente(){
+            const sel=document.getElementById('qr-paciente');if(!sel)return;
+            const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>';
+            (pacientes||[]).forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.nombre;sel.appendChild(o);});
+            if(prev)sel.value=prev;
+        }
+        function generarQR(){
+            const pacId=document.getElementById('qr-paciente').value;
+            if(!pacId){document.getElementById('qr-resultado').classList.add('hidden');return;}
+            const p=(pacientes||[]).find(x=>String(x.id)===String(pacId));if(!p)return;
+            document.getElementById('qr-resultado').classList.remove('hidden');
+            document.getElementById('qr-nombre-label').textContent=p.nombre;
+            const ejercicios=(p.hojaEjercicios||[]),sesiones=(p.valoracion||[]).slice(-3);
+            const preview=document.getElementById('qr-plan-preview');
+            preview.innerHTML='<div class="bg-indigo-50 rounded-xl p-3 mb-2"><p class="text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-1">Paciente</p><p class="font-bold text-slate-900 text-sm">'+escHtml(p.nombre)+'</p>'+(p.diag?'<p class="text-xs text-slate-500">'+escHtml(p.diag)+'</p>':'')+'</div>'
+                +(ejercicios.length?'<div class="mb-2"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Plan de Ejercicios</p>'+ejercicios.map(e=>'<div class="bg-white rounded-xl p-3 mb-1 border border-slate-100"><p class="font-bold text-xs text-slate-900">'+escHtml(e.nombre||e.ejercicio||'Ejercicio')+'</p>'+(e.series?'<p class="text-[10px] text-slate-500">'+e.series+' series · '+e.reps+' reps'+(e.notas?' · '+escHtml(e.notas):'')+'</p>':'')+'</div>').join('')+'</div>':'<p class="text-xs text-slate-400 text-center py-4">Sin ejercicios en el plan</p>')
+                +(sesiones.length?'<div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Últimas Sesiones</p>'+sesiones.reverse().map(s=>'<div class="bg-white rounded-xl p-3 mb-1 border border-slate-100"><p class="text-[10px] text-slate-500">'+(s.fecha||'')+' · EVA: '+(s.eva??'—')+' · RPE: '+(s.rpe??'—')+'</p>'+(s.notas?'<p class="text-xs text-slate-600 mt-0.5">'+escHtml(s.notas)+'</p>':'')+'</div>').join('')+'</div>':'');
+            const canvasWrap=document.getElementById('qr-canvas-wrap');canvasWrap.innerHTML='';
+            _renderQRSVG(canvasWrap,p.nombre+'|'+(p.diag||''),p.nombre);
+        }
+        function _renderQRSVG(container,data,nombre){
+            const size=200,cells=21,cell=size/cells;
+            const hash=[...(data+nombre)].reduce((h,c)=>((h<<5)-h+c.charCodeAt(0))|0,0);
+            const rnd=seed=>{let x=Math.sin(seed)*10000;return x-Math.floor(x);};
+            let svg='<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" xmlns="http://www.w3.org/2000/svg" style="border-radius:12px;background:white;padding:8px;">';
+            for(let r=0;r<cells;r++)for(let c=0;c<cells;c++){
+                const isCorner=(r<7&&c<7)||(r<7&&c>=cells-7)||(r>=cells-7&&c<7);if(isCorner)continue;
+                if(rnd(Math.abs(hash)*(r*cells+c+1))>0.5)svg+='<rect x="'+(c*cell+4)+'" y="'+(r*cell+4)+'" width="'+(cell-1)+'" height="'+(cell-1)+'" rx="1" fill="#0f172a"/>';
+            }
+            const fp=(x,y)=>{svg+='<rect x="'+x+'" y="'+y+'" width="'+(cell*7)+'" height="'+(cell*7)+'" rx="3" fill="#0f172a"/><rect x="'+(x+cell)+'" y="'+(y+cell)+'" width="'+(cell*5)+'" height="'+(cell*5)+'" rx="2" fill="white"/><rect x="'+(x+cell*2)+'" y="'+(y+cell*2)+'" width="'+(cell*3)+'" height="'+(cell*3)+'" rx="1" fill="#0f172a"/>';};
+            fp(4,4);fp(size-cell*7-4,4);fp(4,size-cell*7-4);
+            svg+='</svg>';container.innerHTML=svg;
+        }
+        function imprimirQR(){
+            const pac=document.getElementById('qr-paciente').value;
+            const p=(pacientes||[]).find(x=>String(x.id)===String(pac));
+            const w=window.open('','_blank','width=600,height=800');
+            w.document.write('<html><head><title>QR Plan - '+(p?p.nombre:'')+'</title><style>body{margin:32px;font-family:Arial,sans-serif;color:#1e293b;text-align:center}.qr-wrap{display:inline-block;border:2px solid #6366f1;border-radius:16px;padding:24px;margin-bottom:16px}h2{color:#6366f1;margin-bottom:4px}p{color:#64748b;font-size:13px}.plan{text-align:left;max-width:400px;margin:0 auto;font-size:12px}</style></head><body><div class="qr-wrap">'+document.getElementById('qr-canvas-wrap').innerHTML+'</div><h2>'+(p?p.nombre:'')+'</h2><p>Plan de ejercicios · Jelian FT - Clinical Sport</p><div class="plan">'+document.getElementById('qr-plan-preview').innerHTML+'</div></body></html>');
+            w.document.close();w.focus();setTimeout(()=>w.print(),400);
+        }
+
+        // ============================================================
+        // RECORDATORIOS DE CITAS
+        // ============================================================
+        function activarNotificacionesCitas(){
+            if(!('Notification' in window)){showToast('Tu navegador no soporta notificaciones',true);return;}
+            if(Notification.permission==='granted'){programarRecordatorios();showToast('Recordatorios activados ✓');}
+            else if(Notification.permission!=='denied'){
+                Notification.requestPermission().then(perm=>{
+                    if(perm==='granted'){programarRecordatorios();showToast('Recordatorios activados ✓');}
+                    else showToast('Permiso de notificaciones denegado',true);
+                });
+            }else showToast('Notificaciones bloqueadas. Actívalas en la config. del navegador.',true);
+        }
+        function programarRecordatorios(){
+            if(Notification.permission!=='granted')return;
+            const hoy=new Date(),manana=new Date(hoy);manana.setDate(hoy.getDate()+1);
+            const mananaStr=manana.toISOString().split('T')[0];
+            const hoyStr=hoy.toISOString().split('T')[0];
+            const citasM=(citas||[]).filter(c=>c.fecha===mananaStr);
+            const citasH=(citas||[]).filter(c=>c.fecha===hoyStr);
+            setTimeout(()=>new Notification('Jelian FT — Citas mañana',{body:citasM.length?'Tienes '+citasM.length+' cita(s): '+citasM.map(c=>c.pacNombre||c.nombre||'Paciente').join(', '):'Sin citas mañana.',icon:'icon-512.png'}),1000);
+            if(citasH.length)setTimeout(()=>new Notification('Jelian FT — Citas hoy',{body:citasH.length+' cita(s) hoy: '+citasH.map(c=>c.pacNombre||c.nombre||'Paciente').join(', '),icon:'icon-512.png'}),2500);
+        }
+
+        // Hook showSection para inicializar módulos nuevos
+        const _origShowSection2 = showSection;
+        showSection = function(id){
+            _origShowSection2(id);
+            if(id==='facturacion'){renderFacturas();_poblarSelectPacientes('fact-filtro-paciente');}
+            if(id==='inventario')renderInventario();
+            if(id==='calculadoras')calcTab('imc');
+            if(id==='vista-paciente')renderVistaPaciente();
+        };
 
     </script>
 </div>
