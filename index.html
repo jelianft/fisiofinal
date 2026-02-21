@@ -7636,56 +7636,47 @@ async function updateDashboard() {
         // ============================================================
         // SERVICE WORKER — Registro + detección de actualizaciones
         // ============================================================
-        let _swRegistration = null;
-        let _swWaiting = null;
-
+        // ── Botón recargar manual (simple recarga) ──────────────────
         function forceReload() {
             const icon = document.getElementById('reload-icon');
             if (icon) { icon.style.transition = 'transform 0.6s'; icon.style.transform = 'rotate(360deg)'; setTimeout(() => { icon.style.transform = ''; }, 700); }
-
-            if (_swWaiting) {
-                _swWaiting.postMessage({ type: 'SKIP_WAITING' });
-                _swWaiting = null;
-                navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload(); }, { once: true });
-            } else if (_swRegistration) {
-                _swRegistration.update().then(() => {
-                    if (_swWaiting) {
-                        _swWaiting.postMessage({ type: 'SKIP_WAITING' });
-                        _swWaiting = null;
-                        navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload(); }, { once: true });
-                    } else {
-                        window.location.reload();
-                    }
-                }).catch(() => { window.location.reload(); });
-            } else {
-                window.location.reload();
-            }
+            window.location.reload();
         }
 
-        function _markUpdateReady() {
-            const badge = document.getElementById('reload-badge');
-            if (badge) badge.classList.remove('hidden');
-            showToast('🔄 Nueva versión disponible — toca Recargar para actualizar');
-        }
-
+        // ── Service Worker: actualización AUTOMÁTICA ─────────────────
+        // Cuando el SW detecta una nueva versión la activa sola y recarga.
+        // El usuario no necesita tocar nada.
         if ('serviceWorker' in navigator && !IS_SANDBOX) {
             window.addEventListener('load', () => {
+
                 navigator.serviceWorker.register('sw.js').then(reg => {
-                    _swRegistration = reg;
-                    if (reg.waiting) { _swWaiting = reg.waiting; _markUpdateReady(); }
+
+                    // Chequear actualizaciones cada 2 minutos
+                    setInterval(() => { reg.update().catch(() => {}); }, 2 * 60 * 1000);
+
+                    // Función que activa el SW nuevo automáticamente
+                    function activarSWNuevo(worker) {
+                        worker.postMessage({ type: 'SKIP_WAITING' });
+                    }
+
+                    // Si al cargar ya hay un SW esperando → activarlo de inmediato
+                    if (reg.waiting) { activarSWNuevo(reg.waiting); }
+
+                    // Cuando se encuentre una nueva versión durante la sesión
                     reg.addEventListener('updatefound', () => {
                         const nw = reg.installing;
                         if (!nw) return;
                         nw.addEventListener('statechange', () => {
-                            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                                _swWaiting = nw;
-                                _markUpdateReady();
+                            if (nw.state === 'installed') {
+                                // Hay nueva versión lista → activar automáticamente
+                                activarSWNuevo(nw);
                             }
                         });
                     });
-                    setInterval(() => { reg.update().catch(() => {}); }, 5 * 60 * 1000);
+
                 }).catch(() => {});
 
+                // Cuando el SW nuevo toma el control → recargar la página
                 let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
                     if (!refreshing) { refreshing = true; window.location.reload(); }

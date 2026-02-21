@@ -1,24 +1,18 @@
-// Jelian FT — Service Worker v1
-// Cachea los assets principales para funcionamiento offline
+// Jelian FT — Service Worker
+// ⚠️  Sube el número cada vez que despliegues: v136 → v137 → v138...
+const CACHE_NAME = 'jelianft-v136';
 
-const CACHE_NAME = 'jelianft-v1';
-const ASSETS = [
-  './',
-  './index.html',
-  'https://cdn.tailwindcss.com',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-];
-
-// Instalacion: precachear assets clave
+// Instalación: cachear index.html
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(['./index.html']).catch(() => {});
-    }).then(() => self.skipWaiting())
+    })
   );
+  // NO llamamos skipWaiting aquí — lo controla el cliente (index.html)
 });
 
-// Activacion: limpiar caches antiguas
+// Activación: limpiar cachés viejas y tomar control
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -27,28 +21,50 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: network-first para Supabase, cache-first para assets locales
+// Mensaje desde index.html: activar nueva versión automáticamente
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Fetch
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Supabase y APIs externas: siempre red, sin cache
+  // APIs externas: siempre red, sin caché
   if (url.hostname.includes('supabase.co') || url.hostname.includes('anthropic.com')) {
-    return; // dejar pasar normalmente
+    return;
   }
 
-  // Assets locales: cache-first con fallback a red
+  // index.html → Network-first: siempre busca la versión más reciente del servidor
+  if (url.pathname === '/' || url.pathname.endsWith('index.html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // Resto → Cache-first con fallback a red
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((response) => {
-        // Cachear solo respuestas exitosas de mismo origen o CDNs
-        if (response && response.status === 200 && (url.origin === self.location.origin || url.hostname.includes('jsdelivr') || url.hostname.includes('tailwindcss'))) {
+        if (response && response.status === 200 &&
+          (url.origin === self.location.origin ||
+           url.hostname.includes('jsdelivr') ||
+           url.hostname.includes('tailwindcss'))) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
       }).catch(() => {
-        // Offline fallback: devolver index.html para rutas de la app
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
