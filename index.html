@@ -953,7 +953,14 @@
                 <span id="sidebar-apikey-label">API Key IA</span>
             </button>
         </div>
-        <div class="p-6 text-[10px] text-slate-600 font-bold">
+        <div class="p-6 pt-0">
+            <button onclick="forceReload()" id="btn-reload-sidebar" title="Buscar actualizaciones" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-black text-slate-500 hover:text-white hover:bg-slate-700/50 transition-all group">
+                <svg id="reload-icon-sidebar" class="w-4 h-4 transition-transform duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span id="reload-label-sidebar">Buscar actualizaciones</span>
+                <span id="offline-dot" class="ml-auto w-2 h-2 rounded-full bg-rose-500 hidden"></span>
+            </button>
+        </div>
+        <div class="p-6 pt-0 text-[10px] text-slate-600 font-bold">
             v136.0.0 • 2026 STABLE
         </div>
     </aside>
@@ -7747,12 +7754,10 @@ async function updateDashboard() {
         // ============================================================
         function _actualizarBadgeConexion() {
             const badge = document.getElementById('offline-badge');
-            if (!badge) return;
-            if (navigator.onLine) {
-                badge.classList.add('hidden');
-            } else {
-                badge.classList.remove('hidden');
-            }
+            const dot = document.getElementById('offline-dot');
+            const online = navigator.onLine;
+            if (badge) badge.classList.toggle('hidden', online);
+            if (dot)   dot.classList.toggle('hidden', online);
         }
         window.addEventListener('online',  _actualizarBadgeConexion);
         window.addEventListener('offline', () => {
@@ -7767,23 +7772,34 @@ async function updateDashboard() {
         function abrirWhatsApp() {
             const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.telefono) { showToast('Este paciente no tiene teléfono registrado', true); return; }
-            // Próxima cita desde el calendario si existe, si no: mañana
+
+            // Construir número internacional:
+            // Quitar espacios, guiones, paréntesis
+            let tel = p.telefono.replace(/[^\d+]/g, '');
+            // Si empieza con 0 → reemplazar por código Ecuador +593
+            if (tel.startsWith('0')) tel = '593' + tel.slice(1);
+            // Si empieza con + → quitar el +
+            if (tel.startsWith('+')) tel = tel.slice(1);
+            // Si ya tiene 593 al inicio, dejarlo tal cual
+            // Resultado final: solo dígitos sin +, p.ej. 593987654321
+
+            // Próxima cita desde el calendario si existe
             let fechaCita = 'tu próxima cita';
+            const hoy = new Date().toISOString().split('T')[0];
             const proxima = (window._eventosCalendario || []).find(ev => {
-                const pid = ev.pacienteId || ev.paciente_id;
-                return String(pid) === String(currentId) && ev.fecha >= new Date().toISOString().split('T')[0];
+                const pid = String(ev.pacienteId || ev.paciente_id || '');
+                return pid === String(currentId) && (ev.fecha || '') >= hoy;
             });
             if (proxima) {
                 const d = new Date(proxima.fecha + 'T00:00:00');
                 fechaCita = d.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
                 if (proxima.hora) fechaCita += ' a las ' + proxima.hora;
             }
-            const msg = encodeURIComponent(
-                `Hola ${p.nombre.split(' ')[0]} 👋, te recuerdo que tienes ${fechaCita} en Jelian FT. ` +
-                `Si necesitas cambiar la cita, escríbeme. ¡Hasta pronto! 💪`
-            );
-            const tel = p.telefono.replace(/[^0-9]/g, '');
-            window.open(`https://wa.me/${tel}?text=${msg}`, '_blank');
+
+            const nombre = p.nombre ? p.nombre.split(' ')[0] : 'paciente';
+            const texto = `Hola ${nombre} 👋, te recuerdo que tienes ${fechaCita} en Jelian FT. Si necesitas cambiar la cita, escríbeme. ¡Hasta pronto! 💪`;
+            const url = `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
         }
 
         // ============================================================
@@ -7925,33 +7941,61 @@ async function updateDashboard() {
         let _swRegistration = null;
         let _swWaiting = null;
 
-        function forceReload() {
-            const icon = document.getElementById('reload-icon');
-            if (icon) { icon.style.transition = 'transform 0.6s'; icon.style.transform = 'rotate(360deg)'; setTimeout(() => { icon.style.transform = ''; }, 700); }
+        function _spinBothIcons(on) {
+            ['reload-icon', 'reload-icon-sidebar'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (on) {
+                    el.style.transition = 'transform 0.7s linear';
+                    el.style.transform = 'rotate(360deg)';
+                } else {
+                    el.style.transition = 'none';
+                    el.style.transform = '';
+                }
+            });
+        }
 
-            if (_swWaiting) {
-                _swWaiting.postMessage({ type: 'SKIP_WAITING' });
-                _swWaiting = null;
-                navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload(); }, { once: true });
-            } else if (_swRegistration) {
-                _swRegistration.update().then(() => {
-                    if (_swWaiting) {
-                        _swWaiting.postMessage({ type: 'SKIP_WAITING' });
-                        _swWaiting = null;
-                        navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload(); }, { once: true });
+        function _setReloadLabel(txt, color) {
+            const lbl = document.getElementById('reload-label-sidebar');
+            if (lbl) { lbl.textContent = txt; lbl.style.color = color || ''; }
+            const btn = document.getElementById('btn-reload');
+            if (btn) { btn.title = txt; }
+            const btnS = document.getElementById('btn-reload-sidebar');
+            if (btnS) btnS.title = txt;
+        }
+
+        function forceReload() {
+            _spinBothIcons(true);
+            setTimeout(() => _spinBothIcons(false), 700);
+            _setReloadLabel('Buscando actualizaciones...');
+
+            fetch('./index.html?_v=' + Date.now(), { cache: 'no-store' })
+                .then(r => r.text())
+                .then(html => {
+                    const match = html.match(/const APP_VERSION\s*=\s*'([^']+)'/);
+                    const serverVer = match ? match[1] : null;
+                    const myVer = typeof APP_VERSION !== 'undefined' ? APP_VERSION : null;
+                    if (serverVer && myVer && serverVer !== myVer) {
+                        _setReloadLabel('Actualizando...', '#818cf8');
+                        showToast('🔄 Nueva versión detectada, actualizando...');
+                        if ('caches' in window) {
+                            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).finally(() => location.reload());
+                        } else { location.reload(); }
                     } else {
-                        window.location.reload();
+                        _setReloadLabel('✅ App al día', '#22c55e');
+                        showToast('✅ Ya tienes la versión más reciente');
+                        setTimeout(() => _setReloadLabel('Buscar actualizaciones', ''), 3000);
                     }
-                }).catch(() => { window.location.reload(); });
-            } else {
-                window.location.reload();
-            }
+                })
+                .catch(() => {
+                    _setReloadLabel('Sin conexión', '#f87171');
+                    showToast('Sin conexión — usando versión local', true);
+                    setTimeout(() => _setReloadLabel('Buscar actualizaciones', ''), 3000);
+                });
         }
 
         function _markUpdateReady() {
-            const badge = document.getElementById('reload-badge');
-            if (badge) badge.classList.remove('hidden');
-            showToast('🔄 Nueva versión disponible — toca Recargar para actualizar');
+            showToast('🔄 Nueva versión disponible — pulsa Actualizar para instalar');
         }
 
         if ('serviceWorker' in navigator && !IS_SANDBOX) {
