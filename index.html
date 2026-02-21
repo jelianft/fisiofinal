@@ -1319,6 +1319,14 @@
                         <!-- Predicción de alta -->
                         <div id="p-prediccion" class="mt-6 hidden"></div>
 
+                        <!-- Bienestar del Paciente (datos desde app móvil) -->
+                        <div id="p-bienestar-card" class="mt-6 hidden">
+                            <div class="bg-violet-50 border border-violet-100 p-5 rounded-2xl">
+                                <h4 class="text-[9px] font-black text-violet-400 uppercase tracking-widest mb-3">📱 Bienestar · Último registro</h4>
+                                <div id="p-bienestar-content" class="space-y-2"></div>
+                            </div>
+                        </div>
+
                         <div class="mt-10 pt-10 border-t border-slate-50">
                             <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Hallazgos Iniciales</h4>
                             <div id="p-eval-list" class="space-y-3"></div>
@@ -4878,6 +4886,34 @@ function renderPacientes() { renderLista(); }
                 predEl.innerHTML = `<div class="prediction-chip">🔮 Alta estimada en ~${pred} sesiones</div>`;
             } else { predEl.classList.add('hidden'); }
 
+            // Bienestar del paciente (datos registrados desde la app móvil)
+            const bienCard = document.getElementById('p-bienestar-card');
+            const bienContent = document.getElementById('p-bienestar-content');
+            if (bienCard && bienContent) {
+                // Buscar el último registro de bienestar en evoluciones
+                const ultBien = (p.evoluciones || []).find(e =>
+                    e.rpe != null || e.sleep || e.agua != null
+                );
+                if (ultBien) {
+                    bienCard.classList.remove('hidden');
+                    const sleepLabel = { '<5h':'< 5h', '5-6h':'5-6h', '6-7h':'6-7h', '+8h':'+8h' };
+                    bienContent.innerHTML = `
+                        <div class="text-[9px] font-black text-slate-400 uppercase mb-2">${ultBien.fecha || ''}</div>
+                        <div class="flex flex-wrap gap-2">
+                            ${ultBien.rpe != null ? `<span class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-[10px] font-black">💪 Esfuerzo ${ultBien.rpe}/5</span>` : ''}
+                            ${ultBien.sleep ? `<span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-black">💤 Sueño ${ultBien.sleep}</span>` : ''}
+                            ${ultBien.agua != null ? `<span class="bg-sky-100 text-sky-700 px-3 py-1 rounded-full text-[10px] font-black">💧 ${ultBien.agua}/8 vasos</span>` : ''}
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-[9px] text-violet-400 font-bold">Racha de registros (EVA)</p>
+                            <p class="text-sm font-black text-violet-600 mt-0.5">${calcularRacha(p)} días consecutivos 🔥</p>
+                        </div>
+                    `;
+                } else {
+                    bienCard.classList.add('hidden');
+                }
+            }
+
             document.getElementById('p-eval-list').innerHTML = p.valoracion.map(v => `
                 <div class="flex justify-between items-center bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                     <span class="text-[9px] font-black text-slate-400 uppercase">${v.p}</span>
@@ -5060,6 +5096,15 @@ function renderPacientes() { renderLista(); }
                     </div>
                     <p class="text-sm font-medium text-slate-600 italic border-l-2 border-indigo-200 pl-4">"${escHtml(s.notas || '')}"</p>
                     ${s.bodymap && s.bodymap.length > 0 ? `<div class="mt-4 flex flex-wrap gap-1.5">${s.bodymap.map(p=>`<span class="text-[9px] font-bold px-2 py-1 rounded-full bg-rose-50 text-rose-500">📍 ${escHtml(p.zona)} (${escHtml(p.vista)})</span>`).join('')}</div>` : ''}
+                    ${(s.rpe != null && s.registradoPorPaciente) || s.sleep || s.agua != null ? `
+                    <div class="mt-4 pt-4 border-t border-slate-50">
+                        <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2">📱 Registrado por el paciente</p>
+                        <div class="flex flex-wrap gap-2">
+                            ${s.rpe != null ? `<span class="bg-violet-50 text-violet-600 px-3 py-1 rounded-full text-[10px] font-black">💪 Esfuerzo RPE ${escHtml(s.rpe)}/5</span>` : ''}
+                            ${s.sleep ? `<span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded-full text-[10px] font-black">💤 Sueño ${escHtml(s.sleep)}</span>` : ''}
+                            ${s.agua != null ? `<span class="bg-sky-50 text-sky-500 px-3 py-1 rounded-full text-[10px] font-black">💧 ${escHtml(s.agua)}/8 vasos</span>` : ''}
+                        </div>
+                    </div>` : ''}
                 </div>
             `).join('');
         }
@@ -6009,6 +6054,20 @@ Generado por Jelian FT — Clinical Sport v136`;
         // ============================================================
         // PREDICTION
         // ============================================================
+        // Calcula racha de días consecutivos con registro EVA
+        function calcularRacha(p) {
+            const evo = p.evoluciones || [];
+            const fechasSet = new Set(evo.map(e => e.fecha));
+            let racha = 0;
+            let d = new Date();
+            while (true) {
+                const f = d.toISOString().split('T')[0];
+                if (fechasSet.has(f)) { racha++; d.setDate(d.getDate() - 1); }
+                else break;
+            }
+            return racha;
+        }
+
         function calcularPrediccion(p) {
             if (!p.evoluciones || p.evoluciones.length < 2) return null;
             const evos = [...p.evoluciones].reverse();
