@@ -697,10 +697,14 @@
     <div id="app-content" class="hidden h-screen overflow-hidden flex flex-col lg:flex-row">
 
     <div class="lg:hidden p-4 bg-slate-900 flex justify-between items-center no-print z-[60]">
-        <h1 class="text-white text-xl font-extrabold italic">JELIAN <span class="text-indigo-400">FT</span></h1>
+        <div class="flex items-center gap-2">
+            <h1 class="text-white text-xl font-extrabold italic">JELIAN <span class="text-indigo-400">FT</span></h1>
+            <span id="offline-badge" class="hidden text-[9px] font-black bg-rose-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">sin red</span>
+        </div>
         <div class="flex gap-2">
-            <button onclick="forceReload()" id="btn-reload" title="Buscar actualizaciones" class="text-white p-2 bg-slate-700 rounded-xl active:scale-90 transition-all relative">
-                <svg id="reload-icon" class="w-5 h-5 transition-transform duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <button onclick="forceReload()" id="btn-reload" title="Recargar / Actualizar app" class="text-white p-2 bg-slate-700 rounded-xl active:scale-90 transition-transform relative">
+                <svg id="reload-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span id="reload-badge" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-slate-900"></span>
             </button>
             <button onclick="openGlobalSearch()" class="text-white p-2 bg-slate-700 rounded-xl active:scale-90 transition-transform">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -1246,7 +1250,13 @@
                             </div>
                             <div id="p-telefono-card" class="bg-slate-50 p-4 rounded-2xl col-span-2 hidden">
                                 <span class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">📱 Teléfono</span>
-                                <span id="p-telefono" class="text-sm font-bold text-slate-700"></span>
+                                <div class="flex items-center justify-between gap-2 mt-1">
+                                    <span id="p-telefono" class="text-sm font-bold text-slate-700"></span>
+                                    <button onclick="abrirWhatsApp()" title="Enviar recordatorio por WhatsApp" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-black transition-all flex items-center gap-1.5 active:scale-95">
+                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                        WhatsApp
+                                    </button>
+                                </div>
                             </div>
                             <div class="bg-slate-50 p-4 rounded-2xl col-span-2">
                                 <span class="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Último Contacto</span>
@@ -1290,6 +1300,94 @@
                                 <button onclick="chronoReset()" class="bg-slate-200 text-slate-600 px-4 py-2 rounded-xl text-xs font-black hover:bg-slate-300 transition-all">↺</button>
                             </div>
                         </div>
+                        <!-- ASISTENCIA -->
+                        <div class="flex gap-3 mb-6">
+                            <span class="text-xs font-black text-slate-400 uppercase tracking-widest self-center">Asistencia:</span>
+                            <label id="asis-btn-vino" class="asis-btn flex-1 cursor-pointer">
+                                <input type="radio" name="s-asistencia" value="vino" class="hidden" checked>
+                                <span class="block text-center py-2.5 rounded-xl text-xs font-black border-2 border-transparent bg-emerald-50 text-emerald-600 transition-all">✅ Vino</span>
+                            </label>
+                            <label id="asis-btn-falto" class="asis-btn flex-1 cursor-pointer">
+                                <input type="radio" name="s-asistencia" value="falto" class="hidden">
+                                <span class="block text-center py-2.5 rounded-xl text-xs font-black border-2 border-transparent bg-slate-50 text-slate-500 transition-all">❌ Faltó</span>
+                            </label>
+                            <label id="asis-btn-cancelo" class="asis-btn flex-1 cursor-pointer">
+                                <input type="radio" name="s-asistencia" value="cancelo" class="hidden">
+                                <span class="block text-center py-2.5 rounded-xl text-xs font-black border-2 border-transparent bg-slate-50 text-slate-500 transition-all">🔄 Canceló</span>
+                            </label>
+                        </div>
+
+                        <!-- BODY MAP -->
+                        <div class="mb-6">
+                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Mapa de Dolor — Toca la zona afectada</p>
+                            <div class="flex gap-4 justify-center items-start">
+                                <div class="relative select-none" style="width:110px">
+                                    <p class="text-[9px] text-center font-black text-slate-300 uppercase mb-1">Frontal</p>
+                                    <svg id="bodymap-front" viewBox="0 0 110 280" width="110" height="280" style="cursor:crosshair">
+                                        <!-- Cabeza -->
+                                        <ellipse cx="55" cy="28" rx="22" ry="26" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Cuello -->
+                                        <rect x="46" y="52" width="18" height="14" rx="4" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Tronco -->
+                                        <rect x="28" y="64" width="54" height="80" rx="10" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Brazo izq -->
+                                        <rect x="8" y="66" width="18" height="64" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Brazo der -->
+                                        <rect x="84" y="66" width="18" height="64" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Antebrazo izq -->
+                                        <rect x="6" y="132" width="16" height="52" rx="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Antebrazo der -->
+                                        <rect x="88" y="132" width="16" height="52" rx="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Mano izq -->
+                                        <ellipse cx="14" cy="194" rx="9" ry="12" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Mano der -->
+                                        <ellipse cx="96" cy="194" rx="9" ry="12" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Pelvis -->
+                                        <rect x="26" y="142" width="58" height="26" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Muslo izq -->
+                                        <rect x="28" y="166" width="24" height="60" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Muslo der -->
+                                        <rect x="58" y="166" width="24" height="60" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Pierna izq -->
+                                        <rect x="30" y="228" width="20" height="42" rx="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Pierna der -->
+                                        <rect x="60" y="228" width="20" height="42" rx="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Pie izq -->
+                                        <ellipse cx="36" cy="274" rx="13" ry="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <!-- Pie der -->
+                                        <ellipse cx="74" cy="274" rx="13" ry="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                    </svg>
+                                </div>
+                                <div class="relative select-none" style="width:110px">
+                                    <p class="text-[9px] text-center font-black text-slate-300 uppercase mb-1">Posterior</p>
+                                    <svg id="bodymap-back" viewBox="0 0 110 280" width="110" height="280" style="cursor:crosshair">
+                                        <ellipse cx="55" cy="28" rx="22" ry="26" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="46" y="52" width="18" height="14" rx="4" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="28" y="64" width="54" height="80" rx="10" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="8" y="66" width="18" height="64" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="84" y="66" width="18" height="64" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="6" y="132" width="16" height="52" rx="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="88" y="132" width="16" height="52" rx="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <ellipse cx="14" cy="194" rx="9" ry="12" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <ellipse cx="96" cy="194" rx="9" ry="12" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="26" y="142" width="58" height="26" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="28" y="166" width="24" height="60" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="58" y="166" width="24" height="60" rx="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="30" y="228" width="20" height="42" rx="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <rect x="60" y="228" width="20" height="42" rx="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <ellipse cx="36" cy="274" rx="13" ry="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                        <ellipse cx="74" cy="274" rx="13" ry="7" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div id="bodymap-puntos-lista" class="text-[10px] text-slate-500 space-y-1 max-h-40 overflow-y-auto">
+                                        <p class="text-slate-300 italic">Toca la figura para marcar zonas de dolor</p>
+                                    </div>
+                                    <button onclick="limpiarBodyMap()" class="mt-3 text-[9px] font-black text-slate-400 hover:text-rose-500 uppercase tracking-wide transition-colors">✕ Limpiar mapa</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <div>
                                 <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Fecha</label>
@@ -4802,6 +4900,7 @@ function renderPacientes() { renderLista(); }
             }
             const tecnicas = Array.from(document.querySelectorAll('#tecnicas-chips input:checked')).map(cb => cb.value);
             const psfsVal = parseInt(document.getElementById('s-psfs').value);
+            const asistenciaVal = (document.querySelector('input[name="s-asistencia"]:checked') || {value:'vino'}).value;
             const s = {
                 fecha: document.getElementById('s-fecha').value,
                 eva: evaVal,
@@ -4810,7 +4909,9 @@ function renderPacientes() { renderLista(); }
                 notas: document.getElementById('s-notas').value || 'Sin observaciones.',
                 duracion: chronoSeconds > 0 ? chronoSeconds : null,
                 tecnicas: tecnicas.length > 0 ? tecnicas : [],
-                psfs: isNaN(psfsVal) ? null : psfsVal
+                psfs: isNaN(psfsVal) ? null : psfsVal,
+                asistencia: asistenciaVal,
+                bodymap: _bodymapPuntos.map(p => ({...p}))
             };
             p.evoluciones.unshift(s);
             // Guardar en Supabase
@@ -4827,6 +4928,11 @@ function renderPacientes() { renderLista(); }
             document.getElementById('s-fecha').value = new Date().toISOString().split('T')[0];
             // uncheck all técnicas
             document.querySelectorAll('#tecnicas-chips input').forEach(cb => cb.checked = false);
+            // Reset asistencia a "vino"
+            const radioVino = document.querySelector('input[name="s-asistencia"][value="vino"]');
+            if (radioVino) { radioVino.checked = true; _actualizarAsistenciaBtns(); }
+            // Reset body map
+            limpiarBodyMap();
             showToast("✓ Sesión guardada correctamente.");
             limpiarSesionPendiente();
             // Scroll to sessions list smoothly
@@ -4862,7 +4968,10 @@ function renderPacientes() { renderLista(); }
                 <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 relative animate-in">
                     <div class="flex justify-between items-start mb-6">
                         <div>
-                            <span class="text-[10px] font-black text-slate-300 uppercase">${escHtml(s.fecha)}</span>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[10px] font-black text-slate-300 uppercase">${escHtml(s.fecha)}</span>
+                                ${s.asistencia === 'falto' ? '<span class="text-[9px] font-black bg-rose-100 text-rose-500 px-2 py-0.5 rounded-full">❌ Faltó</span>' : s.asistencia === 'cancelo' ? '<span class="text-[9px] font-black bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">🔄 Canceló</span>' : '<span class="text-[9px] font-black bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full">✅ Vino</span>'}
+                            </div>
                             <div class="mt-2 flex gap-2 flex-wrap">
                                     <span class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-full text-[10px] font-black">${escHtml(s.fuerza)}</span>
                                     ${s.rpe ? `<span class="bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full text-[10px] font-black">RPE ${escHtml(s.rpe)}/10</span>` : ''}
@@ -4877,6 +4986,7 @@ function renderPacientes() { renderLista(); }
                         </div>
                     </div>
                     <p class="text-sm font-medium text-slate-600 italic border-l-2 border-indigo-200 pl-4">"${escHtml(s.notas || '')}"</p>
+                    ${s.bodymap && s.bodymap.length > 0 ? `<div class="mt-4 flex flex-wrap gap-1.5">${s.bodymap.map(p=>`<span class="text-[9px] font-bold px-2 py-1 rounded-full bg-rose-50 text-rose-500">📍 ${escHtml(p.zona)} (${escHtml(p.vista)})</span>`).join('')}</div>` : ''}
                 </div>
             `).join('');
         }
@@ -7633,112 +7743,238 @@ async function updateDashboard() {
             });
         }
         // ============================================================
-        // ACTUALIZACIÓN AUTOMÁTICA — Sistema híbrido iOS + Android
+        // INDICADOR DE CONEXIÓN (offline/online)
         // ============================================================
-        const APP_VERSION = 'v136'; // ← sube este número al desplegar
-
-        // ── Animación del botón ──────────────────────────────────────
-        function _spinIcon(on) {
-            const icon = document.getElementById('reload-icon');
-            if (!icon) return;
-            if (on) {
-                icon.style.transition = 'transform 0.7s linear';
-                icon.style.transform = 'rotate(360deg)';
+        function _actualizarBadgeConexion() {
+            const badge = document.getElementById('offline-badge');
+            if (!badge) return;
+            if (navigator.onLine) {
+                badge.classList.add('hidden');
             } else {
-                icon.style.transition = 'none';
-                icon.style.transform = '';
+                badge.classList.remove('hidden');
             }
         }
+        window.addEventListener('online',  _actualizarBadgeConexion);
+        window.addEventListener('offline', () => {
+            _actualizarBadgeConexion();
+            showToast('⚠️ Sin conexión — los datos se guardarán cuando vuelva la red', true);
+        });
+        window.addEventListener('load', _actualizarBadgeConexion);
 
-        function _setBtnEstado(estado) {
-            // estado: 'checking' | 'ok' | 'updating'
-            const btn = document.getElementById('btn-reload');
-            if (!btn) return;
-            if (estado === 'checking') {
-                btn.style.background = '#334155'; // slate-700
-                btn.title = 'Buscando actualizaciones...';
-                _spinIcon(true);
-                setTimeout(() => _spinIcon(false), 700);
-            } else if (estado === 'ok') {
-                btn.style.background = '#16a34a'; // verde
-                btn.title = '✅ App al día';
-                setTimeout(() => { btn.style.background = ''; btn.title = 'Buscar actualizaciones'; }, 2500);
-            } else if (estado === 'updating') {
-                btn.style.background = '#6366f1'; // indigo
-                btn.title = '🔄 Actualizando...';
-                _spinIcon(true);
+        // ============================================================
+        // WHATSAPP — Recordatorio de cita
+        // ============================================================
+        function abrirWhatsApp() {
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p || !p.telefono) { showToast('Este paciente no tiene teléfono registrado', true); return; }
+            // Próxima cita desde el calendario si existe, si no: mañana
+            let fechaCita = 'tu próxima cita';
+            const proxima = (window._eventosCalendario || []).find(ev => {
+                const pid = ev.pacienteId || ev.paciente_id;
+                return String(pid) === String(currentId) && ev.fecha >= new Date().toISOString().split('T')[0];
+            });
+            if (proxima) {
+                const d = new Date(proxima.fecha + 'T00:00:00');
+                fechaCita = d.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+                if (proxima.hora) fechaCita += ' a las ' + proxima.hora;
             }
+            const msg = encodeURIComponent(
+                `Hola ${p.nombre.split(' ')[0]} 👋, te recuerdo que tienes ${fechaCita} en Jelian FT. ` +
+                `Si necesitas cambiar la cita, escríbeme. ¡Hasta pronto! 💪`
+            );
+            const tel = p.telefono.replace(/[^0-9]/g, '');
+            window.open(`https://wa.me/${tel}?text=${msg}`, '_blank');
         }
 
-        // ── Limpiar caché y recargar ──────────────────────────────────
-        function _limpiarYRecargar() {
-            if ('caches' in window) {
-                caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).finally(() => location.reload());
+        // ============================================================
+        // BODY MAP — Mapa de dolor interactivo
+        // ============================================================
+        let _bodymapPuntos = [];
+
+        const _ZONAS_FRONT = [
+            { id:'cabeza-f',    label:'Cabeza',         shape:'ellipse', cx:55, cy:28, rx:22, ry:26 },
+            { id:'cuello-f',    label:'Cuello',         shape:'rect',    x:46,  y:52,  w:18,  h:14 },
+            { id:'pecho-f',     label:'Pecho/Tórax',    shape:'rect',    x:28,  y:64,  w:54,  h:40 },
+            { id:'abdomen-f',   label:'Abdomen',        shape:'rect',    x:28,  y:104, w:54,  h:40 },
+            { id:'brazo-iz-f',  label:'Brazo izq.',     shape:'rect',    x:8,   y:66,  w:18,  h:64 },
+            { id:'brazo-de-f',  label:'Brazo der.',     shape:'rect',    x:84,  y:66,  w:18,  h:64 },
+            { id:'antebr-iz-f', label:'Antebrazo izq.', shape:'rect',    x:6,   y:132, w:16,  h:52 },
+            { id:'antebr-de-f', label:'Antebrazo der.', shape:'rect',    x:88,  y:132, w:16,  h:52 },
+            { id:'mano-iz-f',   label:'Mano izq.',      shape:'ellipse', cx:14, cy:194, rx:9,  ry:12 },
+            { id:'mano-de-f',   label:'Mano der.',      shape:'ellipse', cx:96, cy:194, rx:9,  ry:12 },
+            { id:'pelvis-f',    label:'Pelvis/Cadera',  shape:'rect',    x:26,  y:142, w:58,  h:26 },
+            { id:'muslo-iz-f',  label:'Muslo izq.',     shape:'rect',    x:28,  y:166, w:24,  h:60 },
+            { id:'muslo-de-f',  label:'Muslo der.',     shape:'rect',    x:58,  y:166, w:24,  h:60 },
+            { id:'pierna-iz-f', label:'Pierna izq.',    shape:'rect',    x:30,  y:228, w:20,  h:42 },
+            { id:'pierna-de-f', label:'Pierna der.',    shape:'rect',    x:60,  y:228, w:20,  h:42 },
+            { id:'pie-iz-f',    label:'Pie izq.',       shape:'ellipse', cx:36, cy:274, rx:13, ry:7 },
+            { id:'pie-de-f',    label:'Pie der.',       shape:'ellipse', cx:74, cy:274, rx:13, ry:7 },
+        ];
+        const _ZONAS_BACK = _ZONAS_FRONT.map(z => ({
+            ...z, id: z.id.replace('-f','-b'),
+            label: z.label.replace('Pecho/Tórax','Espalda sup.').replace('Abdomen','Espalda baja')
+        }));
+
+        function _initBodyMap(svgId, zonas, vista) {
+            const svg = document.getElementById(svgId);
+            if (!svg || svg.dataset.init) return;
+            svg.dataset.init = '1';
+            // Hacer cada zona clicable con un overlay invisible
+            zonas.forEach(z => {
+                let el;
+                if (z.shape === 'ellipse') {
+                    el = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+                    el.setAttribute('cx', z.cx); el.setAttribute('cy', z.cy);
+                    el.setAttribute('rx', z.rx); el.setAttribute('ry', z.ry);
+                } else {
+                    el = document.createElementNS('http://www.w3.org/2000/svg','rect');
+                    el.setAttribute('x', z.x); el.setAttribute('y', z.y);
+                    el.setAttribute('width', z.w); el.setAttribute('height', z.h);
+                    el.setAttribute('rx', '6');
+                }
+                el.setAttribute('fill', 'transparent');
+                el.setAttribute('stroke', 'none');
+                el.style.cursor = 'pointer';
+                el.dataset.zid = z.id;
+                el.addEventListener('click', () => _toggleZona(z, vista, el));
+                svg.appendChild(el);
+            });
+        }
+
+        function _toggleZona(z, vista, el) {
+            const idx = _bodymapPuntos.findIndex(p => p.id === z.id);
+            if (idx >= 0) {
+                _bodymapPuntos.splice(idx, 1);
+                el.setAttribute('fill', 'transparent');
             } else {
-                location.reload();
+                _bodymapPuntos.push({ id: z.id, zona: z.label, vista });
+                el.setAttribute('fill', 'rgba(239,68,68,0.35)');
             }
+            _renderBodyMapLista();
         }
 
-        // ── Chequeo de versión (funciona en iPhone Safari) ────────────
-        let _chequeando = false;
-        function chequearVersion(silencioso) {
-            if (_chequeando || IS_SANDBOX) return;
-            _chequeando = true;
-            if (!silencioso) _setBtnEstado('checking');
-
-            fetch('./index.html?_v=' + Date.now(), { cache: 'no-store' })
-                .then(r => r.text())
-                .then(html => {
-                    _chequeando = false;
-                    const match = html.match(/const APP_VERSION\s*=\s*'([^']+)'/);
-                    if (match && match[1] !== APP_VERSION) {
-                        // ¡Nueva versión! → actualizar automáticamente
-                        _setBtnEstado('updating');
-                        showToast('🔄 Nueva versión detectada, actualizando...');
-                        setTimeout(_limpiarYRecargar, 1200);
-                    } else {
-                        // Ya está al día
-                        if (!silencioso) {
-                            _setBtnEstado('ok');
-                            showToast('✅ Ya tienes la versión más reciente');
-                        }
-                    }
-                })
-                .catch(() => {
-                    _chequeando = false;
-                    if (!silencioso) showToast('Sin conexión — usando versión local', true);
-                });
+        function _renderBodyMapLista() {
+            const cont = document.getElementById('bodymap-puntos-lista');
+            if (!cont) return;
+            if (_bodymapPuntos.length === 0) {
+                cont.innerHTML = '<p class="text-slate-300 italic">Toca la figura para marcar zonas de dolor</p>';
+                return;
+            }
+            cont.innerHTML = _bodymapPuntos.map(p =>
+                `<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-400 flex-shrink-0"></span><span>${p.zona} <span class="opacity-50">(${p.vista})</span></span></div>`
+            ).join('');
         }
 
-        // ── Botón Recargar: chequeo inmediato al pulsar ───────────────
-        function forceReload() {
-            chequearVersion(false);
+        function limpiarBodyMap() {
+            _bodymapPuntos = [];
+            ['bodymap-front','bodymap-back'].forEach(id => {
+                const svg = document.getElementById(id);
+                if (svg) svg.querySelectorAll('[data-zid]').forEach(el => el.setAttribute('fill','transparent'));
+            });
+            _renderBodyMapLista();
         }
 
-        // ── Chequeo automático al abrir y al volver a la app ─────────
-        window.addEventListener('load', () => { setTimeout(() => chequearVersion(true), 2500); });
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') chequearVersion(true);
+        // Inicializar body maps cuando se muestre el detalle del paciente
+        const _origVerDetalle = typeof verDetalle === 'function' ? verDetalle : null;
+
+        function _initBodyMapsDelay() {
+            setTimeout(() => {
+                _initBodyMap('bodymap-front', _ZONAS_FRONT, 'Frontal');
+                _initBodyMap('bodymap-back',  _ZONAS_BACK,  'Posterior');
+            }, 300);
+        }
+
+        // ============================================================
+        // ASISTENCIA — estilos de los botones radio
+        // ============================================================
+        function _actualizarAsistenciaBtns() {
+            const val = (document.querySelector('input[name="s-asistencia"]:checked') || {}).value || 'vino';
+            const config = {
+                vino:    { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-300' },
+                falto:   { bg: 'bg-rose-50',    text: 'text-rose-600',    border: 'border-rose-300'    },
+                cancelo: { bg: 'bg-amber-50',   text: 'text-amber-600',   border: 'border-amber-300'   },
+            };
+            ['vino','falto','cancelo'].forEach(v => {
+                const span = document.querySelector(`input[name="s-asistencia"][value="${v}"] + span`);
+                if (!span) return;
+                const c = config[v];
+                span.className = `block text-center py-2.5 rounded-xl text-xs font-black border-2 transition-all ${c.bg} ${c.text} ${val===v ? c.border : 'border-transparent'}`;
+            });
+        }
+
+        document.addEventListener('change', e => {
+            if (e.target && e.target.name === 's-asistencia') _actualizarAsistenciaBtns();
         });
 
-        // ── Service Worker (offline + Android automático) ─────────────
+        // ── Engancharse a verDetalle para iniciar bodymaps ──────────
+        window.addEventListener('load', () => {
+            const _orig = window.verDetalle;
+            if (typeof _orig === 'function') {
+                window.verDetalle = function(id) {
+                    _orig(id);
+                    _initBodyMapsDelay();
+                    limpiarBodyMap();
+                    _actualizarAsistenciaBtns();
+                };
+            }
+        });
+
+                // ============================================================
+        // SERVICE WORKER — Registro + detección de actualizaciones
+        // ============================================================
+        let _swRegistration = null;
+        let _swWaiting = null;
+
+        function forceReload() {
+            const icon = document.getElementById('reload-icon');
+            if (icon) { icon.style.transition = 'transform 0.6s'; icon.style.transform = 'rotate(360deg)'; setTimeout(() => { icon.style.transform = ''; }, 700); }
+
+            if (_swWaiting) {
+                _swWaiting.postMessage({ type: 'SKIP_WAITING' });
+                _swWaiting = null;
+                navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload(); }, { once: true });
+            } else if (_swRegistration) {
+                _swRegistration.update().then(() => {
+                    if (_swWaiting) {
+                        _swWaiting.postMessage({ type: 'SKIP_WAITING' });
+                        _swWaiting = null;
+                        navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload(); }, { once: true });
+                    } else {
+                        window.location.reload();
+                    }
+                }).catch(() => { window.location.reload(); });
+            } else {
+                window.location.reload();
+            }
+        }
+
+        function _markUpdateReady() {
+            const badge = document.getElementById('reload-badge');
+            if (badge) badge.classList.remove('hidden');
+            showToast('🔄 Nueva versión disponible — toca Recargar para actualizar');
+        }
+
         if ('serviceWorker' in navigator && !IS_SANDBOX) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then(reg => {
-                    function activarSW(worker) { worker.postMessage({ type: 'SKIP_WAITING' }); }
-                    if (reg.waiting) activarSW(reg.waiting);
+                    _swRegistration = reg;
+                    if (reg.waiting) { _swWaiting = reg.waiting; _markUpdateReady(); }
                     reg.addEventListener('updatefound', () => {
                         const nw = reg.installing;
                         if (!nw) return;
                         nw.addEventListener('statechange', () => {
-                            if (nw.state === 'installed') activarSW(nw);
+                            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                                _swWaiting = nw;
+                                _markUpdateReady();
+                            }
                         });
                     });
+                    setInterval(() => { reg.update().catch(() => {}); }, 5 * 60 * 1000);
                 }).catch(() => {});
 
                 let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) { refreshing = true; location.reload(); }
+                    if (!refreshing) { refreshing = true; window.location.reload(); }
                 });
             });
         }
