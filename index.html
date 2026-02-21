@@ -619,6 +619,7 @@
     
     </style>
 </head>
+<body>
     <script>
         let pinBuffer = '';
         const PIN_KEY = 'jelian_pin_v2'; // v2 = hashed
@@ -678,18 +679,18 @@
         </div>
         <p id="pin-error" class="text-rose-400 text-xs font-bold hidden">PIN incorrecto</p>
         <div class="grid grid-cols-3 gap-3 mt-2">
-            <button class="pin-key" onclick="pinPress('1')" aria-label="Dígito 1">1</button>
-            <button class="pin-key" onclick="pinPress('2')" aria-label="Dígito 2">2</button>
-            <button class="pin-key" onclick="pinPress('3')" aria-label="Dígito 3">3</button>
-            <button class="pin-key" onclick="pinPress('4')" aria-label="Dígito 4">4</button>
-            <button class="pin-key" onclick="pinPress('5')" aria-label="Dígito 5">5</button>
-            <button class="pin-key" onclick="pinPress('6')" aria-label="Dígito 6">6</button>
-            <button class="pin-key" onclick="pinPress('7')" aria-label="Dígito 7">7</button>
-            <button class="pin-key" onclick="pinPress('8')" aria-label="Dígito 8">8</button>
-            <button class="pin-key" onclick="pinPress('9')" aria-label="Dígito 9">9</button>
-            <button class="pin-key text-slate-500 text-sm" onclick="pinClear()" aria-label="Borrar último dígito">⌫</button>
-            <button class="pin-key" onclick="pinPress('0')" aria-label="Dígito 0">0</button>
-            <button class="pin-key text-slate-400 text-[10px] font-black tracking-wide" onclick="pinSkip()" aria-label="Omitir PIN y entrar">Omitir</button>
+            <button type="button" class="pin-key" onclick="pinPress('1')" aria-label="Dígito 1">1</button>
+            <button type="button" class="pin-key" onclick="pinPress('2')" aria-label="Dígito 2">2</button>
+            <button type="button" class="pin-key" onclick="pinPress('3')" aria-label="Dígito 3">3</button>
+            <button type="button" class="pin-key" onclick="pinPress('4')" aria-label="Dígito 4">4</button>
+            <button type="button" class="pin-key" onclick="pinPress('5')" aria-label="Dígito 5">5</button>
+            <button type="button" class="pin-key" onclick="pinPress('6')" aria-label="Dígito 6">6</button>
+            <button type="button" class="pin-key" onclick="pinPress('7')" aria-label="Dígito 7">7</button>
+            <button type="button" class="pin-key" onclick="pinPress('8')" aria-label="Dígito 8">8</button>
+            <button type="button" class="pin-key" onclick="pinPress('9')" aria-label="Dígito 9">9</button>
+            <button type="button" class="pin-key text-slate-500 text-sm" onclick="pinClear()" aria-label="Borrar último dígito">⌫</button>
+            <button type="button" class="pin-key" onclick="pinPress('0')" aria-label="Dígito 0">0</button>
+            <button type="button" class="pin-key text-slate-400 text-[10px] font-black tracking-wide" onclick="pinSkip()" aria-label="Omitir PIN y entrar">Omitir</button>
         </div>
         <p class="text-slate-600 text-[10px] mt-2">Presiona <strong>Omitir</strong> para entrar sin PIN o configúralo desde Ajustes</p>
     </div>
@@ -954,7 +955,7 @@
             </button>
         </div>
         <div class="p-6 text-[10px] text-slate-600 font-bold">
-            v135.0.0 • 2026 STABLE
+            v136.0.0 • 2026 STABLE
         </div>
     </aside>
 
@@ -4306,9 +4307,10 @@ const MAPEO_ZONAS = {
                 diag: p.diagnostico || '',
                 zona: p.zona || 'Rodilla',
                 valoracion: p.valoracion || [],
-                evoluciones: p.evoluciones || [],
+                // FIX #13: ordenar evoluciones por fecha desc para que [0] siempre sea la más reciente
+                evoluciones: (p.evoluciones || []).sort((a, b) => (b.fecha || '').localeCompare(a.fecha || '')),
                 rts: p.rts || null,
-                fotosClincias: p.fotos || [],
+                fotosClinicas: p.fotos || [],
                 ejerciciosHoja: p.ejercicios_hoja || [],
                 estado: p.estado || 'activo',
                 status: p.estado || 'activo',
@@ -4376,7 +4378,7 @@ const MAPEO_ZONAS = {
 
         async function save() {
             if (!currentId) return;
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const rawPayload = {
                 nombre: p.nombre,
@@ -4384,7 +4386,7 @@ const MAPEO_ZONAS = {
                 edad: p.edad, sexo: p.sexo,
                 deporte: p.deporte, emergencia: p.emergencia, telefono: p.telefono,
                 diagnostico: p.diag, zona: p.zona, valoracion: p.valoracion,
-                evoluciones: p.evoluciones || [], fotos: p.fotosClincias || [],
+                evoluciones: p.evoluciones || [], fotos: p.fotosClinicas || [],
                 ejercicios_hoja: p.ejerciciosHoja || [], estado: p.estado || p.status || 'activo',
                 rts: p.rts || null, objetivos: p.objetivos || [],
                 foto_avatar: p.foto || null
@@ -4404,6 +4406,8 @@ const MAPEO_ZONAS = {
         }
 
         async function upsertPaciente(p) {
+            // FIX #3: id se asigna una sola vez. Si es número local temporal → undefined (Supabase asigna el real).
+            // FIX #4: propiedad renombrada de fotosClinicas → fotosClinicas
             const rawPayload = {
                 id: typeof p.id === 'number' ? undefined : p.id,
                 nombre: p.nombre,
@@ -4418,11 +4422,10 @@ const MAPEO_ZONAS = {
                 valoracion: p.valoracion,
                 evoluciones: p.evoluciones,
                 rts: p.rts,
-                fotos: p.fotosClincias,
+                fotos: p.fotosClinicas,
                 ejercicios_hoja: p.ejerciciosHoja,
                 estado: p.estado || 'activo'
             };
-            if (typeof p.id !== 'number') rawPayload.id = p.id;
             const payload = _filtrarPayload(rawPayload);
             try {
                 const { data, error } = await sb.from('pacientes').upsert(payload).select().single();
@@ -4493,21 +4496,12 @@ function renderPacientes() { renderLista(); }
         }
         const _debouncedSearch = debounce(renderLista, 180);
         const _debouncedGlobalSearch = debounce(runGlobalSearch, 200);
-        const _debouncedBiblioteca = debounce(() => {
-            const q = document.getElementById('busqueda-biblioteca')?.value || '';
-            const cont = document.getElementById('contenedor-biblioteca');
-            cont.innerHTML = bibliotecaLesiones
-                .filter(l => l.n.toLowerCase().includes(q.toLowerCase()) || l.z.toLowerCase().includes(q.toLowerCase()))
-                .map(l => `
-                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:border-indigo-500 transition-all cursor-pointer group" data-lesion="${l.n.replace(/'/g, '&apos;')}" onclick="cargarProtocolo(this.dataset.lesion)">
-                        <span class="text-[8px] font-black text-indigo-500 uppercase bg-indigo-50 px-3 py-1 rounded-full tracking-widest">${l.z}</span>
-                        <h4 class="font-extrabold text-slate-800 text-sm mt-4 uppercase italic group-hover:text-indigo-600">${l.n}</h4>
-                    </div>
-                `).join('');
-        }, 180);
+        // FIX #20: eliminar duplicado — el debounced ahora llama directamente a renderBiblioteca
+        const _debouncedBiblioteca = debounce(() => renderBiblioteca(), 180);
         function renderBiblioteca() {
-            const q = document.getElementById('busqueda-biblioteca').value.toLowerCase();
+            const q = (document.getElementById('busqueda-biblioteca')?.value || '').toLowerCase();
             const cont = document.getElementById('contenedor-biblioteca');
+            if (!cont) return;
             cont.innerHTML = bibliotecaLesiones
                 .filter(l => l.n.toLowerCase().includes(q) || l.z.toLowerCase().includes(q))
                 .map(l => `
@@ -4624,7 +4618,7 @@ function renderPacientes() { renderLista(); }
         sexo: payload.sexo, deporte: payload.deporte, emergencia: payload.emergencia,
         telefono: payload.telefono, diag: payload.diagnostico, zona: payload.zona,
         valoracion: payload.valoracion, evoluciones: [], rts: null,
-        fotosClincias: [], ejerciciosHoja: [], estado: 'activo', status: 'activo',
+        fotosClinicas: [], ejerciciosHoja: [], estado: 'activo', status: 'activo',
         foto: null, objetivos: [], _supaId: data.id
     };
     pacientes.unshift(newP);
@@ -4709,8 +4703,11 @@ function renderPacientes() { renderLista(); }
         }
 
         function verDetalle(id) {
-            currentId = id;
-            const p = pacientes.find(x => x.id === id);
+            // FIX #21: normalizar id a String para evitar mismatch number vs string en comparaciones ===
+            currentId = String(id);
+            const p = pacientes.find(x => String(x.id) === currentId);
+            // FIX #6: verificar que el paciente exista antes de acceder a sus propiedades
+            if (!p) { showToast('Paciente no encontrado.', true); return; }
             document.getElementById('p-nombre').innerText = p.nombre;
             document.getElementById('p-deporte-tag').innerText = p.deporte;
             document.getElementById('p-edad').innerText = p.edad + " AÑOS";
@@ -4767,7 +4764,7 @@ function renderPacientes() { renderLista(); }
             renderSesiones();
             renderObjetivos();
             renderRTS();
-            renderFotosClinnicas();
+            renderFotosClinicas();
             renderHojaEjercicios();
             updateChartEvolucion();
             showSection('detalle-paciente');
@@ -4778,7 +4775,7 @@ function renderPacientes() { renderLista(); }
             const eva = parseInt(document.getElementById('s-eva').value);
             if(isNaN(eva)) { showToast("❌ Ingresa un valor EVA primero.", true); return; }
             
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const plan = MotorClinico.generarPlan(p, eva);
             
             const display = document.getElementById('display-plan-ia');
@@ -4813,7 +4810,7 @@ function renderPacientes() { renderLista(); }
         async function exportarPlanIAaHoja() {
             const plan = window._lastIAPlan;
             if (!plan) return;
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             if (!p.ejerciciosHoja) p.ejerciciosHoja = [];
             plan.ejercicios.forEach(ej => {
@@ -4832,7 +4829,7 @@ function renderPacientes() { renderLista(); }
         }
 
         async function agregarSesion() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const evaVal = parseInt(document.getElementById('s-eva').value);
             if (isNaN(evaVal) || evaVal < 0 || evaVal > 10) {
                 showToast("❌ EVA debe ser un número entre 0 y 10.", true);
@@ -4893,7 +4890,9 @@ function renderPacientes() { renderLista(); }
         }
 
         function renderSesiones() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            // FIX #7: verificar que el paciente exista antes de acceder a sus propiedades
+            if (!p) return;
             const cont = document.getElementById('sesiones-container');
             if (!p.evoluciones || p.evoluciones.length === 0) {
                 cont.innerHTML = '<div class="text-center py-12 text-slate-400"><p class="font-black text-sm uppercase tracking-widest">Sin sesiones registradas</p><p class="text-xs mt-2">Agrega la primera sesión usando el formulario de arriba</p></div>';
@@ -4923,7 +4922,7 @@ function renderPacientes() { renderLista(); }
         }
 
         async function eliminarSesion(idx) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             if (!confirm(`¿Eliminar la sesión del ${p.evoluciones[idx].fecha}?`)) return;
             p.evoluciones.splice(idx, 1);
@@ -5063,7 +5062,7 @@ async function updateDashboard() {
 }
 
         function updateChartEvolucion() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const canvas = document.getElementById('chartEvolucion');
             if(!p || !p.evoluciones.length || !canvas) return;
             const evos = [...p.evoluciones].reverse();
@@ -5102,12 +5101,12 @@ async function updateDashboard() {
         }
 
         function eliminarPaciente() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             document.getElementById('modal-nombre-paciente').innerText = p.nombre;
             document.getElementById('modal-confirm-btn').onclick = async function() {
                 try { await sb.from('pacientes').delete().eq('id', currentId); } catch(e) { console.error('[JelianFT] Error eliminando:', e.message); }
-                pacientes = pacientes.filter(x => x.id !== currentId);
+                pacientes = pacientes.filter(x => String(x.id) !== String(currentId));
                 cerrarModal();
                 showSection('lista-pacientes');
                 showToast("✓ Atleta dado de alta correctamente.");
@@ -5163,7 +5162,7 @@ async function updateDashboard() {
         // EXPORTAR CSV INDIVIDUAL (paciente)
         // ============================================================
         function exportarCSVPaciente() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const header = 'Fecha,EVA,Métrica,RPE,PSFS,Técnicas,Notas\n';
             const filas = (p.evoluciones || []).map(s =>
@@ -5369,7 +5368,7 @@ async function updateDashboard() {
             return `<span class="status-badge status-${s}">${STATUS_LABELS[s] || s}</span>`;
         }
         async function cambiarStatus(id) {
-            const p = pacientes.find(x => x.id === id);
+            const p = pacientes.find(x => String(x.id) === String(id));
             if (!p) return;
             const opts = Object.keys(STATUS_LABELS);
             const currentStatus = p.status || p.estado || 'activo';
@@ -5392,7 +5391,7 @@ async function updateDashboard() {
             if (!file) return;
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const p = pacientes.find(x => x.id === currentId);
+                const p = pacientes.find(x => String(x.id) === String(currentId));
                 if (!p) return;
                 p.foto = e.target.result;
                 await save();
@@ -5415,7 +5414,7 @@ async function updateDashboard() {
         // OBJECTIVES
         // ============================================================
         async function addObjetivo() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const texto = document.getElementById('obj-texto').value.trim();
             const evaObj = parseInt(document.getElementById('obj-eva').value);
@@ -5431,14 +5430,14 @@ async function updateDashboard() {
             showToast("✓ Objetivo guardado.");
         }
         async function toggleObjetivo(idx) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.objetivos) return;
             p.objetivos[idx].completado = !p.objetivos[idx].completado;
             await save();
             renderObjetivos();
         }
         function renderObjetivos() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const cont = document.getElementById('objetivos-list');
             if (!cont) return;
             if (!p || !p.objetivos || p.objetivos.length === 0) {
@@ -5488,9 +5487,11 @@ async function updateDashboard() {
         // EXPORT PDF (print-based)
         // ============================================================
         function exportarPDF() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const printWin = window.open('', '_blank');
+            // FIX #8: verificar que el popup no fue bloqueado por el navegador
+            if (!printWin) { showToast('❌ Habilita ventanas emergentes para imprimir el informe.', true); return; }
             const evosHTML = p.evoluciones.map(s => `
                 <tr>
                     <td style="padding:8px;border-bottom:1px solid #f1f5f9">${s.fecha}</td>
@@ -5710,7 +5711,8 @@ async function updateDashboard() {
             document.getElementById('cal-dia-titulo').textContent = `${dia} de ${meses[parseInt(mes)-1]} de ${año}`;
             const cont = document.getElementById('cal-citas-dia');
             if (citas.length === 0) { cont.innerHTML = '<p class="text-xs text-slate-400 italic">Sin citas para este día.</p>'; return; }
-            cont.innerHTML = citas.map((c,i) => `
+            // FIX #5: se usa c.id directamente en lugar del índice posicional (frágil ante cambios concurrentes)
+            cont.innerHTML = citas.map((c) => `
                 <div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center font-black text-sm">${c.hora}</div>
@@ -5719,7 +5721,7 @@ async function updateDashboard() {
                             <p class="text-[10px] text-slate-400">${c.tipo}</p>
                         </div>
                     </div>
-                    <button onclick="eliminarCita('${c.fecha}',${i})" class="text-rose-400 hover:text-rose-600 text-xs font-black">✕</button>
+                    <button onclick="eliminarCitaById('${c.id}','${c.fecha}')" class="text-rose-400 hover:text-rose-600 text-xs font-black">✕</button>
                 </div>`).join('');
         }
 
@@ -5756,20 +5758,27 @@ async function updateDashboard() {
             showToast('✓ Cita guardada.');
         }
 
-        async function eliminarCita(fecha, idx) {
-            const todas = await getCitas();
-            const citasDelDia = todas.filter(c => c.fecha === fecha);
-            const toDelete = citasDelDia[idx];
-            if (!toDelete || !toDelete.id) return;
+        // FIX #5: Nueva función que elimina por ID, no por índice
+        async function eliminarCitaById(citaId, fecha) {
+            if (!citaId) return;
             try {
-                const { error } = await sb.from('citas').delete().eq('id', toDelete.id);
+                const { error } = await sb.from('citas').delete().eq('id', citaId);
                 if (error) { showToast('Error eliminando cita: ' + _sbErrMsg(error), true); return; }
             } catch(e) {
                 showToast('Error de red al eliminar cita: ' + e.message, true); return;
             }
             renderCalendario();
-            selDia(fecha);
+            if (fecha) selDia(fecha);
             showToast('✓ Cita eliminada.');
+        }
+
+        // Mantener compatibilidad con llamadas antiguas (por fecha + índice)
+        async function eliminarCita(fecha, idx) {
+            const todas = await getCitas();
+            const citasDelDia = todas.filter(c => c.fecha === fecha);
+            const toDelete = citasDelDia[idx];
+            if (!toDelete || !toDelete.id) return;
+            await eliminarCitaById(toDelete.id, fecha);
         }
 
         // ============================================================
@@ -5949,14 +5958,15 @@ async function updateDashboard() {
                 return `<tr><td>${p.nombre}</td><td>${p.deporte}</td><td>${sesMes}</td><td>${evaActual}/10</td><td>${tendencia}</td><td>${STATUS_LABELS[p.status || p.estado]||'Activo'}</td></tr>`;
             }).join('');
             const win = window.open('','_blank');
-            const mes = new Date().toLocaleDateString('es-ES',{month:'long',year:'numeric'});
+            // FIX #8: verificar que el popup no fue bloqueado
+            if (!win) { showToast('❌ Habilita ventanas emergentes para imprimir el reporte.', true); return; }
             win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte ${mes}</title>
             <style>body{font-family:'Segoe UI',sans-serif;padding:40px;color:#0f172a}h1{font-size:24px;font-weight:900;margin:0}h2{color:#6366f1;font-size:11px;text-transform:uppercase;letter-spacing:3px;margin:0 0 8px}
             table{width:100%;border-collapse:collapse;margin-top:24px}th{background:#f8fafc;padding:10px;text-align:left;font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:2px}
             td{padding:12px 10px;border-bottom:1px solid #f1f5f9;font-size:13px}.footer{margin-top:40px;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px;display:flex;justify-content:space-between}</style></head>
             <body><h2>Reporte Mensual</h2><h1>${mes}</h1>
             <table><thead><tr><th>Atleta</th><th>Deporte</th><th>Ses. Mes</th><th>EVA</th><th>Tendencia</th><th>Estado</th></tr></thead><tbody>${filas}</tbody></table>
-            <div class="footer"><span>Jelian FT Clinical Sport v135</span><span>${new Date().toLocaleDateString('es-ES')}</span></div></body></html>`);
+            <div class="footer"><span>Jelian FT Clinical Sport v136</span><span>${new Date().toLocaleDateString('es-ES')}</span></div></body></html>`);
             win.document.close(); win.print();
         }
 
@@ -6005,7 +6015,7 @@ async function updateDashboard() {
         // MODO KIOSK
         // ============================================================
         function openKiosk() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const eva = p.evoluciones[0]?.eva ?? 0;
             const color = eva > 6 ? '#ef4444' : eva > 3 ? '#f59e0b' : '#10b981';
@@ -6118,7 +6128,7 @@ async function updateDashboard() {
         // EDIT PATIENT MODAL
         // ============================================================
         function openEditModal() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             document.getElementById('edit-nombre').value = p.nombre || '';
             document.getElementById('edit-ci').value = p.ci || '';
@@ -6135,7 +6145,7 @@ async function updateDashboard() {
             document.getElementById('edit-modal-overlay').classList.remove('active');
         }
         async function guardarEdicion() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const nombre = document.getElementById('edit-nombre').value.trim();
             if (!nombre) { showToast('❌ El nombre no puede estar vacío.', true); return; }
@@ -6167,7 +6177,7 @@ async function updateDashboard() {
         ];
 
         function renderRTS() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             if (!p.rts) p.rts = RTS_DEFAULT_CRITERIOS.map(c => ({ ...c, cumplido: false }));
             const cont = document.getElementById('rts-criterios');
@@ -6200,7 +6210,7 @@ async function updateDashboard() {
             `).join('');
         }
         async function toggleRTS(idx) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.rts) return;
             p.rts[idx].cumplido = !p.rts[idx].cumplido;
             await save();
@@ -6209,7 +6219,7 @@ async function updateDashboard() {
         async function agregarCriterioRTS() {
             const texto = prompt("Escribe el nuevo criterio RTS:");
             if (!texto || !texto.trim()) return;
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             if (!p.rts) p.rts = [];
             p.rts.push({ texto: texto.trim(), tipo: 'manual', cumplido: false });
@@ -6218,7 +6228,7 @@ async function updateDashboard() {
             showToast('✓ Criterio RTS agregado.');
         }
         async function eliminarCriterioRTS(idx) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.rts) return;
             p.rts.splice(idx, 1);
             await save();
@@ -6265,13 +6275,13 @@ async function updateDashboard() {
 
         async function guardarFotoModal() {
             if (!_fotoTmpSrc) return;
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const fase = document.getElementById('modal-foto-fase').value;
             const zona = document.getElementById('modal-foto-zona').value.trim();
             const notas = document.getElementById('modal-foto-notas').value.trim();
-            if (!p.fotosClincias) p.fotosClincias = [];
-            p.fotosClincias.push({
+            if (!p.fotosClinicas) p.fotosClinicas = [];
+            p.fotosClinicas.push({
                 src: _fotoTmpSrc,
                 fecha: new Date().toISOString().split('T')[0],
                 fase,
@@ -6280,7 +6290,7 @@ async function updateDashboard() {
             });
             await save();
             cerrarModalFoto();
-            renderFotosClinnicas();
+            renderFotosClinicas();
             showToast('✓ Foto clínica guardada en Supabase.');
         }
 
@@ -6295,7 +6305,7 @@ async function updateDashboard() {
             });
             event.target.classList.add('bg-indigo-600', 'text-white');
             event.target.classList.remove('bg-slate-100', 'text-slate-600');
-            renderFotosClinnicas();
+            renderFotosClinicas();
         }
 
         function _faseBadge(fase) {
@@ -6303,13 +6313,13 @@ async function updateDashboard() {
             return map[fase] || ['📷', 'bg-slate-100 text-slate-600'];
         }
 
-        function renderFotosClinnicas() {
-            const p = pacientes.find(x => x.id === currentId);
+        function renderFotosClinicas() {
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const grid = document.getElementById('fotos-clinicas-grid');
             const empty = document.getElementById('fotos-empty');
             if (!grid || !p) return;
-            const fotos = (p.fotosClincias || []).filter(f => _fotoFiltroActual === 'all' || f.fase === _fotoFiltroActual);
-            if (!p.fotosClincias || p.fotosClincias.length === 0) {
+            const fotos = (p.fotosClinicas || []).filter(f => _fotoFiltroActual === 'all' || f.fase === _fotoFiltroActual);
+            if (!p.fotosClinicas || p.fotosClinicas.length === 0) {
                 grid.innerHTML = '';
                 if (empty) empty.classList.remove('hidden');
                 return;
@@ -6320,7 +6330,7 @@ async function updateDashboard() {
                 return;
             }
             grid.innerHTML = fotos.map((f, i) => {
-                const realIdx = (p.fotosClincias || []).indexOf(f);
+                const realIdx = (p.fotosClinicas || []).indexOf(f);
                 const [faseIcon, faseCls] = _faseBadge(f.fase);
                 return `
                 <div class="relative group rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 hover:shadow-lg transition-all cursor-pointer" onclick="verFotoClinicaByIdx(${realIdx})">
@@ -6341,12 +6351,12 @@ async function updateDashboard() {
         }
 
         async function eliminarFotoClinnica(idx) {
-            const p = pacientes.find(x => x.id === currentId);
-            if (!p || !p.fotosClincias) return;
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p || !p.fotosClinicas) return;
             if (!confirm('¿Eliminar esta foto?')) return;
-            p.fotosClincias.splice(idx, 1);
+            p.fotosClinicas.splice(idx, 1);
             await save();
-            renderFotosClinnicas();
+            renderFotosClinicas();
             showToast('Foto eliminada.');
         }
 
@@ -6359,29 +6369,29 @@ async function updateDashboard() {
         }
 
         function verFotoClinicaByIdx(idx) {
-            const p = pacientes.find(x => x.id === currentId);
-            if (!p || !p.fotosClincias || !p.fotosClincias[idx]) return;
-            verFotoClinica(p.fotosClincias[idx].src);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p || !p.fotosClinicas || !p.fotosClinicas[idx]) return;
+            verFotoClinica(p.fotosClinicas[idx].src);
         }
 
         function abrirComparativaFotos() {
-            const p = pacientes.find(x => x.id === currentId);
-            if (!p || !p.fotosClincias || p.fotosClincias.length === 0) {
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p || !p.fotosClinicas || p.fotosClinicas.length === 0) {
                 showToast('Sin fotos para comparar.', true); return;
             }
             const modal = document.getElementById('modal-comparativa');
             modal.classList.remove('hidden'); modal.classList.add('flex');
             const selAntes = document.getElementById('comp-sel-antes');
             const selDespues = document.getElementById('comp-sel-despues');
-            const opts = p.fotosClincias.map((f, i) => {
+            const opts = p.fotosClinicas.map((f, i) => {
                 const [icon] = _faseBadge(f.fase);
                 return `<option value="${i}">${icon} ${f.fecha} — ${f.zona||f.fase||'foto'}</option>`;
             }).join('');
             selAntes.innerHTML = `<option value="">-- Seleccionar --</option>` + opts;
             selDespues.innerHTML = `<option value="">-- Seleccionar --</option>` + opts;
             // Auto-seleccionar inicial y más reciente
-            const inicial = p.fotosClincias.findIndex(f => f.fase === 'inicial');
-            const alta = p.fotosClincias.map((f,i)=>({...f,i})).filter(f=>f.fase==='alta'||f.fase==='progreso').pop();
+            const inicial = p.fotosClinicas.findIndex(f => f.fase === 'inicial');
+            const alta = p.fotosClinicas.map((f,i)=>({...f,i})).filter(f=>f.fase==='alta'||f.fase==='progreso').pop();
             if (inicial >= 0) selAntes.value = inicial;
             if (alta) selDespues.value = alta.i;
             actualizarComparativa();
@@ -6393,7 +6403,7 @@ async function updateDashboard() {
         }
 
         function actualizarComparativa() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const idxA = document.getElementById('comp-sel-antes').value;
             const idxD = document.getElementById('comp-sel-despues').value;
@@ -6403,19 +6413,19 @@ async function updateDashboard() {
             const emD = document.getElementById('comp-empty-despues');
             const notaA = document.getElementById('comp-nota-antes');
             const notaD = document.getElementById('comp-nota-despues');
-            if (idxA !== '' && p.fotosClincias[idxA]) {
-                imgA.src = p.fotosClincias[idxA].src; imgA.classList.remove('hidden'); emA.classList.add('hidden');
-                notaA.textContent = p.fotosClincias[idxA].notas || '';
+            if (idxA !== '' && p.fotosClinicas[idxA]) {
+                imgA.src = p.fotosClinicas[idxA].src; imgA.classList.remove('hidden'); emA.classList.add('hidden');
+                notaA.textContent = p.fotosClinicas[idxA].notas || '';
             } else { imgA.classList.add('hidden'); emA.classList.remove('hidden'); notaA.textContent = ''; }
-            if (idxD !== '' && p.fotosClincias[idxD]) {
-                imgD.src = p.fotosClincias[idxD].src; imgD.classList.remove('hidden'); emD.classList.add('hidden');
-                notaD.textContent = p.fotosClincias[idxD].notas || '';
+            if (idxD !== '' && p.fotosClinicas[idxD]) {
+                imgD.src = p.fotosClinicas[idxD].src; imgD.classList.remove('hidden'); emD.classList.add('hidden');
+                notaD.textContent = p.fotosClinicas[idxD].notas || '';
             } else { imgD.classList.add('hidden'); emD.classList.remove('hidden'); notaD.textContent = ''; }
             // Calcular días entre fotos
             const evDiv = document.getElementById('comp-evolucion');
-            if (idxA !== '' && idxD !== '' && p.fotosClincias[idxA] && p.fotosClincias[idxD]) {
-                const d1 = new Date(p.fotosClincias[idxA].fecha);
-                const d2 = new Date(p.fotosClincias[idxD].fecha);
+            if (idxA !== '' && idxD !== '' && p.fotosClinicas[idxA] && p.fotosClinicas[idxD]) {
+                const d1 = new Date(p.fotosClinicas[idxA].fecha);
+                const d2 = new Date(p.fotosClinicas[idxD].fecha);
                 const dias = Math.abs(Math.round((d2-d1)/(1000*60*60*24)));
                 document.getElementById('comp-dias').textContent = `${dias} día${dias!==1?'s':''} de evolución entre las fotos seleccionadas`;
                 evDiv.classList.remove('hidden');
@@ -6426,7 +6436,7 @@ async function updateDashboard() {
         // HOJA DE EJERCICIOS ESTRUCTURADA
         // ============================================================
         async function agregarEjercicioManual() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             if (!p.ejerciciosHoja) p.ejerciciosHoja = [];
             p.ejerciciosHoja.push({ nombre: 'Nuevo ejercicio', series: 3, reps: '10', carga: '', descanso: '60s', descripcion: '' });
@@ -6434,7 +6444,7 @@ async function updateDashboard() {
             renderHojaEjercicios();
         }
         function renderHojaEjercicios() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             const cont = document.getElementById('ejercicios-personalizados-container');
             if (!cont || !p) return;
             if (!p.ejerciciosHoja || p.ejerciciosHoja.length === 0) {
@@ -6458,23 +6468,25 @@ async function updateDashboard() {
             `).join('');
         }
         async function updateEjercicio(idx, campo, valor) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.ejerciciosHoja) return;
             p.ejerciciosHoja[idx][campo] = campo === 'series' ? parseInt(valor) : valor;
             await save();
         }
         async function eliminarEjercicio(idx) {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p || !p.ejerciciosHoja) return;
             p.ejerciciosHoja.splice(idx, 1);
             await save();
             renderHojaEjercicios();
         }
         function imprimirHojaEjercicios() {
-            const p = pacientes.find(x => x.id === currentId);
+            const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
             const ejercicios = p.ejerciciosHoja || [];
             const win = window.open('', '_blank');
+            // FIX #9: verificar que el popup no fue bloqueado
+            if (!win) { showToast('❌ Habilita ventanas emergentes para imprimir la hoja.', true); return; }
             win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hoja de Ejercicios - ${p.nombre}</title>
             <style>
                 body{font-family:'Segoe UI',sans-serif;padding:40px;color:#0f172a;max-width:800px;margin:0 auto}
@@ -6502,7 +6514,7 @@ async function updateDashboard() {
                     <div class="notas-box">Notas del paciente:</div>
                 </div>
             `).join('') : '<p style="color:#94a3b8;font-style:italic">Sin ejercicios asignados.</p>'}
-            <div class="footer"><span>Jelian FT Clinical Sport v135</span><span>${new Date().toLocaleDateString('es-ES')}</span></div>
+            <div class="footer"><span>Jelian FT Clinical Sport v136</span><span>${new Date().toLocaleDateString('es-ES')}</span></div>
             </body></html>`);
             win.document.close();
             win.print();
@@ -7777,6 +7789,8 @@ async function updateDashboard() {
             const el = document.getElementById(previewId);
             if (!el) return;
             const w = window.open('', '_blank', 'width=800,height=900');
+            // FIX #8: verificar que el popup no fue bloqueado
+            if (!w) { showToast('❌ Habilita ventanas emergentes para imprimir.', true); return; }
             w.document.write('<html><head><title>Jelian FT - Documento</title><style>body{margin:32px;font-family:Georgia,serif;line-height:1.7;color:#1e293b}table{border-collapse:collapse;width:100%}td{border:1px solid #e2e8f0;padding:8px 12px}</style></head><body>' + el.innerHTML + '</body></html>');
             w.document.close();
             w.focus();
@@ -7856,9 +7870,17 @@ async function updateDashboard() {
         function marcarPagado(id) { const f=facturas.find(x=>x.id===id); if(f){f.estado='pagado';saveFacturas();renderFacturas();showToast('Marcado como pagado');} }
         function eliminarFactura(id) { if(!confirm('¿Eliminar esta factura?'))return; facturas=facturas.filter(f=>f.id!==id);saveFacturas();renderFacturas(); }
         function exportarFacturasCSV() {
+            // FIX #10: sanitizar campos para prevenir CSV Injection (Excel interpreta =, +, -, @ como fórmulas)
+            const _csvSafe = v => {
+                const s = String(v == null ? '' : v).replace(/"/g, '""');
+                return /^[=+\-@\t\r]/.test(s) ? `"'${s}"` : `"${s}"`;
+            };
             const header='Fecha,Paciente,Tipo,Monto,Estado,Metodo,Notas\n';
-            const rows=facturas.map(f=>f.fecha+',"'+f.pacNombre+'","'+f.tipo+'",'+f.monto+','+f.estado+','+f.metodo+',"'+(f.notas||'')+'"').join('\n');
-            const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([header+rows],{type:'text/csv'}));a.download='facturas_jelianft.csv';a.click();
+            const rows=facturas.map(f=>[
+                _csvSafe(f.fecha), _csvSafe(f.pacNombre), _csvSafe(f.tipo),
+                _csvSafe(f.monto), _csvSafe(f.estado), _csvSafe(f.metodo), _csvSafe(f.notas||'')
+            ].join(',')).join('\n');
+            const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+header+rows],{type:'text/csv;charset=utf-8;'}));a.download='facturas_jelianft.csv';a.click();
         }
 
         // ============================================================
@@ -8032,7 +8054,9 @@ async function updateDashboard() {
             let total=0,count=0;
             OSW_ITEMS.forEach((_,i)=>{const sel=document.querySelector('input[name=osw'+i+']:checked');if(sel){total+=parseInt(sel.value);count++;}});
             if(count<10){showToast('Responde todas las preguntas',true);return;}
-            const pct=(total/50)*100;
+            // FIX #14: fórmula ODI correcta: (total / (preguntas_contestadas × 5)) × 100
+            // El denominador fijo de 50 era incorrecto; debe ser count*5 para reflejar el máximo real posible.
+            const pct=(total/(count*5))*100;
             document.getElementById('oswestry-resultado').classList.remove('hidden');
             document.getElementById('oswestry-valor').textContent=pct.toFixed(0)+'%';
             let nivel,desc,col;
@@ -8104,43 +8128,27 @@ async function updateDashboard() {
             const pac=document.getElementById('qr-paciente').value;
             const p=(pacientes||[]).find(x=>String(x.id)===String(pac));
             const w=window.open('','_blank','width=600,height=800');
+            // FIX #8: verificar que el popup no fue bloqueado
+            if(!w){showToast('❌ Habilita ventanas emergentes para imprimir el QR.', true);return;}
             w.document.write('<html><head><title>QR Plan - '+(p?p.nombre:'')+'</title><style>body{margin:32px;font-family:Arial,sans-serif;color:#1e293b;text-align:center}.qr-wrap{display:inline-block;border:2px solid #6366f1;border-radius:16px;padding:24px;margin-bottom:16px}h2{color:#6366f1;margin-bottom:4px}p{color:#64748b;font-size:13px}.plan{text-align:left;max-width:400px;margin:0 auto;font-size:12px}</style></head><body><div class="qr-wrap">'+document.getElementById('qr-canvas-wrap').innerHTML+'</div><h2>'+(p?p.nombre:'')+'</h2><p>Plan de ejercicios · Jelian FT - Clinical Sport</p><div class="plan">'+document.getElementById('qr-plan-preview').innerHTML+'</div></body></html>');
             w.document.close();w.focus();setTimeout(()=>w.print(),400);
         }
 
         // ============================================================
-        // RECORDATORIOS DE CITAS
-        // ============================================================
-        function activarNotificacionesCitas(){
-            if(!('Notification' in window)){showToast('Tu navegador no soporta notificaciones',true);return;}
-            if(Notification.permission==='granted'){programarRecordatorios();showToast('Recordatorios activados ✓');}
-            else if(Notification.permission!=='denied'){
-                Notification.requestPermission().then(perm=>{
-                    if(perm==='granted'){programarRecordatorios();showToast('Recordatorios activados ✓');}
-                    else showToast('Permiso de notificaciones denegado',true);
-                });
-            }else showToast('Notificaciones bloqueadas. Actívalas en la config. del navegador.',true);
-        }
-        function programarRecordatorios(){
-            if(Notification.permission!=='granted')return;
-            const hoy=new Date(),manana=new Date(hoy);manana.setDate(hoy.getDate()+1);
-            const mananaStr=manana.toISOString().split('T')[0];
-            const hoyStr=hoy.toISOString().split('T')[0];
-            const citasM=(citas||[]).filter(c=>c.fecha===mananaStr);
-            const citasH=(citas||[]).filter(c=>c.fecha===hoyStr);
-            setTimeout(()=>new Notification('Jelian FT — Citas mañana',{body:citasM.length?'Tienes '+citasM.length+' cita(s): '+citasM.map(c=>c.pacNombre||c.nombre||'Paciente').join(', '):'Sin citas mañana.',icon:'icon-512.png'}),1000);
-            if(citasH.length)setTimeout(()=>new Notification('Jelian FT — Citas hoy',{body:citasH.length+' cita(s) hoy: '+citasH.map(c=>c.pacNombre||c.nombre||'Paciente').join(', '),icon:'icon-512.png'}),2500);
-        }
-
         // Hook showSection para inicializar módulos nuevos
-        const _origShowSection2 = showSection;
-        showSection = function(id){
-            _origShowSection2(id);
-            if(id==='facturacion'){renderFacturas();_poblarSelectPacientes('fact-filtro-paciente');}
-            if(id==='inventario')renderInventario();
-            if(id==='calculadoras')calcTab('imc');
-            if(id==='vista-paciente')renderVistaPaciente();
-        };
+        // FIX #1: Se eliminó activarNotificacionesCitas duplicada (ya existe en línea ~5198).
+        // FIX #2: Se valida que _origShowSection2 sea función antes de llamarla.
+        // ============================================================
+        (function() {
+            const _origShowSection2 = (typeof showSection === 'function') ? showSection : null;
+            showSection = function(id){
+                if (typeof _origShowSection2 === 'function') _origShowSection2(id);
+                if(id==='facturacion'){renderFacturas();_poblarSelectPacientes('fact-filtro-paciente');}
+                if(id==='inventario')renderInventario();
+                if(id==='calculadoras')calcTab('imc');
+                if(id==='vista-paciente')renderVistaPaciente();
+            };
+        })();
 
     </script>
 </div>
