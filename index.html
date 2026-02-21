@@ -12,26 +12,94 @@
       const SUPABASE_URL = 'https://autdqxqlhxpibleqjvbu.supabase.co';
       const SUPABASE_KEY = 'sb_publishable_iIunAaNnuIWfNhBgd7kjJQ_ykOJxuCn';
 
-      // Bloquear BroadcastChannel: previene DataCloneError en entornos sandbox (iframes, srcdoc)
-      // donde postMessage no puede clonar el objeto Headers. Inofensivo en GitHub Pages.
-      if (typeof BroadcastChannel !== 'undefined') {
+      // ============================================================
+      // SANDBOX FIX: Previene DataCloneError en entornos srcdoc/iframe
+      // Supabase JS internamente hace postMessage con objetos Headers
+      // que no son structured-cloneable. Aplicamos 4 capas de defensa.
+      // ============================================================
+      (function() {
+
+        // 1) BroadcastChannel — Supabase lo usa para sincronizar tabs
         window.BroadcastChannel = class {
           constructor() {} postMessage() {} close() {}
-          addEventListener() {} removeEventListener() {} dispatchEvent() {}
+          addEventListener() {} removeEventListener() {} dispatchEvent() { return false; }
         };
-      }
+
+        // 2) Worker — Supabase Realtime puede crear workers internos
+        window.Worker = class {
+          constructor() {} postMessage() {} terminate() {}
+          addEventListener() {} removeEventListener() {}
+        };
+
+        // 3) Parchar window.postMessage para suprimir DataCloneError
+        const _pm = window.postMessage.bind(window);
+        window.postMessage = function(data, origin, transfer) {
+          try { _pm(data, origin || '*', transfer); }
+          catch(e) { if (e && e.name !== 'DataCloneError') throw e; }
+        };
+
+        // 4) Parchar fetch para que la Response nunca exponga Headers incompatibles
+        //    Supabase llama fetch() y luego intenta postMessage({ headers: response.headers })
+        //    Reemplazamos headers con un proxy serializable en cada respuesta.
+        const _fetch = window.fetch.bind(window);
+        window.fetch = async function(...args) {
+          const res = await _fetch(...args);
+          const plainHeaders = {};
+          try { res.headers.forEach((v, k) => { plainHeaders[k] = v; }); } catch(_e) {}
+          return new Proxy(res, {
+            get(target, prop) {
+              if (prop === 'headers') return new Headers(plainHeaders);
+              const val = target[prop];
+              return typeof val === 'function' ? val.bind(target) : val;
+            }
+          });
+        };
+
+      })();
+
+      // Detectar si estamos en la vista previa sandbox de Claude (srcdoc/about:srcdoc)
+      // En ese caso NO se hacen llamadas de red para evitar DataCloneError de Supabase.
+      const IS_SANDBOX = (function() {
+        try {
+          return location.href === 'about:srcdoc' ||
+                 location.href === 'about:blank' ||
+                 window.self !== window.top && !location.hostname;
+        } catch(e) { return true; }
+      })();
 
       const _nullStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
 
-      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-          detectSessionInUrl: false,
-          storage: _nullStorage
-        },
-        realtime: { params: { eventsPerSecond: -1 } }
-      });
+      // Cliente Supabase real o mock según entorno
+      let sb;
+      if (IS_SANDBOX) {
+        // Mock con cadena infinita: soporta cualquier combinacion de metodos Supabase
+        // sb.from().select().order().order().limit().eq() etc.
+        const _mkChain = () => {
+          const EMPTY = { data: [], error: null };
+          const EMPTY_ONE = { data: null, error: null };
+          const handler = {
+            get(_, prop) {
+              if (prop === 'then') {
+                return (resolve) => Promise.resolve(EMPTY).then(resolve);
+              }
+              if (prop === 'single') return () => Promise.resolve(EMPTY_ONE);
+              return (..._a) => new Proxy({}, handler);
+            }
+          };
+          return new Proxy({}, handler);
+        };
+        sb = { from: () => _mkChain() };
+      } else {
+        sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+            detectSessionInUrl: false,
+            storage: _nullStorage
+          },
+          realtime: { params: { eventsPerSecond: -1 } }
+        });
+      }
     </script>
        <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -3444,6 +3512,7 @@ const MAPEO_ZONAS = {
 
         // --- SUPABASE: cargar pacientes ---
         async function cargarPacientesDB() {
+            if (IS_SANDBOX) return;
             let data, error;
             try {
                 ({ data, error } = await sb.from('pacientes').select('*').order('created_at', { ascending: false }));
@@ -3490,6 +3559,7 @@ const MAPEO_ZONAS = {
         let _dbCols = null;
 
         async function detectarSchemaDB() {
+            if (IS_SANDBOX) return;
             // Columnas base conocidas de la tabla
             _dbCols = new Set([
                 'nombre', 'edad', 'sexo', 'deporte', 'emergencia', 'telefono',
@@ -6137,6 +6207,16 @@ async function updateDashboard() {
                       lesiones: 'Tendinopatía rotuliana, condromalacia, síndrome femoropatelar, fractura de rótula.',
                       tests: 'Clarke Test, Test de Zohlen, Palpación polo inferior, FPA',
                       dolor: 'Polo inferior de rótula. Dolor al bajar escaleras y en cuclillas.' },
+                    { id: 'femur', nombre: 'Fémur (cóndilo distal)', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Transmisión de cargas desde la cadera. Los cóndilos forman la superficie articular superior de la rodilla.',
+                      lesiones: 'Fractura supracondílea, osteocondritis disecante (OCD), contusión ósea, necrosis avascular.',
+                      tests: 'Radiografía AP/lateral, RMN para OCD y contusión ósea, Palpación de cóndilos',
+                      dolor: 'Cara distal del muslo. En OCD: dolor difuso mal localizado, peor en carga y rotación.' },
+                    { id: 'tibia_r', nombre: 'Tibia (platillo tibial)', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Soporte principal de carga. El platillo tibial forma la superficie articular inferior de la rodilla.',
+                      lesiones: 'Fractura de platillo tibial (Schatzker I-VI), síndrome de Osgood-Schlatter, fractura por estrés.',
+                      tests: 'Rx AP/lateral, TC para clasificación de fractura, Palpación tuberosidad tibial',
+                      dolor: 'Tuberosidad anterior (Osgood-Schlatter en adolescentes). Cara proximal en fracturas.' },
                 ],
                 tests: [
                     { nombre: 'Lachman Test', estructura: 'LCA', posicion: 'Supino, rodilla 20-30° flexión', ejecucion: 'Traslación anterior de tibia con fémur fijo', positivo: 'Traslación >3mm o tope blando', sensibilidad: '85%' },
@@ -6170,6 +6250,21 @@ async function updateDashboard() {
                       lesiones: 'Inestabilidad anterior, luxación glenohumeral, lesión de Bankart.',
                       tests: 'Apprehension Test, Relocation Test, Load & Shift',
                       dolor: 'Cara anterior de hombro. Miedo a luxación en ABD + RE.' },
+                    { id: 'humero', nombre: 'Húmero (cabeza y tuberosidades)', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Forma la articulación glenohumeral. Las tuberosidades son inserción del manguito rotador.',
+                      lesiones: 'Fractura de troquíter (caída sobre mano), fractura de cuello quirúrgico, luxación glenohumeral, lesión de Hill-Sachs.',
+                      tests: 'Rx AP/perfil axilar, TC para fractura compleja, RMN para lesión de Hill-Sachs',
+                      dolor: 'Cara lateral de hombro. En fracturas: dolor intenso con impotencia funcional y deformidad.' },
+                    { id: 'escapula', nombre: 'Escápula / Acromion', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Base de inserción del manguito rotador y bíceps. El acromion forma el techo del espacio subacromial.',
+                      lesiones: 'Fractura de escápula (alta energía), discinesia escapular, síndrome de pinzamiento subacromial por morfología acromial (tipo I-III).',
+                      tests: 'Kibler Test (discinesia), Clasificación acromial en Rx outlet, Palpación espina escapular',
+                      dolor: 'Cara posterior de hombro en discinesia. Dolor difuso en pinzamiento subacromial.' },
+                    { id: 'clavicula', nombre: 'Clavícula', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Única conexión ósea entre extremidad superior y tronco. Protege el paquete vasculonervioso subyacente.',
+                      lesiones: 'Fractura de clavícula (1/3 medio más frecuente), fractura por estrés en atletas de lanzamiento.',
+                      tests: 'Rx AP con 15° de inclinación cefálica, Palpación directa del trazo de fractura',
+                      dolor: 'Dolor localizado en la clavícula con deformidad visible. Dolor al elevar el brazo.' },
                 ],
                 tests: [
                     { nombre: 'Neer Test', estructura: 'Supraespinoso', posicion: 'Sentado, brazo neutro', ejecucion: 'Elevación pasiva con RI forzada', positivo: 'Dolor en arco de movimiento', sensibilidad: '72%' },
@@ -6203,6 +6298,26 @@ async function updateDashboard() {
                       lesiones: 'Disfunción del tibial posterior, pie plano adquirido del adulto.',
                       tests: 'Too Many Toes Sign, Single Leg Heel Rise, Palpación retromaleolar',
                       dolor: 'Cara medial del tobillo, zona retromaleolar.' },
+                    { id: 'tibia_t', nombre: 'Tibia (maléolo medial / pilón tibial)', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Forma el maléolo medial y el techo de la mortaja tibioperonea. Soporte principal de carga del tobillo.',
+                      lesiones: 'Fractura de maléolo medial, fractura de pilón tibial (alta energía), fractura por estrés de tibia distal.',
+                      tests: 'Rx AP/lateral/mortaja, Ottawa Ankle Rules, TC para fractura compleja de pilón',
+                      dolor: 'Cara medial del tobillo. En fractura de pilón: dolor e inflamación masiva con deformidad visible.' },
+                    { id: 'astragalo', nombre: 'Astrágalo', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Clave de bóveda del tobillo. Transmite el 100% del peso corporal. Sin inserciones musculares directas.',
+                      lesiones: 'Fractura de astrágalo (Hawkins I-IV), osteocondritis disecante astragalina (ODA), necrosis avascular.',
+                      tests: 'Rx AP/lateral/mortaja, RMN para ODA y necrosis, TC para fracturas complejas, Signo de Hawkins',
+                      dolor: 'Dolor difuso en tobillo. En ODA: dolor anterior con efusión articular. Crepitación en movimiento.' },
+                    { id: 'calcaneo', nombre: 'Calcáneo', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Mayor hueso del tarso. Punto de apoyo del talón y palanca del tendón de Aquiles.',
+                      lesiones: 'Fractura por compresión axial (caída de altura), fractura por estrés (corredores), espolón calcáneo.',
+                      tests: 'Rx lateral con ángulo de Böhler, TC para fractura intraarticular, Squeeze Test (fractura estrés)',
+                      dolor: 'Talón en fractura aguda. Cara posteromedial en fractura estrés. Cara plantar en espolón.' },
+                    { id: 'perone_t', nombre: 'Peroné (maléolo lateral)', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Forma el maléolo lateral de la mortaja tibioperonea. Estabilización lateral del tobillo.',
+                      lesiones: 'Fractura de maléolo lateral (Weber A/B/C), fractura por avulsión (esguince grado III), fractura de Maisonneuve.',
+                      tests: 'Rx AP/lateral/mortaja, Ottawa Ankle Rules, Squeeze Test para Maisonneuve',
+                      dolor: 'Cara lateral del tobillo con equimosis. Dolor en punta del maléolo en avulsión.' },
                 ],
                 tests: [
                     { nombre: 'Cajón Anterior', estructura: 'LPAA', posicion: 'Supino, tobillo 20° FP', ejecucion: 'Traslación anterior del astrágalo', positivo: '>3mm traslación o tope blando', sensibilidad: '83%' },
@@ -6234,6 +6349,16 @@ async function updateDashboard() {
                       lesiones: 'Disfunción sacroilíaca, sacroileítis, bloqueo articular.',
                       tests: 'FABER, Gaenslen, Compresión/Distracción, Thigh Thrust, ASLR',
                       dolor: 'Zona glútea alta, EIPS. Dolor unilateral, raramente irradia más allá de la rodilla.' },
+                    { id: 'vertebra', nombre: 'Cuerpo Vertebral Lumbar', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Soporte de carga axial. Los pedículos y láminas forman el canal vertebral que protege la médula.',
+                      lesiones: 'Fractura por compresión (osteoporosis), fractura por estallido, espondilolistesis, espondilólisis (istmo).',
+                      tests: 'Rx AP/lateral en bipedestación, TC para fractura, Rx dinámica para inestabilidad, Stork Test (espondilólisis)',
+                      dolor: 'Lumbalgia central. En fractura: dolor agudo en carga axial. En espondilolistesis: dolor con extensión.' },
+                    { id: 'sacro', nombre: 'Sacro', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Cierre posterior de la pelvis. Transmisión de cargas entre columna lumbar e ilíacos.',
+                      lesiones: 'Fractura sacra por insuficiencia (osteoporosis), fractura por estrés (corredores), fractura traumática de alta energía.',
+                      tests: 'RMN para fractura estrés, TC para fractura traumática, Rx AP pelvis, Palpación de la línea media sacra',
+                      dolor: 'Dolor sacro central o paramedial. En fractura estrés: dolor glúteo difuso que empeora con el ejercicio.' },
                 ],
                 tests: [
                     { nombre: 'Lasègue (SLR)', estructura: 'Nervio Ciático / Disco', posicion: 'Supino', ejecucion: 'Elevación pasiva de pierna con rodilla extendida', positivo: 'Dolor radicular <70°', sensibilidad: '91%' },
@@ -6266,6 +6391,16 @@ async function updateDashboard() {
                       lesiones: 'Síndrome de la banda iliotibial (rodilla del corredor).',
                       tests: 'Test de Ober, Test de Noble, Palpación del tubérculo de Gerdy',
                       dolor: 'Cara lateral de rodilla (epicóndilo lateral). Peor a los 30 min de carrera.' },
+                    { id: 'pelvis', nombre: 'Pelvis (ilíaco / isquion)', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Transmisión de cargas entre columna y extremidades. Protección de órganos pélvicos. Inserción de músculos del suelo pélvico y cadera.',
+                      lesiones: 'Fractura de pelvis (alta energía), avulsión de EIAS (sartorio/TFL), avulsión isquiática (isquiotibiales), osteítis púbica.',
+                      tests: 'Rx AP pelvis, TC para clasificación de fractura, Palpación de EIAS y EIPS, Test de osteítis púbica',
+                      dolor: 'Variable según zona. EIAS: dolor en sprint. Isquion: dolor en sprint y sedestación. Sínfisis: dolor en aducción.' },
+                    { id: 'cabeza_femoral', nombre: 'Cabeza y cuello femoral', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Forma la articulación coxofemoral. El cuello transmite las cargas en ángulo hacia la diáfisis.',
+                      lesiones: 'Fractura de cuello femoral (Garden I-IV), necrosis avascular de cabeza femoral (NAF), choque femoroacetabular (FAI).',
+                      tests: 'Rx AP/Dunn 45°, RMN para NAF precoz, FADIR para FAI, Test de Thomas para anteversión',
+                      dolor: 'Ingle profunda. En NAF: dolor progresivo en carga. En fractura: impotencia funcional total con EEII en RE.' },
                 ],
                 tests: [
                     { nombre: 'FADIR', estructura: 'FAI / Labrum', posicion: 'Supino', ejecucion: 'Flexión 90° + aducción + RI pasiva', positivo: 'Dolor en ingle', sensibilidad: '88%' },
@@ -6297,6 +6432,16 @@ async function updateDashboard() {
                       lesiones: 'Lesión traumática o degenerativa del TFCC.',
                       tests: 'TFCC Compression Test, Press Test, Shuck Test, RUD Stress Test',
                       dolor: 'Cara cubital de la muñeca. Dolor en pronosupinación con carga.' },
+                    { id: 'humero_codo', nombre: 'Húmero distal (epicóndilos)', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Los epicóndilos son el origen de los músculos flexores (medial) y extensores (lateral) del antebrazo.',
+                      lesiones: 'Fractura supracondílea (niños), fractura de epicóndilo medial, fractura de cabeza radial, osteocondritis disecante del capitelo.',
+                      tests: 'Rx AP/lateral de codo, Rx oblicua para epicóndilo medial, RMN para OCD del capitelo',
+                      dolor: 'Dolor localizado en el epicóndilo afectado. En fractura: deformidad y crepitación en codo.' },
+                    { id: 'radio_cubito', nombre: 'Radio y Cúbito', tipo: 'Hueso', icono: '🦴',
+                      funcion: 'Radio soporta el 80% de carga en muñeca. La pronosupinación ocurre por rotación del radio alrededor del cúbito fijo.',
+                      lesiones: 'Fractura de Colles (radio distal), fractura de Smith, fractura de escafoides, fractura de Monteggia, fractura de Galeazzi.',
+                      tests: 'Rx AP/lateral de muñeca, Rx de escafoides en desviación cubital, TC para fractura de escafoides oculta',
+                      dolor: 'Muñeca en fractura de Colles: deformidad en "dorso de tenedor". Tabaquera anatómica en fractura de escafoides.' },
                 ],
                 tests: [
                     { nombre: 'Cozen Test', estructura: 'Epicóndilo lateral', posicion: 'Codo extendido, muñeca pronada', ejecucion: 'Extensión de muñeca resistida', positivo: 'Dolor en epicóndilo lateral', sensibilidad: '84%' },
@@ -6396,209 +6541,270 @@ async function updateDashboard() {
         function renderAnatomeSVG(region, data) {
             const cont = document.getElementById('anat-svg-container');
             const svgs = {
-                rodilla: `<svg viewBox="0 0 300 380" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:340px">
+                rodilla: `<svg viewBox="0 0 300 400" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:360px">
                     <defs><style>
                         .anat-estructura-svg { cursor:pointer; transition: all 0.2s; }
-                        .anat-estructura-svg:hover { filter: brightness(1.15); }
+                        .anat-estructura-svg:hover { filter: brightness(1.15) drop-shadow(0 0 4px rgba(99,102,241,0.5)); }
                         .anat-activo { filter: drop-shadow(0 0 8px #10b981) brightness(1.2); }
                         .anat-label { font-family: sans-serif; font-size: 9px; font-weight: 700; pointer-events: none; }
+                        .hueso-svg { cursor:pointer; transition: all 0.2s; }
+                        .hueso-svg:hover { filter: brightness(0.9) drop-shadow(0 0 5px rgba(100,116,139,0.6)); }
                     </style></defs>
-                    <!-- Fémur -->
-                    <ellipse cx="150" cy="70" rx="55" ry="65" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
-                    <text x="150" y="72" text-anchor="middle" class="anat-label" fill="#64748b">Fémur</text>
-                    <!-- Tibia -->
-                    <ellipse cx="150" cy="305" rx="50" ry="60" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
-                    <text x="150" y="308" text-anchor="middle" class="anat-label" fill="#64748b">Tibia</text>
+                    <!-- Fémur CLICKEABLE -->
+                    <ellipse id="svg-femur" class="hueso-svg" cx="150" cy="68" rx="55" ry="62" fill="#dde3ea" stroke="#94a3b8" stroke-width="2.5" onclick="seleccionarEstructura('femur')"/>
+                    <text x="150" y="65" text-anchor="middle" class="anat-label" fill="#475569">Fémur</text>
+                    <text x="150" y="75" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
+                    <!-- Tibia CLICKEABLE -->
+                    <ellipse id="svg-tibia_r" class="hueso-svg" cx="150" cy="315" rx="50" ry="58" fill="#dde3ea" stroke="#94a3b8" stroke-width="2.5" onclick="seleccionarEstructura('tibia_r')"/>
+                    <text x="150" y="312" text-anchor="middle" class="anat-label" fill="#475569">Tibia</text>
+                    <text x="150" y="322" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
                     <!-- Espacio articular -->
                     <rect x="95" y="128" width="110" height="14" rx="4" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
                     <!-- Menisco medial -->
-                    <path id="svg-menisco_medial" class="anat-estructura-svg" d="M100 132 Q118 125 118 140 Q100 145 100 132Z" fill="#6366f1" opacity="0.7" onclick="seleccionarEstructura('menisco_medial')"/>
-                    <text x="78" y="138" class="anat-label" fill="#6366f1">M.Med</text>
+                    <path id="svg-menisco_medial" class="anat-estructura-svg" d="M100 132 Q118 125 118 140 Q100 145 100 132Z" fill="#6366f1" opacity="0.8" onclick="seleccionarEstructura('menisco_medial')"/>
+                    <text x="65" y="133" class="anat-label" fill="#6366f1">M.Med</text>
                     <!-- Menisco lateral -->
-                    <path id="svg-menisco_lateral" class="anat-estructura-svg" d="M200 132 Q182 125 182 140 Q200 145 200 132Z" fill="#8b5cf6" opacity="0.7" onclick="seleccionarEstructura('menisco_lateral')"/>
-                    <text x="202" y="138" class="anat-label" fill="#8b5cf6">M.Lat</text>
+                    <path id="svg-menisco_lateral" class="anat-estructura-svg" d="M200 132 Q182 125 182 140 Q200 145 200 132Z" fill="#8b5cf6" opacity="0.8" onclick="seleccionarEstructura('menisco_lateral')"/>
+                    <text x="202" y="133" class="anat-label" fill="#8b5cf6">M.Lat</text>
                     <!-- LCA -->
-                    <line id="svg-lca" class="anat-estructura-svg" x1="140" y1="130" x2="160" y2="142" stroke="#ef4444" stroke-width="6" stroke-linecap="round" onclick="seleccionarEstructura('lca')"/>
-                    <text x="120" y="118" class="anat-label" fill="#ef4444">LCA</text>
+                    <line id="svg-lca" class="anat-estructura-svg" x1="140" y1="130" x2="160" y2="142" stroke="#ef4444" stroke-width="7" stroke-linecap="round" onclick="seleccionarEstructura('lca')"/>
+                    <text x="118" y="118" class="anat-label" fill="#ef4444">LCA</text>
                     <!-- LCP -->
-                    <line id="svg-lcp" class="anat-estructura-svg" x1="160" y1="130" x2="140" y2="142" stroke="#f97316" stroke-width="6" stroke-linecap="round" onclick="seleccionarEstructura('lcp')"/>
+                    <line id="svg-lcp" class="anat-estructura-svg" x1="160" y1="130" x2="140" y2="142" stroke="#f97316" stroke-width="7" stroke-linecap="round" onclick="seleccionarEstructura('lcp')"/>
                     <text x="162" y="118" class="anat-label" fill="#f97316">LCP</text>
-                    <!-- LCO -->
-                    <line id="svg-lco" class="anat-estructura-svg" x1="97" y1="115" x2="97" y2="155" stroke="#0ea5e9" stroke-width="5" stroke-linecap="round" onclick="seleccionarEstructura('lco')"/>
-                    <text x="60" y="136" class="anat-label" fill="#0ea5e9">LCI</text>
+                    <!-- LCI -->
+                    <line id="svg-lco" class="anat-estructura-svg" x1="97" y1="115" x2="97" y2="155" stroke="#0ea5e9" stroke-width="6" stroke-linecap="round" onclick="seleccionarEstructura('lco')"/>
+                    <text x="56" y="148" class="anat-label" fill="#0ea5e9">LCI</text>
                     <!-- Rótula -->
-                    <ellipse id="svg-rotula" class="anat-estructura-svg" cx="150" cy="135" rx="20" ry="14" fill="#10b981" opacity="0.8" onclick="seleccionarEstructura('rotula')"/>
+                    <ellipse id="svg-rotula" class="anat-estructura-svg" cx="150" cy="135" rx="20" ry="14" fill="#10b981" opacity="0.9" onclick="seleccionarEstructura('rotula')"/>
                     <text x="150" y="139" text-anchor="middle" class="anat-label" fill="white">Rótula</text>
                     <!-- Leyenda -->
-                    <rect x="8" y="330" width="284" height="44" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                    <text x="16" y="345" class="anat-label" fill="#64748b">Haz clic en cada estructura para ver información</text>
-                    <circle cx="16" cy="358" r="4" fill="#ef4444"/><text x="24" y="361" class="anat-label" fill="#64748b">LCA</text>
-                    <circle cx="56" cy="358" r="4" fill="#f97316"/><text x="64" y="361" class="anat-label" fill="#64748b">LCP</text>
-                    <circle cx="96" cy="358" r="4" fill="#6366f1"/><text x="104" y="361" class="anat-label" fill="#64748b">M.Med</text>
-                    <circle cx="144" cy="358" r="4" fill="#8b5cf6"/><text x="152" y="361" class="anat-label" fill="#64748b">M.Lat</text>
-                    <circle cx="192" cy="358" r="4" fill="#10b981"/><text x="200" y="361" class="anat-label" fill="#64748b">Rótula</text>
-                    <circle cx="236" cy="358" r="4" fill="#0ea5e9"/><text x="244" y="361" class="anat-label" fill="#64748b">LCI</text>
+                    <rect x="8" y="346" width="284" height="48" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <text x="16" y="360" class="anat-label" fill="#64748b">Haz clic en cada estructura — huesos grises también clickeables</text>
+                    <circle cx="16" cy="374" r="4" fill="#dde3ea" stroke="#94a3b8"/><text x="24" y="377" class="anat-label" fill="#64748b">Hueso</text>
+                    <circle cx="68" cy="374" r="4" fill="#ef4444"/><text x="76" y="377" class="anat-label" fill="#64748b">LCA</text>
+                    <circle cx="104" cy="374" r="4" fill="#f97316"/><text x="112" y="377" class="anat-label" fill="#64748b">LCP</text>
+                    <circle cx="140" cy="374" r="4" fill="#6366f1"/><text x="148" y="377" class="anat-label" fill="#64748b">M.Med</text>
+                    <circle cx="184" cy="374" r="4" fill="#8b5cf6"/><text x="192" y="377" class="anat-label" fill="#64748b">M.Lat</text>
+                    <circle cx="228" cy="374" r="4" fill="#10b981"/><text x="236" y="377" class="anat-label" fill="#64748b">Rótula</text>
                 </svg>`,
-                hombro: `<svg viewBox="0 0 300 340" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:320px">
-                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15)}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}</style></defs>
-                    <!-- Escápula -->
-                    <path d="M60 80 Q100 60 180 90 Q200 130 190 180 Q160 210 120 200 Q80 180 60 140 Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
-                    <text x="120" y="150" text-anchor="middle" class="anat-label" fill="#64748b">Escápula</text>
-                    <!-- Acromion -->
-                    <rect x="155" y="68" width="55" height="18" rx="8" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"/>
+                hombro: `<svg viewBox="0 0 300 360" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:340px">
+                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15) drop-shadow(0 0 4px rgba(99,102,241,0.5))}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}.hueso-svg{cursor:pointer;transition:all 0.2s}.hueso-svg:hover{filter:brightness(0.88) drop-shadow(0 0 5px rgba(100,116,139,0.6))}</style></defs>
+                    <!-- Escápula CLICKEABLE -->
+                    <path id="svg-escapula" class="hueso-svg" d="M60 80 Q100 60 180 90 Q200 130 190 180 Q160 210 120 200 Q80 180 60 140 Z" fill="#dde3ea" stroke="#94a3b8" stroke-width="2.5" onclick="seleccionarEstructura('escapula')"/>
+                    <text x="112" y="148" text-anchor="middle" class="anat-label" fill="#475569">Escápula</text>
+                    <text x="112" y="158" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
+                    <!-- Acromion parte de escápula (también clickeable) -->
+                    <rect id="svg-escapula2" class="hueso-svg" x="155" y="68" width="55" height="18" rx="8" fill="#ccd4de" stroke="#94a3b8" stroke-width="1.5" onclick="seleccionarEstructura('escapula')"/>
                     <text x="182" y="80" text-anchor="middle" class="anat-label" fill="#475569">Acromion</text>
-                    <!-- Clavícula -->
-                    <line x1="215" y1="73" x2="280" y2="55" stroke="#94a3b8" stroke-width="10" stroke-linecap="round"/>
-                    <text x="255" y="52" class="anat-label" fill="#64748b">Clavícula</text>
+                    <!-- Clavícula CLICKEABLE -->
+                    <line id="svg-clavicula" class="hueso-svg" x1="215" y1="73" x2="280" y2="55" stroke="#ccd4de" stroke-width="12" stroke-linecap="round" onclick="seleccionarEstructura('clavicula')" style="pointer-events:stroke"/>
+                    <text x="252" y="50" class="anat-label" fill="#475569">Clavícula ▶</text>
                     <!-- Articulación AC -->
-                    <ellipse id="svg-acromio" class="anat-estructura-svg" cx="213" cy="72" rx="10" ry="8" fill="#f59e0b" opacity="0.85" onclick="seleccionarEstructura('acromio')"/>
-                    <text x="220" y="68" class="anat-label" fill="#92400e">AC</text>
-                    <!-- Húmero -->
-                    <ellipse cx="200" cy="195" rx="35" ry="30" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
-                    <rect x="182" y="215" width="36" height="90" rx="10" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <text x="200" y="270" text-anchor="middle" class="anat-label" fill="#64748b">Húmero</text>
+                    <ellipse id="svg-acromio" class="anat-estructura-svg" cx="213" cy="72" rx="10" ry="8" fill="#f59e0b" opacity="0.9" onclick="seleccionarEstructura('acromio')"/>
+                    <text x="196" y="66" class="anat-label" fill="#92400e">AC</text>
+                    <!-- Húmero CLICKEABLE -->
+                    <ellipse id="svg-humero" class="hueso-svg" cx="200" cy="195" rx="35" ry="30" fill="#dde3ea" stroke="#94a3b8" stroke-width="2.5" onclick="seleccionarEstructura('humero')"/>
+                    <rect class="hueso-svg" x="182" y="215" width="36" height="90" rx="10" fill="#dde3ea" stroke="#94a3b8" stroke-width="1.5" onclick="seleccionarEstructura('humero')"/>
+                    <text x="200" y="192" text-anchor="middle" class="anat-label" fill="#475569">Húmero</text>
+                    <text x="200" y="202" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
+                    <text x="200" y="268" text-anchor="middle" class="anat-label" fill="#64748b">Diáfisis</text>
                     <!-- GH Cápsula -->
                     <ellipse id="svg-glenohumeral" class="anat-estructura-svg" cx="175" cy="175" rx="22" ry="28" fill="#6366f1" opacity="0.5" onclick="seleccionarEstructura('glenohumeral')"/>
-                    <text x="120" y="178" class="anat-label" fill="#4f46e5">GH</text>
+                    <text x="118" y="178" class="anat-label" fill="#4f46e5">GH</text>
                     <!-- Manguito rotador -->
-                    <path id="svg-manguito" class="anat-estructura-svg" d="M158 148 Q185 135 210 155 Q205 170 185 168 Q165 165 158 148Z" fill="#ef4444" opacity="0.7" onclick="seleccionarEstructura('manguito')"/>
+                    <path id="svg-manguito" class="anat-estructura-svg" d="M158 148 Q185 135 210 155 Q205 170 185 168 Q165 165 158 148Z" fill="#ef4444" opacity="0.75" onclick="seleccionarEstructura('manguito')"/>
                     <text x="175" y="145" text-anchor="middle" class="anat-label" fill="#dc2626">Manguito</text>
                     <!-- Bíceps PLB -->
                     <path id="svg-biceps" class="anat-estructura-svg" d="M185 168 Q188 185 190 230" stroke="#10b981" stroke-width="5" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('biceps')" style="pointer-events:stroke"/>
-                    <text x="194" y="195" class="anat-label" fill="#059669">Bíceps</text>
+                    <text x="194" y="200" class="anat-label" fill="#059669">Bíceps</text>
                     <!-- Leyenda -->
-                    <rect x="8" y="300" width="284" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                    <circle cx="16" cy="318" r="4" fill="#ef4444"/><text x="24" y="321" class="anat-label" fill="#64748b">Manguito</text>
-                    <circle cx="80" cy="318" r="4" fill="#10b981"/><text x="88" y="321" class="anat-label" fill="#64748b">Bíceps PLB</text>
-                    <circle cx="152" cy="318" r="4" fill="#f59e0b"/><text x="160" y="321" class="anat-label" fill="#64748b">AC</text>
-                    <circle cx="188" cy="318" r="4" fill="#6366f1"/><text x="196" y="321" class="anat-label" fill="#64748b">Cápsula GH</text>
+                    <rect x="8" y="316" width="284" height="36" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <circle cx="16" cy="330" r="4" fill="#dde3ea" stroke="#94a3b8"/><text x="24" y="333" class="anat-label" fill="#64748b">Hueso</text>
+                    <circle cx="60" cy="330" r="4" fill="#ef4444"/><text x="68" y="333" class="anat-label" fill="#64748b">Manguito</text>
+                    <circle cx="116" cy="330" r="4" fill="#10b981"/><text x="124" y="333" class="anat-label" fill="#64748b">Bíceps</text>
+                    <circle cx="160" cy="330" r="4" fill="#f59e0b"/><text x="168" y="333" class="anat-label" fill="#64748b">AC</text>
+                    <circle cx="192" cy="330" r="4" fill="#6366f1"/><text x="200" y="333" class="anat-label" fill="#64748b">Cápsula GH</text>
+                    <text x="16" y="347" class="anat-label" fill="#94a3b8">Húmero, Escápula y Clavícula también son clickeables</text>
                 </svg>`,
-                tobillo: `<svg viewBox="0 0 300 340" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:320px">
-                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15)}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}</style></defs>
-                    <!-- Tibia/Peroné -->
-                    <rect x="100" y="20" width="40" height="120" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <rect x="160" y="30" width="28" height="100" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <text x="120" y="75" text-anchor="middle" class="anat-label" fill="#64748b">Tibia</text>
-                    <text x="174" y="75" text-anchor="middle" class="anat-label" fill="#64748b">Peroné</text>
-                    <!-- Astrágalo -->
-                    <ellipse cx="130" cy="168" rx="45" ry="28" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <text x="130" y="172" text-anchor="middle" class="anat-label" fill="#64748b">Astrágalo</text>
-                    <!-- Calcáneo -->
-                    <ellipse cx="115" cy="230" rx="50" ry="28" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <text x="115" y="234" text-anchor="middle" class="anat-label" fill="#64748b">Calcáneo</text>
+                tobillo: `<svg viewBox="0 0 300 360" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:340px">
+                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15) drop-shadow(0 0 4px rgba(99,102,241,0.5))}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}.hueso-svg{cursor:pointer;transition:all 0.2s}.hueso-svg:hover{filter:brightness(0.88) drop-shadow(0 0 5px rgba(100,116,139,0.6))}</style></defs>
+                    <!-- Tibia CLICKEABLE -->
+                    <rect id="svg-tibia_t" class="hueso-svg" x="100" y="20" width="40" height="120" rx="8" fill="#dde3ea" stroke="#94a3b8" stroke-width="2" onclick="seleccionarEstructura('tibia_t')"/>
+                    <text x="120" y="68" text-anchor="middle" class="anat-label" fill="#475569">Tibia</text>
+                    <text x="120" y="78" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
+                    <!-- Peroné CLICKEABLE -->
+                    <rect id="svg-perone_t" class="hueso-svg" x="160" y="30" width="28" height="100" rx="8" fill="#dde3ea" stroke="#94a3b8" stroke-width="2" onclick="seleccionarEstructura('perone_t')"/>
+                    <text x="174" y="68" text-anchor="middle" class="anat-label" fill="#475569">Peroné</text>
+                    <text x="174" y="78" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
+                    <!-- Astrágalo CLICKEABLE -->
+                    <ellipse id="svg-astragalo" class="hueso-svg" cx="130" cy="168" rx="45" ry="28" fill="#dde3ea" stroke="#94a3b8" stroke-width="2" onclick="seleccionarEstructura('astragalo')"/>
+                    <text x="130" y="165" text-anchor="middle" class="anat-label" fill="#475569">Astrágalo</text>
+                    <text x="130" y="175" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
+                    <!-- Calcáneo CLICKEABLE -->
+                    <ellipse id="svg-calcaneo" class="hueso-svg" cx="115" cy="238" rx="50" ry="28" fill="#dde3ea" stroke="#94a3b8" stroke-width="2" onclick="seleccionarEstructura('calcaneo')"/>
+                    <text x="115" y="235" text-anchor="middle" class="anat-label" fill="#475569">Calcáneo</text>
+                    <text x="115" y="245" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
                     <!-- LPAA -->
-                    <line id="svg-pla" class="anat-estructura-svg" x1="172" y1="128" x2="168" y2="160" stroke="#ef4444" stroke-width="5" stroke-linecap="round" onclick="seleccionarEstructura('pla')"/>
-                    <text x="174" y="148" class="anat-label" fill="#dc2626">LPAA</text>
+                    <line id="svg-pla" class="anat-estructura-svg" x1="172" y1="128" x2="168" y2="160" stroke="#ef4444" stroke-width="6" stroke-linecap="round" onclick="seleccionarEstructura('pla')"/>
+                    <text x="176" y="145" class="anat-label" fill="#dc2626">LPAA</text>
                     <!-- Aquiles -->
-                    <line id="svg-aquiles" class="anat-estructura-svg" x1="140" y1="140" x2="145" y2="215" stroke="#f97316" stroke-width="7" stroke-linecap="round" onclick="seleccionarEstructura('aquiles')"/>
-                    <text x="148" y="185" class="anat-label" fill="#ea580c">Aquiles</text>
+                    <line id="svg-aquiles" class="anat-estructura-svg" x1="155" y1="140" x2="158" y2="218" stroke="#f97316" stroke-width="7" stroke-linecap="round" onclick="seleccionarEstructura('aquiles')"/>
+                    <text x="162" y="183" class="anat-label" fill="#ea580c">Aquiles</text>
                     <!-- Fascia plantar -->
-                    <path id="svg-fascia" class="anat-estructura-svg" d="M72 248 Q115 260 185 255 Q190 270 180 278 Q115 275 68 260Z" fill="#10b981" opacity="0.7" onclick="seleccionarEstructura('fascia')"/>
-                    <text x="120" y="270" text-anchor="middle" class="anat-label" fill="#065f46">Fascia Plantar</text>
+                    <path id="svg-fascia" class="anat-estructura-svg" d="M72 256 Q115 268 185 263 Q190 278 180 286 Q115 283 68 268Z" fill="#10b981" opacity="0.75" onclick="seleccionarEstructura('fascia')"/>
+                    <text x="120" y="278" text-anchor="middle" class="anat-label" fill="#065f46">Fascia Plantar</text>
                     <!-- Tibial posterior -->
-                    <path id="svg-tibpost" class="anat-estructura-svg" d="M104 140 Q90 165 88 200" stroke="#6366f1" stroke-width="5" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('tibpost')" style="pointer-events:stroke"/>
-                    <text x="48" y="178" class="anat-label" fill="#4f46e5">Tib.Post</text>
+                    <path id="svg-tibpost" class="anat-estructura-svg" d="M104 140 Q90 165 88 208" stroke="#6366f1" stroke-width="5" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('tibpost')" style="pointer-events:stroke"/>
+                    <text x="44" y="182" class="anat-label" fill="#4f46e5">Tib.Post</text>
                     <!-- Leyenda -->
-                    <rect x="8" y="298" width="284" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                    <circle cx="16" cy="316" r="4" fill="#ef4444"/><text x="24" y="319" class="anat-label" fill="#64748b">LPAA</text>
-                    <circle cx="60" cy="316" r="4" fill="#f97316"/><text x="68" y="319" class="anat-label" fill="#64748b">Aquiles</text>
-                    <circle cx="112" cy="316" r="4" fill="#10b981"/><text x="120" y="319" class="anat-label" fill="#64748b">Fascia Plantar</text>
-                    <circle cx="200" cy="316" r="4" fill="#6366f1"/><text x="208" y="319" class="anat-label" fill="#64748b">Tib.Posterior</text>
+                    <rect x="8" y="314" width="284" height="38" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <circle cx="16" cy="328" r="4" fill="#dde3ea" stroke="#94a3b8"/><text x="24" y="331" class="anat-label" fill="#64748b">Hueso</text>
+                    <circle cx="60" cy="328" r="4" fill="#ef4444"/><text x="68" y="331" class="anat-label" fill="#64748b">LPAA</text>
+                    <circle cx="100" cy="328" r="4" fill="#f97316"/><text x="108" y="331" class="anat-label" fill="#64748b">Aquiles</text>
+                    <circle cx="148" cy="328" r="4" fill="#10b981"/><text x="156" y="331" class="anat-label" fill="#64748b">Fascia</text>
+                    <circle cx="192" cy="328" r="4" fill="#6366f1"/><text x="200" y="331" class="anat-label" fill="#64748b">Tib.Post</text>
+                    <text x="16" y="345" class="anat-label" fill="#94a3b8">Astrágalo, Calcáneo, Tibia y Peroné también clickeables</text>
                 </svg>`,
-                columna: `<svg viewBox="0 0 300 360" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:340px">
-                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15)}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}</style></defs>
-                    <!-- Vértebras (5 lumbares) -->
-                    ${[0,1,2,3,4].map(i=>`
-                    <rect x="95" y="${30+i*44}" width="80" height="28" rx="6" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <text x="135" y="${48+i*44}" text-anchor="middle" class="anat-label" fill="#64748b">L${i+1}</text>
-                    <!-- Apófisis espinosa -->
-                    <rect x="175" y="${34+i*44}" width="22" height="20" rx="4" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"/>
-                    `).join('')}
-                    <!-- Discos intervertebrales -->
-                    ${[0,1,2,3].map(i=>`
-                    <rect id="${i===1?'svg-disco':''}" class="${i===1?'anat-estructura-svg':''}" x="100" y="${58+i*44}" width="70" height="12" rx="3" fill="${i===1?'#6366f1':'#a5b4fc'}" opacity="0.75" ${i===1?`onclick="seleccionarEstructura('disco')"`:''}/>
-                    `).join('')}
-                    <text x="60" y="105" class="anat-label" fill="#4f46e5">Disco</text>
-                    <!-- Facetas -->
-                    <rect id="svg-facetas" class="anat-estructura-svg" x="82" y="72" width="14" height="12" rx="3" fill="#f97316" opacity="0.8" onclick="seleccionarEstructura('facetas')"/>
-                    <text x="50" y="81" class="anat-label" fill="#ea580c">Faceta</text>
+                columna: `<svg viewBox="0 0 300 380" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:360px">
+                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15) drop-shadow(0 0 4px rgba(99,102,241,0.5))}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}.hueso-svg{cursor:pointer;transition:all 0.2s}.hueso-svg:hover{filter:brightness(0.88) drop-shadow(0 0 5px rgba(100,116,139,0.6))}</style></defs>
+                    <!-- L1 -->
+                    <rect class="hueso-svg" x="95" y="30" width="80" height="28" rx="6" fill="#dde3ea" stroke="#94a3b8" stroke-width="1.5" onclick="seleccionarEstructura('vertebra')"/>
+                    <text x="135" y="45" text-anchor="middle" class="anat-label" fill="#475569">L1</text>
+                    <rect class="hueso-svg" x="175" y="34" width="22" height="20" rx="4" fill="#ccd4de" stroke="#94a3b8" stroke-width="1" onclick="seleccionarEstructura('vertebra')"/>
+                    <!-- Disco L1-L2 -->
+                    <rect class="anat-estructura-svg" x="100" y="58" width="70" height="12" rx="3" fill="#6366f1" opacity="0.55" onclick="seleccionarEstructura('disco')"/>
+                    <!-- Faceta L1 -->
+                    <rect id="svg-facetas" class="anat-estructura-svg" x="82" y="34" width="14" height="12" rx="3" fill="#f97316" opacity="0.8" onclick="seleccionarEstructura('facetas')"/>
+                    <!-- L2 -->
+                    <rect class="hueso-svg" x="95" y="74" width="80" height="28" rx="6" fill="#dde3ea" stroke="#94a3b8" stroke-width="1.5" onclick="seleccionarEstructura('vertebra')"/>
+                    <text x="135" y="89" text-anchor="middle" class="anat-label" fill="#475569">L2</text>
+                    <rect class="hueso-svg" x="175" y="78" width="22" height="20" rx="4" fill="#ccd4de" stroke="#94a3b8" stroke-width="1" onclick="seleccionarEstructura('vertebra')"/>
+                    <!-- Disco L2-L3 -->
+                    <rect class="anat-estructura-svg" x="100" y="102" width="70" height="12" rx="3" fill="#6366f1" opacity="0.55" onclick="seleccionarEstructura('disco')"/>
+                    <!-- Faceta L2 -->
+                    <rect class="anat-estructura-svg" x="82" y="78" width="14" height="12" rx="3" fill="#f97316" opacity="0.8" onclick="seleccionarEstructura('facetas')"/>
+                    <!-- L3 (destacada) -->
+                    <rect id="svg-vertebra" class="hueso-svg" x="95" y="118" width="80" height="28" rx="6" fill="#c8d4e0" stroke="#94a3b8" stroke-width="2.5" onclick="seleccionarEstructura('vertebra')"/>
+                    <text x="135" y="133" text-anchor="middle" class="anat-label" fill="#475569">L3</text>
+                    <rect class="hueso-svg" x="175" y="122" width="22" height="20" rx="4" fill="#ccd4de" stroke="#94a3b8" stroke-width="1" onclick="seleccionarEstructura('vertebra')"/>
+                    <!-- Disco L3-L4 (destacado) -->
+                    <rect id="svg-disco" class="anat-estructura-svg" x="100" y="146" width="70" height="12" rx="3" fill="#6366f1" opacity="0.85" onclick="seleccionarEstructura('disco')"/>
+                    <!-- Faceta L3 -->
+                    <rect class="anat-estructura-svg" x="82" y="122" width="14" height="12" rx="3" fill="#f97316" opacity="0.8" onclick="seleccionarEstructura('facetas')"/>
+                    <!-- L4 -->
+                    <rect class="hueso-svg" x="95" y="162" width="80" height="28" rx="6" fill="#dde3ea" stroke="#94a3b8" stroke-width="1.5" onclick="seleccionarEstructura('vertebra')"/>
+                    <text x="135" y="177" text-anchor="middle" class="anat-label" fill="#475569">L4</text>
+                    <rect class="hueso-svg" x="175" y="166" width="22" height="20" rx="4" fill="#ccd4de" stroke="#94a3b8" stroke-width="1" onclick="seleccionarEstructura('vertebra')"/>
+                    <!-- Disco L4-L5 -->
+                    <rect class="anat-estructura-svg" x="100" y="190" width="70" height="12" rx="3" fill="#6366f1" opacity="0.55" onclick="seleccionarEstructura('disco')"/>
+                    <!-- Faceta L4 -->
+                    <rect class="anat-estructura-svg" x="82" y="166" width="14" height="12" rx="3" fill="#f97316" opacity="0.8" onclick="seleccionarEstructura('facetas')"/>
+                    <!-- L5 -->
+                    <rect class="hueso-svg" x="95" y="206" width="80" height="28" rx="6" fill="#dde3ea" stroke="#94a3b8" stroke-width="1.5" onclick="seleccionarEstructura('vertebra')"/>
+                    <text x="135" y="221" text-anchor="middle" class="anat-label" fill="#475569">L5</text>
+                    <rect class="hueso-svg" x="175" y="210" width="22" height="20" rx="4" fill="#ccd4de" stroke="#94a3b8" stroke-width="1" onclick="seleccionarEstructura('vertebra')"/>
+                    <!-- Faceta L5 -->
+                    <rect class="anat-estructura-svg" x="82" y="210" width="14" height="12" rx="3" fill="#f97316" opacity="0.8" onclick="seleccionarEstructura('facetas')"/>
+                    <!-- Etiquetas laterales -->
+                    <text x="57" y="48" class="anat-label" fill="#ea580c">Facetas</text>
+                    <text x="57" y="104" class="anat-label" fill="#4f46e5">Disco IV</text>
                     <!-- Nervio ciático -->
-                    <path id="svg-nervio_ciatico" class="anat-estructura-svg" d="M130 236 Q140 270 130 310 Q125 330 120 350" stroke="#ef4444" stroke-width="4" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('nervio_ciatico')" style="pointer-events:stroke"/>
-                    <text x="142" y="290" class="anat-label" fill="#dc2626">Ciático</text>
-                    <!-- Sacro y sacroilíaca -->
-                    <ellipse cx="135" cy="252" rx="38" ry="22" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <text x="135" y="256" text-anchor="middle" class="anat-label" fill="#64748b">Sacro</text>
-                    <ellipse id="svg-sacroiliaca" class="anat-estructura-svg" cx="90" cy="248" rx="14" ry="20" fill="#10b981" opacity="0.7" onclick="seleccionarEstructura('sacroiliaca')"/>
-                    <text x="55" y="252" class="anat-label" fill="#065f46">ASI</text>
+                    <path id="svg-nervio_ciatico" class="anat-estructura-svg" d="M130 236 Q140 260 130 295 Q125 310 120 330" stroke="#ef4444" stroke-width="4" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('nervio_ciatico')" style="pointer-events:stroke"/>
+                    <text x="143" y="278" class="anat-label" fill="#dc2626">Ciático</text>
+                    <!-- Sacro CLICKEABLE -->
+                    <ellipse id="svg-sacro" class="hueso-svg" cx="135" cy="258" rx="38" ry="22" fill="#dde3ea" stroke="#94a3b8" stroke-width="2" onclick="seleccionarEstructura('sacro')"/>
+                    <text x="135" y="255" text-anchor="middle" class="anat-label" fill="#475569">Sacro</text>
+                    <text x="135" y="265" text-anchor="middle" class="anat-label" fill="#64748b">clic</text>
+                    <!-- ASI -->
+                    <ellipse id="svg-sacroiliaca" class="anat-estructura-svg" cx="90" cy="254" rx="14" ry="20" fill="#10b981" opacity="0.75" onclick="seleccionarEstructura('sacroiliaca')"/>
+                    <text x="50" y="258" class="anat-label" fill="#065f46">ASI</text>
                     <!-- Leyenda -->
-                    <rect x="8" y="318" width="284" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                    <circle cx="16" cy="336" r="4" fill="#6366f1"/><text x="24" y="339" class="anat-label" fill="#64748b">Disco IV</text>
-                    <circle cx="68" cy="336" r="4" fill="#f97316"/><text x="76" y="339" class="anat-label" fill="#64748b">Facetas</text>
-                    <circle cx="122" cy="336" r="4" fill="#ef4444"/><text x="130" y="339" class="anat-label" fill="#64748b">Nervio Ciático</text>
-                    <circle cx="200" cy="336" r="4" fill="#10b981"/><text x="208" y="339" class="anat-label" fill="#64748b">ASI</text>
+                    <rect x="8" y="292" width="284" height="82" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <text x="16" y="306" class="anat-label" fill="#94a3b8">Todas las vertebras, discos y facetas son clickeables</text>
+                    <circle cx="16" cy="320" r="4" fill="#dde3ea" stroke="#94a3b8"/><text x="24" y="323" class="anat-label" fill="#64748b">Vertebra (L1-L5)</text>
+                    <circle cx="108" cy="320" r="4" fill="#6366f1"/><text x="116" y="323" class="anat-label" fill="#64748b">Disco IV</text>
+                    <circle cx="156" cy="320" r="4" fill="#f97316"/><text x="164" y="323" class="anat-label" fill="#64748b">Facetas</text>
+                    <circle cx="16" cy="338" r="4" fill="#ef4444"/><text x="24" y="341" class="anat-label" fill="#64748b">Nervio Ciatico</text>
+                    <circle cx="108" cy="338" r="4" fill="#dde3ea" stroke="#94a3b8"/><text x="116" y="341" class="anat-label" fill="#64748b">Sacro</text>
+                    <circle cx="156" cy="338" r="4" fill="#10b981"/><text x="164" y="341" class="anat-label" fill="#64748b">ASI</text>
+                    <text x="16" y="358" class="anat-label" fill="#94a3b8">L3 y Disco L3-L4 destacados como referencia anatomica</text>
+                    <text x="16" y="368" class="anat-label" fill="#94a3b8">Apofisis espinosas (grises) tambien son clickeables</text>
                 </svg>`,
-                cadera: `<svg viewBox="0 0 300 340" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:320px">
-                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15)}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}</style></defs>
-                    <!-- Pelvis -->
-                    <path d="M50 80 Q150 40 250 80 Q270 130 240 180 Q200 210 150 215 Q100 210 60 180 Q30 130 50 80Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
-                    <text x="150" y="130" text-anchor="middle" class="anat-label" fill="#64748b">Pelvis</text>
+                cadera: `<svg viewBox="0 0 300 360" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:340px">
+                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15) drop-shadow(0 0 4px rgba(99,102,241,0.5))}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}.hueso-svg{cursor:pointer;transition:all 0.2s}.hueso-svg:hover{filter:brightness(0.88) drop-shadow(0 0 5px rgba(100,116,139,0.6))}</style></defs>
+                    <!-- Pelvis CLICKEABLE -->
+                    <path id="svg-pelvis" class="hueso-svg" d="M50 80 Q150 40 250 80 Q270 130 240 180 Q200 210 150 215 Q100 210 60 180 Q30 130 50 80Z" fill="#dde3ea" stroke="#94a3b8" stroke-width="2.5" onclick="seleccionarEstructura('pelvis')"/>
+                    <text x="150" y="118" text-anchor="middle" class="anat-label" fill="#475569">Pelvis</text>
+                    <text x="150" y="128" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
                     <!-- Acetábulo -->
                     <circle cx="150" cy="190" r="30" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
                     <!-- Labrum -->
                     <circle id="svg-labrum" class="anat-estructura-svg" cx="150" cy="190" r="33" fill="none" stroke="#6366f1" stroke-width="8" stroke-dasharray="4 2" onclick="seleccionarEstructura('labrum')"/>
-                    <text x="192" y="175" class="anat-label" fill="#4f46e5">Labrum</text>
-                    <!-- Cabeza femoral -->
-                    <circle cx="150" cy="190" r="24" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
-                    <!-- Cuello femoral -->
-                    <path d="M150 214 Q165 240 170 280 Q148 282 128 280 Q133 240 150 214Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <text x="150" y="255" text-anchor="middle" class="anat-label" fill="#64748b">Fémur</text>
+                    <text x="194" y="175" class="anat-label" fill="#4f46e5">Labrum</text>
+                    <!-- Cabeza femoral CLICKEABLE -->
+                    <circle id="svg-cabeza_femoral" class="hueso-svg" cx="150" cy="190" r="24" fill="#ccd4de" stroke="#94a3b8" stroke-width="2.5" onclick="seleccionarEstructura('cabeza_femoral')"/>
+                    <text x="150" y="187" text-anchor="middle" class="anat-label" fill="#475569">Cab.</text>
+                    <text x="150" y="197" text-anchor="middle" class="anat-label" fill="#475569">Fem.</text>
+                    <!-- Cuello + diáfisis femoral CLICKEABLE -->
+                    <path id="svg-cabeza_femoral2" class="hueso-svg" d="M150 214 Q165 240 170 295 Q148 297 128 295 Q133 240 150 214Z" fill="#dde3ea" stroke="#94a3b8" stroke-width="1.5" onclick="seleccionarEstructura('cabeza_femoral')"/>
+                    <text x="150" y="262" text-anchor="middle" class="anat-label" fill="#64748b">Fémur ▶ clic</text>
                     <!-- Isquiotibiales -->
-                    <path id="svg-isquiotibiales" class="anat-estructura-svg" d="M80 200 Q70 220 75 270" stroke="#f97316" stroke-width="6" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('isquiotibiales')" style="pointer-events:stroke"/>
-                    <text x="32" y="238" class="anat-label" fill="#ea580c">Isquioitb.</text>
+                    <path id="svg-isquiotibiales" class="anat-estructura-svg" d="M78 204 Q66 228 72 278" stroke="#f97316" stroke-width="6" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('isquiotibiales')" style="pointer-events:stroke"/>
+                    <text x="24" y="244" class="anat-label" fill="#ea580c">Isquiotib.</text>
                     <!-- Piriforme -->
                     <path id="svg-piriforme" class="anat-estructura-svg" d="M95 160 Q130 148 155 165" stroke="#ef4444" stroke-width="5" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('piriforme')" style="pointer-events:stroke"/>
                     <text x="88" y="148" class="anat-label" fill="#dc2626">Piriforme</text>
                     <!-- ITB -->
-                    <path id="svg-it_band" class="anat-estructura-svg" d="M220 185 Q230 220 225 275" stroke="#10b981" stroke-width="6" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('it_band')" style="pointer-events:stroke"/>
-                    <text x="232" y="235" class="anat-label" fill="#065f46">ITB</text>
+                    <path id="svg-it_band" class="anat-estructura-svg" d="M222 188 Q232 224 228 280" stroke="#10b981" stroke-width="6" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('it_band')" style="pointer-events:stroke"/>
+                    <text x="234" y="238" class="anat-label" fill="#065f46">ITB</text>
                     <!-- Leyenda -->
-                    <rect x="8" y="298" width="284" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                    <circle cx="16" cy="316" r="4" fill="#6366f1"/><text x="24" y="319" class="anat-label" fill="#64748b">Labrum</text>
-                    <circle cx="70" cy="316" r="4" fill="#f97316"/><text x="78" y="319" class="anat-label" fill="#64748b">Isquiotibiales</text>
-                    <circle cx="148" cy="316" r="4" fill="#ef4444"/><text x="156" y="319" class="anat-label" fill="#64748b">Piriforme</text>
-                    <circle cx="200" cy="316" r="4" fill="#10b981"/><text x="208" y="319" class="anat-label" fill="#64748b">ITB</text>
+                    <rect x="8" y="312" width="284" height="40" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <circle cx="16" cy="326" r="4" fill="#dde3ea" stroke="#94a3b8"/><text x="24" y="329" class="anat-label" fill="#64748b">Hueso</text>
+                    <circle cx="60" cy="326" r="4" fill="#6366f1"/><text x="68" y="329" class="anat-label" fill="#64748b">Labrum</text>
+                    <circle cx="112" cy="326" r="4" fill="#f97316"/><text x="120" y="329" class="anat-label" fill="#64748b">Isquiotib.</text>
+                    <circle cx="172" cy="326" r="4" fill="#ef4444"/><text x="180" y="329" class="anat-label" fill="#64748b">Piriforme</text>
+                    <circle cx="228" cy="326" r="4" fill="#10b981"/><text x="236" y="329" class="anat-label" fill="#64748b">ITB</text>
+                    <text x="16" y="344" class="anat-label" fill="#94a3b8">Pelvis y Fémur (cabeza + diáfisis) son clickeables</text>
                 </svg>`,
-                codo: `<svg viewBox="0 0 300 340" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:320px">
-                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15)}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}</style></defs>
-                    <!-- Húmero distal -->
-                    <rect x="100" y="20" width="70" height="100" rx="10" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <text x="135" y="70" text-anchor="middle" class="anat-label" fill="#64748b">Húmero</text>
-                    <!-- Epicóndilo lateral -->
-                    <ellipse id="svg-epi_lat" class="anat-estructura-svg" cx="175" cy="115" rx="18" ry="14" fill="#ef4444" opacity="0.8" onclick="seleccionarEstructura('epi_lat')"/>
-                    <text x="194" y="118" class="anat-label" fill="#dc2626">Lat</text>
-                    <!-- Epicóndilo medial -->
-                    <ellipse id="svg-epi_med" class="anat-estructura-svg" cx="95" cy="115" rx="18" ry="14" fill="#f97316" opacity="0.8" onclick="seleccionarEstructura('epi_med')"/>
-                    <text x="58" y="118" class="anat-label" fill="#ea580c">Med</text>
-                    <!-- Radio y cúbito -->
-                    <rect x="105" y="130" width="30" height="120" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <rect x="145" y="130" width="28" height="120" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <text x="120" y="195" text-anchor="middle" class="anat-label" fill="#64748b">Radio</text>
-                    <text x="160" y="195" text-anchor="middle" class="anat-label" fill="#64748b">Cúbito</text>
-                    <!-- Muñeca / Túnel carpiano -->
-                    <rect x="90" y="255" width="90" height="38" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
-                    <text x="135" y="278" text-anchor="middle" class="anat-label" fill="#64748b">Muñeca</text>
+                codo: `<svg viewBox="0 0 300 360" class="w-full max-w-xs" xmlns="http://www.w3.org/2000/svg" style="max-height:340px">
+                    <defs><style>.anat-estructura-svg{cursor:pointer;transition:all 0.2s}.anat-estructura-svg:hover{filter:brightness(1.15) drop-shadow(0 0 4px rgba(99,102,241,0.5))}.anat-activo{filter:drop-shadow(0 0 8px #10b981) brightness(1.2)}.anat-label{font-family:sans-serif;font-size:9px;font-weight:700;pointer-events:none}.hueso-svg{cursor:pointer;transition:all 0.2s}.hueso-svg:hover{filter:brightness(0.88) drop-shadow(0 0 5px rgba(100,116,139,0.6))}</style></defs>
+                    <!-- Húmero distal CLICKEABLE -->
+                    <rect id="svg-humero_codo" class="hueso-svg" x="100" y="20" width="70" height="100" rx="10" fill="#dde3ea" stroke="#94a3b8" stroke-width="2" onclick="seleccionarEstructura('humero_codo')"/>
+                    <text x="135" y="62" text-anchor="middle" class="anat-label" fill="#475569">Húmero</text>
+                    <text x="135" y="72" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
+                    <!-- Epicóndilo lateral CLICKEABLE -->
+                    <ellipse id="svg-epi_lat" class="anat-estructura-svg" cx="175" cy="115" rx="18" ry="14" fill="#ef4444" opacity="0.85" onclick="seleccionarEstructura('epi_lat')"/>
+                    <text x="195" y="118" class="anat-label" fill="#dc2626">Lat</text>
+                    <!-- Epicóndilo medial CLICKEABLE -->
+                    <ellipse id="svg-epi_med" class="anat-estructura-svg" cx="95" cy="115" rx="18" ry="14" fill="#f97316" opacity="0.85" onclick="seleccionarEstructura('epi_med')"/>
+                    <text x="56" y="118" class="anat-label" fill="#ea580c">Med</text>
+                    <!-- Radio CLICKEABLE -->
+                    <rect id="svg-radio_cubito" class="hueso-svg" x="105" y="130" width="30" height="120" rx="8" fill="#dde3ea" stroke="#94a3b8" stroke-width="2" onclick="seleccionarEstructura('radio_cubito')"/>
+                    <text x="120" y="188" text-anchor="middle" class="anat-label" fill="#475569">Radio</text>
+                    <text x="120" y="198" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
+                    <!-- Cúbito CLICKEABLE -->
+                    <rect class="hueso-svg" x="145" y="130" width="28" height="120" rx="8" fill="#dde3ea" stroke="#94a3b8" stroke-width="2" onclick="seleccionarEstructura('radio_cubito')"/>
+                    <text x="159" y="188" text-anchor="middle" class="anat-label" fill="#475569">Cúbito</text>
+                    <text x="159" y="198" text-anchor="middle" class="anat-label" fill="#64748b">▶ clic</text>
+                    <!-- Muñeca CLICKEABLE -->
+                    <rect class="hueso-svg" x="90" y="256" width="90" height="38" rx="8" fill="#dde3ea" stroke="#94a3b8" stroke-width="2" onclick="seleccionarEstructura('radio_cubito')"/>
+                    <text x="135" y="279" text-anchor="middle" class="anat-label" fill="#475569">Muñeca ▶ clic</text>
                     <!-- Nervio mediano -->
-                    <path id="svg-tunel_carpo" class="anat-estructura-svg" d="M130 250 Q132 265 133 275" stroke="#6366f1" stroke-width="6" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('tunel_carpo')" style="pointer-events:stroke"/>
-                    <text x="136" y="260" class="anat-label" fill="#4f46e5">Mediano</text>
+                    <path id="svg-tunel_carpo" class="anat-estructura-svg" d="M128 252 Q130 265 131 278" stroke="#6366f1" stroke-width="6" fill="none" stroke-linecap="round" onclick="seleccionarEstructura('tunel_carpo')" style="pointer-events:stroke"/>
+                    <text x="106" y="260" class="anat-label" fill="#4f46e5">Mediano</text>
                     <!-- TFCC -->
-                    <ellipse id="svg-triangular" class="anat-estructura-svg" cx="168" cy="258" rx="14" ry="10" fill="#10b981" opacity="0.8" onclick="seleccionarEstructura('triangular')"/>
-                    <text x="182" y="261" class="anat-label" fill="#065f46">TFCC</text>
+                    <ellipse id="svg-triangular" class="anat-estructura-svg" cx="168" cy="260" rx="14" ry="10" fill="#10b981" opacity="0.85" onclick="seleccionarEstructura('triangular')"/>
+                    <text x="183" y="263" class="anat-label" fill="#065f46">TFCC</text>
                     <!-- Leyenda -->
-                    <rect x="8" y="302" width="284" height="30" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-                    <circle cx="16" cy="318" r="4" fill="#ef4444"/><text x="24" y="321" class="anat-label" fill="#64748b">Epi.Lateral</text>
-                    <circle cx="88" cy="318" r="4" fill="#f97316"/><text x="96" y="321" class="anat-label" fill="#64748b">Epi.Medial</text>
-                    <circle cx="160" cy="318" r="4" fill="#6366f1"/><text x="168" y="321" class="anat-label" fill="#64748b">T.Carpiano</text>
-                    <circle cx="230" cy="318" r="4" fill="#10b981"/><text x="238" y="321" class="anat-label" fill="#64748b">TFCC</text>
+                    <rect x="8" y="306" width="284" height="46" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+                    <circle cx="16" cy="320" r="4" fill="#dde3ea" stroke="#94a3b8"/><text x="24" y="323" class="anat-label" fill="#64748b">Hueso</text>
+                    <circle cx="60" cy="320" r="4" fill="#ef4444"/><text x="68" y="323" class="anat-label" fill="#64748b">Epi.Lat</text>
+                    <circle cx="108" cy="320" r="4" fill="#f97316"/><text x="116" y="323" class="anat-label" fill="#64748b">Epi.Med</text>
+                    <circle cx="160" cy="320" r="4" fill="#6366f1"/><text x="168" y="323" class="anat-label" fill="#64748b">T.Carpiano</text>
+                    <circle cx="236" cy="320" r="4" fill="#10b981"/><text x="244" y="323" class="anat-label" fill="#64748b">TFCC</text>
+                    <text x="16" y="338" class="anat-label" fill="#94a3b8">Húmero, Radio, Cúbito y Muñeca también son clickeables</text>
+                    <text x="16" y="348" class="anat-label" fill="#94a3b8">Radio/Cúbito → info de fracturas de muñeca (Colles, escafoides)</text>
                 </svg>`
             };
             cont.innerHTML = svgs[region] || `<div class="text-center text-slate-400 text-sm p-8">Diagrama no disponible para esta región</div>`;
@@ -6654,6 +6860,15 @@ async function updateDashboard() {
 
         // --- INIT SUPABASE ---
         (async function initApp() {
+            if (IS_SANDBOX) {
+                // Vista previa de Claude: omitir llamadas de red, solo renderizar UI vacía
+                console.info('[JelianFT] Modo preview sandbox — Supabase desactivado.');
+                try { renderCalendario(); } catch(e) {}
+                renderBiblioteca();
+                updateDashboard();
+                loadNotes();
+                return;
+            }
             try {
                 await detectarSchemaDB();
                 await cargarPacientesDB();
