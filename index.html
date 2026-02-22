@@ -1653,11 +1653,66 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4" id="ejercicios-personalizados-container">
                             <p class="text-xs text-slate-400 italic col-span-2">Usa el Motor IA para generar ejercicios o agrégalos manualmente:</p>
                         </div>
-                        <button onclick="agregarEjercicioManual()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">+ Ejercicio Manual</button>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="agregarEjercicioManual()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">+ Ejercicio Manual</button>
+                            <button onclick="abrirBibliotecaEjercicios()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all">📚 Biblioteca de Ejercicios</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- MODAL: BIBLIOTECA DE EJERCICIOS -->
+        <div id="ej-lib-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-[2rem] w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+                <!-- Header -->
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center flex-shrink-0">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-900">📚 Biblioteca de Ejercicios</h3>
+                        <p class="text-xs text-slate-500 mt-1">Selecciona ejercicios por zona y fase para agregar a la hoja</p>
+                    </div>
+                    <button onclick="cerrarBibliotecaEjercicios()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none font-bold">×</button>
+                </div>
+                <!-- Filtros -->
+                <div class="p-4 border-b border-slate-100 flex-shrink-0 space-y-3">
+                    <div class="flex gap-3 flex-wrap">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Zona corporal</label>
+                            <select id="ejlib-zona" onchange="renderBibliotecaEjercicios()" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold bg-slate-50 outline-none focus:border-indigo-500">
+                                <option value="Rodilla">🦵 Rodilla</option>
+                                <option value="Cadera">⚙️ Cadera</option>
+                                <option value="Hombro">💪 Hombro</option>
+                                <option value="Tobillo">🦶 Tobillo</option>
+                                <option value="Espalda">🦴 Espalda / Lumbar</option>
+                                <option value="Muñeca/Mano">🤲 Muñeca / Mano</option>
+                                <option value="Cuello/Cervical">🧠 Cuello / Cervical</option>
+                                <option value="Ingle/Pubis">🏃 Ingle / Pubis</option>
+                                <option value="Isquiotibiales">🦵 Isquiotibiales</option>
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-[160px]">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Fase</label>
+                            <select id="ejlib-fase" onchange="renderBibliotecaEjercicios()" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold bg-slate-50 outline-none focus:border-indigo-500">
+                                <option value="todas">Todas las fases</option>
+                                <option value="Fase 1">Fase 1 — Aguda / Inicial</option>
+                                <option value="Fase 2">Fase 2 — Fortalecimiento</option>
+                                <option value="Fase 3">Fase 3 — Funcional / Retorno</option>
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-[180px]">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Buscar ejercicio</label>
+                            <input type="text" id="ejlib-busqueda" oninput="renderBibliotecaEjercicios()" placeholder="ej. Nordic, isométrico..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50 outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs text-slate-400" id="ejlib-count"></p>
+                        <button onclick="agregarEjerciciosSeleccionados()" class="bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-black hover:bg-emerald-700 transition-all">✓ Agregar seleccionados</button>
+                    </div>
+                </div>
+                <!-- Lista de ejercicios -->
+                <div id="ejlib-lista" class="overflow-y-auto p-4 space-y-2 flex-1 custom-scrollbar"></div>
+            </div>
+        </div>
 
         <!-- ===== SECCIÓN AGENDA / CALENDARIO ===== -->
         <section id="calendario" class="hidden max-w-7xl mx-auto">
@@ -2513,21 +2568,42 @@
             { n: "Deslizamiento de Talón (Isquios)", d: "Sentado, flexionar rodilla arrastrando talón contra resistencia.", o: "Activación suave de isquios post-desgarro", s: 3, r: "15", p: "Usar banda elástica", c: "Dolor localizado en vientre muscular" },
             { n: "Extensión en decúbito", d: "Elevar pierna estirada boca abajo sin arquear lumbar.", o: "Activación de glúteo mayor", s: 3, r: "12", p: "Sostener 3s arriba", c: "Psoítis aguda" },
             { n: "Clamshells (Fase Inicial)", d: "Apertura de rodillas tumbado lateralmente, pies juntos.", o: "Reclutamiento de glúteo medio", s: 3, r: "15", p: "Sin banda elástica", c: "Bursitis trocantérea severa" },
-            { n: "Rotación Externa Pasiva", d: "Movilidad en figura de 4 (tobillo sobre rodilla opuesta).", o: "Flexibilidad de rotadores externos", s: 3, r: "30s", p: "Presión sutil manual", c: "Choque femoroacetabular" }
+            { n: "Rotación Externa Pasiva", d: "Movilidad en figura de 4 (tobillo sobre rodilla opuesta).", o: "Flexibilidad de rotadores externos", s: 3, r: "30s", p: "Presión sutil manual", c: "Choque femoroacetabular" },
+            { n: "Puente Glúteo Isométrico", d: "Elevar la pelvis y mantener la posición apretando glúteos.", o: "Activación básica de glúteo mayor y medio", s: 3, r: "15s", p: "Unipodal", c: "Dolor lumbar irradiado" },
+            { n: "Abducción en Decúbito Lateral", d: "Tumbado de lado, elevar la pierna superior con pie en flexión.", o: "Activación glúteo medio sin carga", s: 3, r: "15", p: "Añadir tobillera de peso", c: "Bursitis trocantérea severa" },
+            { n: "Contracción Isométrica del Psoas", d: "Sentado, elevar ligeramente el muslo contra resistencia manual.", o: "Activación del psoas sin compresión acetabular", s: 3, r: "10s", p: "Mayor intensidad manual", c: "FAI con dolor agudo" },
+            { n: "Estiramiento Piriforme en Supino", d: "Cruzar el tobillo sobre la rodilla opuesta y atraer hacia el pecho.", o: "Relajación del piriforme y rotadores externos", s: 3, r: "30s", p: "Añadir tracción suave de mano", c: "Hernia discal con ciática" },
+            { n: "Activación Transverso del Abdomen", d: "Inspirar, soltar el aire y contraer el bajo vientre sin mover la pelvis.", o: "Estabilización lumbopélvica profunda", s: 3, r: "10s", p: "Combinar con extensión de pierna", c: "Hernia de disco aguda" },
+            { n: "Marcha en Cuadrupedia", d: "A cuatro patas, avanzar alternando mano-rodilla opuesta.", o: "Coordinación lumbopélvica básica", s: 3, r: "10m", p: "Añadir peso en espalda", c: "Dolor sacroilíaco agudo" },
+            { n: "Estiramiento de Flexores de Cadera", d: "Zancada baja en el suelo, mantener posición con pelvis inclinada hacia adelante.", o: "Elongación de psoas-ilíaco", s: 3, r: "30s", p: "Elevar el brazo del lado afecto", c: "Psoítis aguda" }
         ],
         "Fase 2": [
             { n: "Copenhague Plank (Nivel 1)", d: "Plancha lateral con pierna superior apoyada en silla (rodilla flexionada).", o: "Fortalecimiento específico de aductores", s: 3, r: "20s", p: "Pierna extendida (Nivel 2)", c: "Inestabilidad de rodilla" },
             { n: "Curl de Isquios con Fitball", d: "Puente glúteo sobre balón y flexionar rodillas acercando el balón.", o: "Fuerza isotónica de isquiotibiales", s: 3, r: "12", p: "Unipodal", c: "Dolor en inserción proximal" },
             { n: "Monster Walk", d: "Pasos laterales con banda elástica en rodillas o tobillos.", o: "Fuerza abductora dinámica", s: 3, r: "20", p: "Banda de mayor tensión", c: "Pubalgia reactiva" },
             { n: "Zancada Estática (Split)", d: "Bajada controlada manteniendo el eje vertical.", o: "Fuerza de cuádriceps y glúteo", s: 3, r: "10", p: "Añadir mancuernas", c: "Pinzamiento anterior" },
-            { n: "Step Up Frontal", d: "Subida al cajón con control de caída.", o: "Fuerza funcional concéntrica", s: 3, r: "12", p: "Aumentar altura del cajón", c: "Dolor articular agudo" }
+            { n: "Step Up Frontal", d: "Subida al cajón con control de caída.", o: "Fuerza funcional concéntrica", s: 3, r: "12", p: "Aumentar altura del cajón", c: "Dolor articular agudo" },
+            { n: "Copenhague Plank Nivel 2", d: "Plancha lateral con pierna extendida apoyada en silla.", o: "Fuerza máxima de aductores", s: 3, r: "30s", p: "Añadir movimiento de adducción", c: "Inestabilidad pélvica" },
+            { n: "Hip Thrust Bilateral", d: "Espalda en banco, subir y bajar la pelvis con carga sobre el abdomen.", o: "Hipertrofia glúteo mayor", s: 4, r: "12", p: "Unipodal con carga", c: "Dolor lumbar bajo carga axial" },
+            { n: "Sentadilla Goblet", d: "Sentadilla sujetando una kettlebell o mancuerna al pecho.", o: "Fuerza funcional de cadera y rodilla", s: 3, r: "12", p: "Mayor profundidad con carga", c: "Dolor articular de cadera" },
+            { n: "Peso Muerto Rumano Bilateral", d: "Con barra, flexión de tronco manteniendo espalda neutra.", o: "Fuerza excéntrica de isquiotibiales y glúteo", s: 3, r: "10", p: "Unipodal", c: "Hernia discal activa" },
+            { n: "Abducción Resistida en Pie", d: "De pie, elevar la pierna lateralmente contra banda elástica.", o: "Fuerza glúteo medio en posición funcional", s: 3, r: "15", p: "Mayor tensión de banda", c: "Bursitis trocantérea activa" },
+            { n: "Marcha con Banda en Rodillas", d: "Caminar hacia adelante y atrás con banda elástica en rodillas.", o: "Activación funcional de abductores", s: 3, r: "20m", p: "Añadir sentadilla al paso", c: "Dolor patelofemoral" },
+            { n: "Extensión de Cadera en Máquina", d: "Extensión de cadera con polea o máquina multipower.", o: "Fuerza aislada del glúteo mayor", s: 3, r: "12", p: "Añadir carga progresiva", c: "Dolor sacroilíaco activo" }
         ],
         "Fase 3": [
             { n: "Nordic Hamstring (Excéntrico)", d: "Arrodillado, bajar el tronco lentamente controlando con isquios.", o: "Prevención de recaídas en desgarros", s: 3, r: "6", p: "Aumentar rango de caída libre", c: "Fase subaguda (solo fase funcional)" },
             { n: "Step Up Explosivo", d: "Subida al cajón con impulso potente y bajada controlada.", o: "Potencia de extensores de cadera", s: 3, r: "10", p: "Cargar mancuernas", c: "Falta de control de valgo" },
             { n: "Split Squat Búlgara (Cadera)", d: "Sentadilla con pie posterior elevado enfocado en glúteo y aductores.", o: "Fuerza máxima unilateral cadera", s: 4, r: "8", p: "Carga axial pesada", c: "Mala técnica de eje" },
             { n: "Skater Jumps", d: "Saltos laterales pliométricos con amortiguación.", o: "Potencia lateral y agilidad", s: 3, r: "12", p: "Aumentar distancia de salto", c: "Inestabilidad de tobillo" },
-            { n: "Peso Muerto Sumo", d: "Apertura amplia de pies con carga central.", o: "Fuerza global de cadera/aductores", s: 3, r: "10", p: "Barra olímpica", c: "Hernia discal activa" }
+            { n: "Peso Muerto Sumo", d: "Apertura amplia de pies con carga central.", o: "Fuerza global de cadera/aductores", s: 3, r: "10", p: "Barra olímpica", c: "Hernia discal activa" },
+            { n: "Hip Thrust Unipodal con Carga", d: "Hip thrust sobre banco con una sola pierna y barra o disco.", o: "Fuerza máxima unilateral de glúteo", s: 4, r: "8", p: "Aumentar carga progresivamente", c: "Dolor sacroilíaco bajo carga" },
+            { n: "Sentadilla Búlgara con Salto", d: "Split squat búlgara explosivo impulsando la pierna de apoyo.", o: "Potencia explosiva unilateral", s: 3, r: "8", p: "Añadir carga ligera", c: "Inestabilidad de rodilla o tobillo" },
+            { n: "Swing de Kettlebell", d: "Balanceo explosivo de kettlebell desde la cadera (bisagra).", o: "Potencia de cadena posterior", s: 3, r: "15", p: "Mayor carga o doble kettlebell", c: "Hernia discal activa" },
+            { n: "Sprint de Aceleración", d: "Sprint de 10-20m desde posición de salida con aceleración máxima.", o: "Retorno a la velocidad máxima", s: 5, r: "20m", p: "Sprint con cambios de dirección", c: "Lesión muscular no resuelta" },
+            { n: "Cambios de Dirección (COD)", d: "Carrera en zigzag o en T controlando el frenado y aceleración.", o: "Agilidad funcional específica al deporte", s: 4, r: "6", p: "Aumentar velocidad y complejidad", c: "Inestabilidad de tobillo" },
+            { n: "Sentadilla con Salto (Jump Squat)", d: "Sentadilla explosiva impulsando hacia arriba con máxima velocidad.", o: "Potencia y reactividad de cuádriceps y glúteos", s: 3, r: "8", p: "Con carga ligera (20% 1RM)", c: "Lesión de menisco activa" },
+            { n: "Sled Push/Pull", d: "Empujar o arrastrar un trineo con carga progresiva.", o: "Fuerza funcional máxima de cadena posterior", s: 4, r: "20m", p: "Aumentar carga del trineo", c: "Dolor lumbar bajo carga alta" }
         ]
     },
     "Espalda": {
@@ -2536,21 +2612,41 @@
             { n: "Gato-Camello", d: "En cuadrupedia, arquear y redondear espalda lento.", o: "Lubricación discal y movilidad", s: 2, r: "12", p: "Focalizar zona dorsal", c: "Mareo o dolor punzante" },
             { n: "Puente Glúteo Isométrico", d: "Elevar pelvis y sostener con columna neutra.", o: "Activación de cadena posterior", s: 3, r: "20s", p: "Unipodal", c: "Calambres o dolor lumbar" },
             { n: "Basculación Pélvica", d: "Movimiento sutil de anteversión y retroversión.", o: "Control propioceptivo lumbar", s: 3, r: "20", p: "Sobre fitball", c: "Dolor agudo al movimiento" },
-            { n: "Bird-Dog (Piernas)", d: "En cuadrupedia, deslizar solo pierna atrás sin arquear.", o: "Estabilidad base", s: 3, r: "10", p: "Levantar la pierna 5cm", c: "Inestabilidad severa" }
+            { n: "Bird-Dog Solo Piernas", d: "En cuadrupedia, deslizar solo pierna atrás sin arquear.", o: "Estabilidad base", s: 3, r: "10", p: "Levantar la pierna 5cm", c: "Inestabilidad severa" },
+            { n: "Estiramiento en Rodillas al Pecho", d: "Tumbado en supino, abrazar ambas rodillas al pecho.", o: "Movilidad lumbar y alivio de la compresión discal", s: 3, r: "30s", p: "Alternar pierna por pierna", c: "Hernia aguda con ciática intensa" },
+            { n: "Estiramiento del Piriforme (Figura 4)", d: "Cruzar un tobillo sobre la rodilla opuesta y atraer ambas hacia el pecho.", o: "Elongación de rotadores externos y glúteo profundo", s: 3, r: "30s", p: "Añadir tracción manual", c: "Hernia discal con ciática" },
+            { n: "Activación del Transverso (Hollowing)", d: "Contraer el bajo vientre hacia la columna sin mover la pelvis.", o: "Activación profunda del core lumbopélvico", s: 3, r: "10s", p: "Combinar con Bird-Dog", c: "Hernia aguda de dolor severo" },
+            { n: "Flexión Lateral en Decúbito", d: "Tumbado de lado, deslizar la mano hacia el tobillo y volver.", o: "Movilidad lateral de columna lumbar", s: 3, r: "10 c/lado", p: "Añadir resistencia de banda", c: "Dolor facetario al lateral" },
+            { n: "Extensión de Cadera en Prono", d: "Boca abajo, elevar una pierna extendida sin rotar la pelvis.", o: "Activación del glúteo mayor sin carga en lumbar", s: 3, r: "12", p: "Sostener 5s en la parte superior", c: "Psoítis aguda" },
+            { n: "Estiramiento del Cuadrado Lumbar", d: "Sentado, inclinar el tronco lateralmente con el brazo elevado.", o: "Elongación del cuadrado lumbar", s: 3, r: "30s", p: "Mayor rango con apoyo en la cabeza", c: "Fractura de apófisis transversa" },
+            { n: "Movilización en McKenzie (Extensión en Prono)", d: "Boca abajo, apoyar los codos y elevar suavemente el tronco.", o: "Centralización del dolor discogénico posterior", s: 3, r: "10", p: "Extensión completa en manos", c: "Hernia con dolor que se periferiza" }
         ],
         "Fase 2": [
-            { n: "Bird-Dog (Completo)", d: "Extender brazo y pierna contraria en cuadrupedia.", o: "Estabilidad rotacional y multífidos", s: 3, r: "10 c/u", p: "Mantener 10s", c: "Incapacidad de neutro" },
+            { n: "Bird-Dog (Completo)", d: "Extender brazo y pierna contraria en cuadrupedia.", o: "Estabilidad rotacional y multífidos", s: 3, r: "10 c/u", p: "Mantener 10s", c: "Incapacidad de columna neutra" },
             { n: "Pallof Press (Banda)", d: "Resistir tracción lateral de banda empujando al frente.", o: "Antirrotación de core", s: 3, r: "12", p: "Base estrecha", c: "Hernia fase aguda" },
-            { n: "Deadbug", d: "Bajar brazo/pierna opuesta controlando la lumbar.", o: "Control de pared abdominal anterior", s: 3, r: "10 c/u", p: "Con peso en manos", c: "Dolor sacroilíaco" },
+            { n: "Dead Bug", d: "Bajar brazo/pierna opuesta controlando la lumbar.", o: "Control de pared abdominal anterior", s: 3, r: "10 c/u", p: "Con peso en manos", c: "Dolor sacroilíaco" },
             { n: "Plancha Lateral (Rodillas)", d: "Sostener alineación desde rodillas.", o: "Fuerza de cuadrado lumbar", s: 3, r: "30s", p: "Piernas extendidas", c: "Escoliosis dolorosa" },
-            { n: "Remo un brazo (Banco)", d: "Tracción horizontal manteniendo espalda plana.", o: "Fuerza de tracción y control escapular", s: 3, r: "12", p: "Aumentar carga", c: "Carga axial alta" }
+            { n: "Remo un Brazo (Banco)", d: "Tracción horizontal manteniendo espalda plana.", o: "Fuerza de tracción y control escapular", s: 3, r: "12", p: "Aumentar carga", c: "Carga axial alta" },
+            { n: "Plancha Ventral Isométrica", d: "Posición prona apoyando codos y pies, manteniendo línea recta.", o: "Resistencia de toda la musculatura del core", s: 3, r: "30-60s", p: "Añadir movimientos de brazo alternados", c: "Dolor lumbar bajo carga estática" },
+            { n: "Superman Dinámico", d: "En prono, elevar brazos y piernas simultáneamente.", o: "Fuerza de extensores lumbares y glúteos", s: 3, r: "10", p: "Sostener 5s en la cima", c: "Espondilolistesis o fractura" },
+            { n: "Sentadilla con Fitball en Pared", d: "Espalda sobre fitball en la pared, sentadilla controlada.", o: "Fortalecimiento de piernas sin carga axial directa", s: 3, r: "15", p: "Añadir peso corporal adicional", c: "Dolor lumbar con carga axial" },
+            { n: "Hip Hinge con Bastón (Bisagra)", d: "Con bastón en la espalda, practicar el patrón de bisagra de cadera.", o: "Aprendizaje motor del peso muerto sin carga", s: 3, r: "10", p: "Progresar a peso muerto con mancuerna", c: "Espondilolistesis inestable" },
+            { n: "Reverse Hyperextension en Mesa", d: "Tumbado boca abajo en la camilla con piernas colgando, elevarlas.", o: "Extensión lumbar y glúteos sin compresión discal", s: 3, r: "12", p: "Añadir tobilleras de peso", c: "Estenosis lumbar severa" },
+            { n: "Estabilización Sagital con Polea Baja", d: "De pie, tirar de la polea baja hacia arriba manteniendo espalda neutra.", o: "Integración de core con miembros en cadena abierta", s: 3, r: "12", p: "Aumentar carga de la polea", c: "Hernia lumbar activa" },
+            { n: "Rotación de Tronco en Sedestación", d: "Sentado, rotar el tronco hacia cada lado con los brazos cruzados.", o: "Movilidad rotatoria de la columna torácica", s: 3, r: "10 c/lado", p: "Añadir resistencia con banda", c: "Dolor facetario lumbar en rotación" }
         ],
         "Fase 3": [
             { n: "Peso Muerto Rumano (Espalda)", d: "Bisagra de cadera con carga y espalda recta, énfasis lumbar.", o: "Fuerza excéntrica cadena posterior lumbar", s: 4, r: "8", p: "Aumentar carga axial", c: "Pérdida de técnica lumbar" },
             { n: "Plancha Lateral Dinámica", d: "Elevar cadera y bajar de forma controlada.", o: "Fuerza de oblicuos", s: 3, r: "12", p: "Abducción de pierna superior", c: "Dolor hombro de apoyo" },
-            { n: "Farmer Walk", d: "Caminar con carga pesada en una mano (postura erguida).", o: "Estabilidad dinámica y transferencia", s: 3, r: "30m", p: "Carga asimétrica extrema", c: "Pérdida de alineación" },
-            { n: "Swing de Kettlebell", d: "Balanceo explosivo desde la cadera.", o: "Potencia de cadena posterior", s: 3, r: "15", p: "Mayor carga", c: "Inestabilidad lítica" },
-            { n: "Sentadilla Goblet", d: "Sentadilla con carga frontal pegada al pecho.", o: "Fuerza funcional y core", s: 3, r: "10", p: "Profundidad máxima técnica", c: "Dolor facetario" }
+            { n: "Farmer Walk Asimétrico", d: "Caminar con carga pesada en una sola mano (postura erguida).", o: "Estabilidad dinámica y anti-lateralización", s: 3, r: "30m", p: "Carga asimétrica extrema", c: "Pérdida de alineación" },
+            { n: "Swing de Kettlebell", d: "Balanceo explosivo desde la cadera con columna neutra.", o: "Potencia de cadena posterior", s: 3, r: "15", p: "Mayor carga o doble kettlebell", c: "Inestabilidad lítica" },
+            { n: "Sentadilla Goblet con Carga Progresiva", d: "Sentadilla con carga frontal pegada al pecho.", o: "Fuerza funcional y core", s: 3, r: "10", p: "Profundidad máxima técnica", c: "Dolor facetario" },
+            { n: "Peso Muerto Convencional con Barra", d: "Peso muerto desde el suelo con barra olímpica.", o: "Fuerza máxima de cadena posterior", s: 4, r: "6", p: "Aumentar carga semana a semana", c: "Hernia activa o dolor irradiado" },
+            { n: "Sentadilla con Barra Trasera", d: "Sentadilla con barra en la espalda, profundidad paralela.", o: "Fuerza máxima de cuádriceps, glúteos y columna", s: 4, r: "8", p: "Progresión de carga", c: "Espondilolistesis severa" },
+            { n: "Good Morning con Barra", d: "Con barra en espalda, inclinación de tronco manteniendo columna neutra.", o: "Fuerza excéntrica de extensores lumbares e isquios", s: 3, r: "10", p: "Aumentar carga", c: "Hernia discal activa" },
+            { n: "Sprint con Pausa (40m)", d: "Sprint de 40m con pausa de 2min entre repeticiones.", o: "Retorno a la velocidad deportiva controlada", s: 5, r: "40m", p: "Sprint máximo y cambios de dirección", c: "Dolor lumbar durante la carrera" },
+            { n: "Sled Push Ancho", d: "Empujar trineo con carga progresiva manteniendo espalda alineada.", o: "Fuerza funcional de tren inferior y estabilización lumbar", s: 4, r: "20m", p: "Mayor carga del trineo", c: "Dolor lumbar bajo alta carga" },
+            { n: "Lanzamiento al suelo con Balón Medicinal (Slam)", d: "Elevar balón medicinal sobre la cabeza y lanzar al suelo con fuerza.", o: "Potencia de la cadena posterior y core", s: 3, r: "10", p: "Mayor peso del balón", c: "Hernia discal con síntomas" }
         ]
     },
     "Hombro": {
@@ -2559,21 +2655,42 @@
             { n: "Isométrico en Neutro GH", d: "Empuje lateral contra pared (codo 90°).", o: "Estabilidad manguito rotador", s: 3, r: "10s", p: "Ángulos variables", c: "Post-op inmediato" },
             { n: "Isométrico Extensores", d: "Presionar dorso de mano contra mesa.", o: "Activación epicondílea sin cizalla", s: 3, r: "15s", p: "Más intensidad", c: "Dolor >7 EVA" },
             { n: "Retracción Escapular", d: "Juntar escápulas sentado erguido.", o: "Estabilidad basal", s: 3, r: "15", p: "Sostener 5s", c: "Dolor cervical agudo" },
-            { n: "Flexión Asistida (Bastón)", d: "Subir brazo con ayuda del brazo sano.", o: "Ganancia de ROM pasivo/asistido", s: 3, r: "10", p: "Rango máximo tolerable", c: "Pinzamiento severo" }
+            { n: "Flexión Asistida (Bastón)", d: "Subir brazo con ayuda del brazo sano.", o: "Ganancia de ROM pasivo/asistido", s: 3, r: "10", p: "Rango máximo tolerable", c: "Pinzamiento severo" },
+            { n: "Rotación Interna Isométrica", d: "Presionar el dorso de la mano contra la pared con codo en 90°.", o: "Activación del subescapular sin movimiento", s: 3, r: "10s", p: "Añadir banda ligera", c: "Post-quirúrgico inmediato" },
+            { n: "ROM Pasivo Polea Overhead", d: "Con polea simple, el brazo sano ayuda a elevar el afecto.", o: "Ganar flexión pasiva sin esfuerzo del manguito", s: 3, r: "10", p: "Aumentar rango progresivamente", c: "Capsulitis adhesiva inflamatoria" },
+            { n: "Estiramiento en Cruzado (Cross-body)", d: "Llevar el brazo afecto horizontalmente al pecho con ayuda del otro.", o: "Elongación de la cápsula posterior", s: 3, r: "30s", p: "Presión mayor con la mano", c: "Inestabilidad anterior" },
+            { n: "Isométrico Rotación Externa (0°)", d: "Codo al lado del cuerpo, banda ligera, presionar hacia afuera sin moverse.", o: "Activación temprana del infraespinoso", s: 3, r: "10s", p: "Añadir leve arco de movimiento", c: "Rotura total del manguito" },
+            { n: "Elevación Escapular Activa", d: "Elevar y deprimir hombros de forma controlada.", o: "Movilidad escapulotorácica inicial", s: 3, r: "15", p: "Con mancuernas ligeras", c: "Dolor acromioclavicular agudo" },
+            { n: "Movilidad Glenohumeral en Dec. Lateral", d: "Tumbado sobre el lado sano, mover brazo afecto en todos los planos dentro del rango libre.", o: "ROM activo suave inicial", s: 2, r: "10 c/dirección", p: "Aumentar rango", c: "Luxación reciente no estabilizada" },
+            { n: "Estiramiento Suboccipital-Trapecio", d: "Inclinar la cabeza lateralmente y añadir depresión del hombro del lado estirado.", o: "Liberación de tensión miofascial trapecio-clavicular", s: 3, r: "30s", p: "Mayor rango de inclinación", c: "Dolor cervical agudo" }
         ],
         "Fase 2": [
             { n: "Rotación Externa con Banda", d: "RE con toalla bajo axila.", o: "Fortalecer infraespinoso", s: 3, r: "12", p: "Banda mayor tensión", c: "Signos de atrapamiento" },
             { n: "Push Up Plus", d: "En plancha, empujar suelo separando escápulas.", o: "Activación del serrato anterior", s: 3, r: "15", p: "En el suelo (sin inclinación)", c: "Inestabilidad de codo" },
-            { n: "Excéntrico Muñeca (Tyler)", d: "Extensión con barra flexible, bajar lento.", o: "Tratamiento de Epicondilitis", s: 3, r: "15", p: "Banda más fuerte", c: "Inflamación aguda" },
             { n: "Serrato Punch", d: "Tumbado, empujar mancuerna hacia techo.", o: "Estabilidad escapulotorácica", s: 3, r: "15", p: "Peso progresivo", c: "Dolor costal" },
-            { n: "Remo con Banda", d: "Tracción horizontal neutra.", o: "Fortalecimiento retractores", s: 3, r: "12", p: "Retracción máxima", c: "Epitrocleitis" }
+            { n: "Remo con Banda", d: "Tracción horizontal neutra.", o: "Fortalecimiento retractores", s: 3, r: "12", p: "Retracción máxima", c: "Epitrocleitis" },
+            { n: "Rotación Interna con Banda", d: "RI con codo a 90°, banda desde lateral, rotación hacia el cuerpo.", o: "Fuerza del subescapular", s: 3, r: "12", p: "Banda mayor tensión o 90° ABD", c: "Inestabilidad anterior reciente" },
+            { n: "Elevación Lateral con Mancuerna", d: "Abducción del hombro hasta 90° con pulgar hacia abajo.", o: "Fuerza del deltoides medio y supraespinoso", s: 3, r: "12", p: "Mayor carga", c: "Arco doloroso activo 60-120°" },
+            { n: "Elevación Frontal con Mancuerna", d: "Subir el brazo al frente hasta la altura del hombro.", o: "Fuerza del deltoides anterior y supraespinoso", s: 3, r: "12", p: "Aumentar carga", c: "Pinzamiento subacromial reactivo" },
+            { n: "Y-W-T en Decúbito Prono", d: "Boca abajo, elevar brazos en posición Y, W y T.", o: "Fuerza trapecio inferior, medio y romboides", s: 3, r: "15", p: "Pesas de 1-2kg", c: "Dolor cervical irradiado activo" },
+            { n: "Diagonal con Polea (D2 Flexión)", d: "Movimiento diagonal de la polea desde abajo-adentro hacia arriba-afuera.", o: "Integración funcional de manguito y deltoides", s: 3, r: "12", p: "Mayor carga", c: "Capsulitis sin ROM completo" },
+            { n: "Face Pull con Polea Alta", d: "Tracción diagonal alta con polea, llevando las manos hacia la cara.", o: "Fuerza de rotadores externos y retractores escapulares", s: 3, r: "15", p: "Mayor carga con retracción escapular", c: "Dolor acromioclavicular activo" },
+            { n: "Elevación con Barra (Overhead Press Asistido)", d: "Press vertical con barra guiada (Smith) en rango controlado.", o: "Fuerza de deltoides y trapecio bajo supervisión", s: 3, r: "10", p: "Reducir asistencia de máquina", c: "Arco doloroso >90° sin resolver" },
+            { n: "Curl de Bíceps con Supinación", d: "Flexión de codo con supinación de antebrazo con mancuerna.", o: "Fuerza del bíceps y supinador", s: 3, r: "12", p: "Aumentar carga", c: "Rotura tendón bíceps distal reciente" }
         ],
         "Fase 3": [
-            { n: "Lanzamiento Balón Med", d: "Pase de pecho explosivo contra pared.", o: "Potencia y estabilidad", s: 3, r: "12", p: "Aumentar peso balón", c: "Inestabilidad anterior" },
+            { n: "Lanzamiento Balón Med Pecho", d: "Pase de pecho explosivo contra pared.", o: "Potencia y estabilidad", s: 3, r: "12", p: "Aumentar peso balón", c: "Inestabilidad anterior" },
             { n: "Landmine Press", d: "Empuje diagonal con barra.", o: "Fuerza funcional overhead", s: 3, r: "10", p: "Carga progresiva", c: "Arco doloroso agudo" },
             { n: "Dominadas / Remo Invertido", d: "Tracción en barra o anillas.", o: "Fuerza cadena posterior superior", s: 3, r: "8", p: "Lastre", c: "Epitrocleitis reactiva" },
-            { n: "Turkish Get Up (Medio)", d: "Levantamiento turco hasta posición sentado.", o: "Estabilidad y propiocepción global", s: 3, r: "5", p: "Kettlebell pesada", c: "Mala técnica core" },
-            { n: "Y-W-T Isométrico", d: "Mantener posiciones de brazos en aire.", o: "Resistencia postural escapular", s: 3, r: "30s", p: "Pesas de 1kg", c: "Dolor subacromial" }
+            { n: "Turkish Get Up (Completo)", d: "Levantamiento turco completo desde el suelo hasta de pie.", o: "Estabilidad y propiocepción global de hombro", s: 3, r: "5", p: "Kettlebell pesada", c: "Mala técnica de core" },
+            { n: "Y-W-T Isométrico con Pesos", d: "Mantener posiciones de brazos en Y, W, T con pequeñas pesas.", o: "Resistencia postural escapular", s: 3, r: "30s", p: "Pesas de 1-2kg", c: "Dolor subacromial activo" },
+            { n: "Press Militar con Barra", d: "Empuje vertical con barra desde la altura del cuello.", o: "Fuerza máxima overhead", s: 4, r: "8", p: "Aumentar carga semanal", c: "Arco doloroso no resuelto" },
+            { n: "Press de Banca con Barra", d: "Empuje horizontal decúbito supino con barra.", o: "Fuerza máxima pectoral y deltoides anterior", s: 4, r: "8", p: "Progresión de carga", c: "Inestabilidad anterior reciente" },
+            { n: "Lanzamiento Overhead con Balón", d: "Pase overhead explosivo contra pared o slam al suelo.", o: "Potencia de overhead press y estabilidad dinámica", s: 3, r: "10", p: "Mayor peso del balón", c: "Inestabilidad multidireccional" },
+            { n: "Dominadas Agarre Pronado (Pull-ups)", d: "Tracción desde barra con manos en pronación.", o: "Fuerza máxima de dorsal, bíceps y retractores", s: 3, r: "8", p: "Añadir peso con cinturón", c: "Epitrocleitis reactiva" },
+            { n: "Kettlebell Clean and Press", d: "Limpiar la kettlebell desde el suelo hasta el hombro y presionarla arriba.", o: "Potencia funcional integral del miembro superior", s: 3, r: "6", p: "Aumentar peso de la kettlebell", c: "Inestabilidad glenohumeral" },
+            { n: "Lanzamiento Rotacional con Balón", d: "Rotación de tronco con lanzamiento de balón medicinal contra pared.", o: "Potencia rotacional funcional", s: 3, r: "10 c/lado", p: "Mayor peso y velocidad", c: "Lesión labral activa" },
+            { n: "Gesto Técnico Deportivo Específico", d: "Lanzar, golpear, nadar o rematar reproduciendo el gesto real del deporte.", o: "Transferencia de fuerza y estabilidad al deporte", s: 3, r: "10", p: "Velocidad e intensidad real", c: "Dolor en gesto >3 EVA" }
         ]
     },
     "Tobillo": {
@@ -2581,45 +2698,82 @@
             { n: "Movilidad Circular", d: "Círculos lentos en ambos sentidos.", o: "Mantener ROM sin carga", s: 3, r: "10 c/u", p: "Dibujar abecedario", c: "Dolor punzante" },
             { n: "Isométrico Inversión", d: "Presionar borde interno contra objeto.", o: "Activar tibial posterior", s: 3, r: "10s", p: "Aumentar tiempo", c: "Fase aguda esguince" },
             { n: "Bombeos de Tobillo", d: "Flexo-extensión activa sin carga.", o: "Drenaje y movilidad inicial", s: 3, r: "20", p: "Con hielo", c: "Fractura no consolidada" },
-            { n: "Recoger Toalla", d: "Arrugar toalla con los dedos.", o: "Fuerza intrínseca", s: 3, r: "15", p: "Con peso encima", c: "Fascitis aguda" },
-            { n: "Isométrico Peroneos", d: "Empuje lateral contra pared.", o: "Estabilidad lateral inicial", s: 3, r: "10s", p: "Banda elástica leve", c: "Dolor maleolar agudo" }
+            { n: "Recoger Toalla con Dedos", d: "Arrugar toalla con los dedos del pie.", o: "Fuerza intrínseca del pie", s: 3, r: "15", p: "Con peso encima de la toalla", c: "Fascitis aguda" },
+            { n: "Isométrico Peroneos", d: "Empuje lateral contra pared.", o: "Estabilidad lateral inicial", s: 3, r: "10s", p: "Banda elástica leve", c: "Dolor maleolar agudo" },
+            { n: "Dorsiflexión Activa en Decúbito", d: "Tirar del pie hacia la cara manteniendo la rodilla extendida.", o: "Activación del tibial anterior", s: 3, r: "15", p: "Añadir banda en dorso del pie", c: "Fractura de pie no consolidada" },
+            { n: "Crioterapia + Movilidad Pasiva", d: "Aplicar hielo 10-15min y luego movilización pasiva suave del tobillo.", o: "Control del edema y recuperación del ROM", s: 2, r: "10 min", p: "Mayor rango pasivo con el tiempo", c: "Herida abierta en la zona" },
+            { n: "Elevación de Miembro con Vendaje Compresivo", d: "Miembro en elevación con vendaje compresivo en reposo.", o: "Reducción del edema agudo", s: 1, r: "30 min", p: "Combinar con crioterapia", c: "Tromboflebitis" },
+            { n: "Contracción Isométrica de Eversión", d: "Empujar el borde externo del pie contra la pared.", o: "Activación de peroneos sin movimiento", s: 3, r: "10s", p: "Añadir banda elástica", c: "Fractura de maleolo peroneo" },
+            { n: "Marcha con Bastón (Carga Parcial)", d: "Marcha con bastón o muleta aliviando carga del tobillo lesionado.", o: "Activar la cadena cinética sin sobrecargar", s: 1, r: "100m", p: "Reducir uso del bastón progresivamente", c: "Fractura inestable" },
+            { n: "Estiramiento de Gemelos en Pared (Bipodal)", d: "Pierna extendida, apoyar manos en pared e inclinar cuerpo adelante.", o: "Elongación del tríceps sural", s: 3, r: "30s", p: "Unipodal", c: "Rotura parcial de Aquiles reciente" },
+            { n: "Escritura con el Tobillo", d: "Dibujar letras del abecedario con la punta del pie en el aire.", o: "ROM multiplanar activo sin carga", s: 2, r: "Abecedario completo", p: "Mayor amplitud de movimiento", c: "Dolor agudo >6 EVA" }
         ],
         "Fase 2": [
-            { n: "Elevación de Talones", d: "Subir y bajar talones bipodal.", o: "Fuerza de tríceps sural", s: 3, r: "15", p: "Hacerlo unipodal", c: "Tendinitis aquilea reactiva" },
-            { n: "Equilibrio Unipodal", d: "Mantenerse en un pie sobre suelo firme.", o: "Propiocepción básica", s: 4, r: "30s", p: "Suelo inestable (foam)", c: "Inestabilidad grado III" },
-            { n: "Caminata en Talones", d: "Desplazamiento apoyando solo talón.", o: "Fuerza tibial anterior", s: 3, r: "15m", p: "Caminata pato", c: "Fascitis plantar" },
-            { n: "Eversión con Banda", d: "Rotación externa del pie contra resistencia.", o: "Fortalecimiento peroneos", s: 3, r: "12", p: "Banda más fuerte", c: "Dolor maleolar" },
-            { n: "Sentadilla en Bosu", d: "Sentadilla en superficie inestable.", o: "Estabilidad global tobillo/rodilla", s: 3, r: "12", p: "Con carga", c: "Vértigo" }
+            { n: "Elevación de Talones Bipodal", d: "Subir y bajar talones en bipodestación.", o: "Fuerza de tríceps sural", s: 3, r: "15", p: "Hacerlo unipodal", c: "Tendinitis aquilea reactiva" },
+            { n: "Equilibrio Unipodal Ojos Abiertos", d: "Mantenerse en un pie sobre suelo firme.", o: "Propiocepción básica", s: 4, r: "30s", p: "Suelo inestable (foam)", c: "Inestabilidad grado III" },
+            { n: "Caminata en Talones", d: "Desplazamiento apoyando solo el talón.", o: "Fuerza del tibial anterior", s: 3, r: "15m", p: "Caminata pato", c: "Fascitis plantar" },
+            { n: "Eversión con Banda Elástica", d: "Rotación externa del pie contra resistencia de banda.", o: "Fortalecimiento de peroneos", s: 3, r: "12", p: "Banda más fuerte", c: "Dolor maleolar activo" },
+            { n: "Sentadilla en Bosu", d: "Sentadilla bilateral en superficie inestable.", o: "Estabilidad global tobillo/rodilla", s: 3, r: "12", p: "Con carga adicional", c: "Vértigo" },
+            { n: "Elevación de Talones Unipodal", d: "Subir y bajar el talón apoyado en escalón con una sola pierna.", o: "Fuerza y resistencia del tríceps sural unilateral", s: 3, r: "15", p: "Añadir mochila con peso", c: "Tendinitis aquilea insertional activa" },
+            { n: "Propriocepción en Foam Pad", d: "Equilibrio sobre superficie de gomaespuma con ojos abiertos.", o: "Estabilidad dinámica en superficie inestable", s: 3, r: "30s", p: "Ojos cerrados", c: "Inestabilidad severa no compensada" },
+            { n: "Inversión con Banda Elástica", d: "Girar el pie hacia adentro contra resistencia de banda.", o: "Fortalecimiento del tibial posterior", s: 3, r: "12", p: "Banda de mayor tensión", c: "Esguince inversión agudo" },
+            { n: "Salto Bilateral Controlado", d: "Salto vertical con aterrizaje controlado sobre ambos pies.", o: "Reintroducción al impacto bipodal", s: 3, r: "10", p: "Aumentar altura del salto", c: "Fractura no consolidada" },
+            { n: "Marcha en Puntas", d: "Caminar apoyando solo las puntas de los pies.", o: "Fuerza del tríceps sural en acortamiento", s: 3, r: "20m", p: "Con inclinación del terreno", c: "Tendinitis aquilea" },
+            { n: "Step Up Frontal con Control", d: "Subida a escalón con control del tobillo y rodilla.", o: "Fuerza funcional en cadena cinética cerrada", s: 3, r: "12", p: "Aumentar altura del escalón", c: "Dolor articular en carga" },
+            { n: "Balance en BOSU Unipodal", d: "Equilibrio en superficie convexa de BOSU con un solo pie.", o: "Estabilidad propioceptiva avanzada", s: 3, r: "30s", p: "Movimientos de brazos perturbadores", c: "Inestabilidad grado III sin cirugía" }
         ],
         "Fase 3": [
-            { n: "Saltos de Tijera (Jacks)", d: "Saltos controlados abriendo/cerrando.", o: "Reintroducción al impacto", s: 3, r: "20", p: "Aumentar velocidad", c: "Dolor residual >3 EVA" },
-            { n: "Carga Excéntrica Aquiles", d: "Bajar talón lento desde escalón.", o: "Remodelación tendinosa", s: 3, r: "12", p: "Añadir peso", c: "Rotura parcial reciente" },
-            { n: "Saltos en Y", d: "Saltos coordinados en 3 direcciones.", o: "Agilidad y control motor", s: 3, r: "6", p: "Unipodal", c: "Falta control valgo" },
-            { n: "Sprint con Frenada", d: "Carrera corta y parada en seco.", o: "Potencia y absorción de carga", s: 5, r: "10m", p: "Frenada unipodal", c: "Inestabilidad mecánica" },
-            { n: "Zancada con Giro", d: "Lunge frontal + rotación de tronco.", o: "Control dinámico global", s: 3, r: "12", p: "Balón medicinal", c: "Dolor articular" }
+            { n: "Saltos de Tijera (Jumping Jacks)", d: "Saltos controlados abriendo/cerrando piernas.", o: "Reintroducción al impacto polipodal", s: 3, r: "20", p: "Aumentar velocidad", c: "Dolor residual >3 EVA" },
+            { n: "Carga Excéntrica Aquiles en Escalón", d: "Bajar talón lento desde escalón (solo fase excéntrica).", o: "Remodelación tendinosa aquilea", s: 3, r: "12", p: "Añadir mochila con peso", c: "Rotura parcial reciente" },
+            { n: "Saltos en Y", d: "Saltos coordinados en 3 direcciones con aterrizaje controlado.", o: "Agilidad y control motor", s: 3, r: "6", p: "Unipodal", c: "Falta control de valgo de rodilla" },
+            { n: "Sprint con Frenada", d: "Carrera corta y parada en seco.", o: "Potencia y absorción de carga", s: 5, r: "10m", p: "Frenada unipodal", c: "Inestabilidad mecánica residual" },
+            { n: "Zancada con Giro de Tronco", d: "Lunge frontal + rotación de tronco con o sin balón.", o: "Control dinámico global", s: 3, r: "12", p: "Balón medicinal", c: "Dolor articular en gesto" },
+            { n: "Hop Test Unipodal (Triple Hop)", d: "Tres saltos consecutivos en un solo pie, medir distancia.", o: "Evaluación y entrenamiento de potencia unilateral", s: 3, r: "3 saltos", p: "Mayor distancia progresiva", c: "Asimetría >15% sin resolver" },
+            { n: "Cambios de Dirección Laterales", d: "Carrera lateral con cambios de dirección cada 5m.", o: "Agilidad lateral y estabilidad de tobillo", s: 4, r: "4 repeticiones", p: "Aumentar velocidad", c: "Inestabilidad crónica no compensada" },
+            { n: "Carrera en Terreno Irregular", d: "Trotar o correr en hierba, arena o gravel.", o: "Activación propioceptiva en entorno real", s: 1, r: "20 min", p: "Aumentar duración e intensidad", c: "Fractura reciente o inestabilidad severa" },
+            { n: "Drop Jump desde Cajón", d: "Caer desde un cajón y saltar inmediatamente al aterrizar.", o: "Pliometría reactiva y absorción de impacto", s: 3, r: "8", p: "Aumentar altura del cajón", c: "Falta de control en el aterrizaje" },
+            { n: "Carrera con Perturbaciones (Reactividad)", d: "Correr y responder a señales externas (luz, sonido) para cambiar dirección.", o: "Velocidad de reacción y control neuromuscular", s: 3, r: "6", p: "Mayor velocidad basal", c: "Inestabilidad sin compensación neuromuscular" },
+            { n: "Entrenamiento Deporte-Específico", d: "Gestos propios del deporte (regates, frenadas, saltos en canasta).", o: "Transferencia completa al entorno deportivo", s: 1, r: "15-30 min", p: "Partido de práctica controlado", c: "Dolor en gesto deportivo >3 EVA" }
         ]
     },
     "Muñeca/Mano": {
         "Fase 1": [
             { n: "Isométrico Flexores Muñeca", d: "Flexión de muñeca contra resistencia manual suave con codo a 90°.", o: "Activación sin carga del tendón", s: 3, r: "10s", p: "Incrementar intensidad gradual", c: "Inflamación aguda >7 EVA" },
-            { n: "Bombeos de muñeca", d: "Movimiento lento de flexo-extensión en rango libre de dolor.", o: "Drenaje y movilidad inicial", s: 3, r: "20", p: "Añadir peso pequeño (0.5 kg)", c: "Fractura sin consolidar" },
-            { n: "Oposición pulgar-dedos", d: "Tocar cada dedo con el pulgar de forma secuencial.", o: "Coordinación y movilidad fina", s: 3, r: "10 ciclos", p: "Aumentar velocidad", c: "Dedo en gatillo agudo" },
-            { n: "Pelota antiestrés (agarre suave)", d: "Apretones suaves de pelota blanda.", o: "Activar musculatura intrínseca", s: 3, r: "15", p: "Pelota más dura", c: "Síndrome túnel carpiano agudo" },
-            { n: "Estiramientos tenores/hipotenores", d: "Extensión suave de dedos con muñeca neutra.", o: "Flexibilidad intrínseca", s: 3, r: "30s", p: "Con ayuda del otro mano", c: "Artritis inflamatoria aguda" }
+            { n: "Bombeos de Muñeca", d: "Movimiento lento de flexo-extensión en rango libre de dolor.", o: "Drenaje y movilidad inicial", s: 3, r: "20", p: "Añadir peso pequeño (0.5 kg)", c: "Fractura sin consolidar" },
+            { n: "Oposición Pulgar-Dedos", d: "Tocar cada dedo con el pulgar de forma secuencial.", o: "Coordinación y movilidad fina", s: 3, r: "10 ciclos", p: "Aumentar velocidad", c: "Dedo en gatillo agudo" },
+            { n: "Pelota Antiestrés Suave", d: "Apretones suaves de pelota blanda.", o: "Activar musculatura intrínseca", s: 3, r: "15", p: "Pelota más dura", c: "Síndrome del túnel carpiano agudo" },
+            { n: "Estiramientos Tenores/Hipotenores", d: "Extensión suave de dedos con muñeca neutra.", o: "Flexibilidad intrínseca", s: 3, r: "30s", p: "Con ayuda de la otra mano", c: "Artritis inflamatoria aguda" },
+            { n: "Movilización Pasiva de Muñeca", d: "Con la otra mano, llevar la muñeca afecta a flexión y extensión suave.", o: "Mantener el ROM pasivo sin esfuerzo muscular", s: 3, r: "10 c/dirección", p: "Aumentar el rango gradualmente", c: "Fractura de radio sin consolidar" },
+            { n: "Isométrico Extensores Muñeca", d: "Presionar el dorso de la mano contra la mesa sin mover la muñeca.", o: "Activación de extensores sin cizalla", s: 3, r: "10s", p: "Mayor resistencia manual", c: "Epicondilitis lateral aguda >7 EVA" },
+            { n: "Estiramiento Flexores de Muñeca", d: "Con el codo extendido, llevar la muñeca a extensión máxima con la otra mano.", o: "Elongación de musculatura flexora del antebrazo", s: 3, r: "30s", p: "Con rotación de hombro añadida", c: "Síndrome del túnel carpiano agudo" },
+            { n: "Estiramiento Extensores de Muñeca", d: "Con el codo extendido, llevar la muñeca a flexión máxima con la otra mano.", o: "Elongación de extensores del antebrazo", s: 3, r: "30s", p: "Con rotación interna del hombro", c: "Epicondilitis medial aguda" },
+            { n: "Neurodinamia Nervio Mediano (Suave)", d: "Extensión suave de muñeca con el codo a 90° y rotación lateral del cuello.", o: "Deslizamiento neural del mediano", s: 3, r: "10", p: "Añadir movimiento de codo y hombro", c: "Parestesias que empeoran con el movimiento" },
+            { n: "Inmersión en Agua Tibia + Movilidad", d: "Sumergir la mano en agua tibia y realizar movimientos activos libres.", o: "Relajación muscular y mejora del ROM", s: 1, r: "15 min", p: "Añadir resistencia con agua", c: "Herida abierta" },
+            { n: "Masaje de Cicatriz Post-Quirúrgico", d: "Deslizamiento longitudinal y transversal suave sobre la cicatriz.", o: "Evitar adherencias de cicatriz", s: 1, r: "5 min", p: "Mayor presión y dirección circular", c: "Cicatriz abierta o infectada" }
         ],
         "Fase 2": [
             { n: "Excéntrico Extensores Muñeca (Tyler Twist)", d: "Con barra flexible, extender muñeca y bajar lentamente con la mano sana.", o: "Fortalecimiento excéntrico para epicondilitis", s: 3, r: "15", p: "Barra más resistente", c: "Inflamación activa" },
-            { n: "Pronación/Supinación con Barra", d: "Rotar el antebrazo sosteniendo un martillo por el mango.", o: "Fortalecimiento de pronadores y supinadores", s: 3, r: "12", p: "Desplazar mano más alejada", c: "Síndrome túnel carpiano activo" },
+            { n: "Pronación/Supinación con Barra", d: "Rotar el antebrazo sosteniendo un martillo por el mango.", o: "Fortalecimiento de pronadores y supinadores", s: 3, r: "12", p: "Desplazar mano más alejada del mango", c: "Síndrome del túnel carpiano activo" },
             { n: "Pinza con Ropa Pinzas", d: "Comprimir y soltar pinzas de ropa de distintos tamaños.", o: "Fuerza de pinza lateral", s: 3, r: "15", p: "Pinzas de mayor tensión", c: "Tendón dañado" },
-            { n: "Puño cerrado-abierto con banda", d: "Extender dedos contra resistencia de una banda.", o: "Fuerza extrínseca extensora", s: 3, r: "12", p: "Mayor resistencia", c: "Rotura parcial de tendón extensor" },
-            { n: "Neurodinamia del Mediano", d: "Elongación del nervio mediano con muñeca en extensión, codo extendido y rotación cervical.", o: "Movilización neural carpal", s: 3, r: "10", p: "Añadir depresión escapular", c: "Dolor >6 EVA en neurodinamia" }
+            { n: "Extensión de Dedos con Banda", d: "Extender dedos contra resistencia de una banda.", o: "Fuerza extrínseca extensora", s: 3, r: "12", p: "Mayor resistencia", c: "Rotura parcial de tendón extensor" },
+            { n: "Neurodinamia del Mediano Progresiva", d: "Elongación completa del nervio mediano con muñeca en extensión, codo extendido y rotación cervical.", o: "Movilización neural carpal", s: 3, r: "10", p: "Añadir depresión escapular", c: "Dolor >6 EVA en neurodinamia" },
+            { n: "Flexión de Muñeca con Mancuerna", d: "Antebrazo apoyado en la pierna, flexionar la muñeca con mancuerna.", o: "Hipertrofia de flexores del carpo", s: 3, r: "15", p: "Mayor carga", c: "Epitrocleitis activa" },
+            { n: "Extensión de Muñeca con Mancuerna", d: "Antebrazo apoyado, extender la muñeca con mancuerna.", o: "Hipertrofia de extensores del carpo", s: 3, r: "15", p: "Mayor carga", c: "Epicondilitis lateral activa" },
+            { n: "Agarre de Pelota Dura (Stress Ball)", d: "Apretar una pelota de caucho o lacrosse con la mano.", o: "Fuerza de agarre total", s: 3, r: "15", p: "Pelota de mayor dureza", c: "Desgarro de tendón no reparado" },
+            { n: "Isométrico de Muñeca en Diferentes Ángulos", d: "Flexión, extensión, desviación radial y cubital isométrica con resistencia manual.", o: "Fortalecimiento multiplanar sin lesión articular", s: 3, r: "10s c/ángulo", p: "Mayor resistencia", c: "Artropatía activa inflamatoria" },
+            { n: "Presión en Pulgar (Thenar/Oponente)", d: "Presionar el pulgar contra los otros dedos con resistencia de la otra mano.", o: "Fuerza del oponente del pulgar", s: 3, r: "15", p: "Añadir objeto de resistencia", c: "Artrosis trapeziometacarpiana aguda" },
+            { n: "Cuerda de Trepa Simulada (Rope Climbing)", d: "Simular el movimiento de trepa de cuerda con una soga enrollada y halar.", o: "Fuerza funcional de agarre y tracción", s: 3, r: "10 halas", p: "Mayor resistencia o velocidad", c: "Inestabilidad carpal" },
+            { n: "Escritura con Lápiz (Terapia Ocupacional)", d: "Escribir letras y números controlando la presión del lápiz.", o: "Destreza motora fina y función", s: 2, r: "5 min", p: "Cambiar tamaño y tipo de letra", c: "Dolor agudo >5 EVA" }
         ],
         "Fase 3": [
-            { n: "Press en Suelo (push up modificado)", d: "Flexiones con muñeca en puño (sobre nudillos) o con barras paralelas.", o: "Carga progresiva en muñeca", s: 3, r: "10", p: "Flexiones convencionales", c: "Fractura de escafoides no consolidada" },
-            { n: "Agarre de Barra con Carga", d: "Colgarse de barra con agarre en pronación y supinación.", o: "Fuerza máxima de agarre", s: 3, r: "30s", p: "Añadir peso corporal", c: "Inestabilidad escafolunar" },
-            { n: "Lanzamientos de Pelota Medicinal", d: "Lanzamiento al rebotador con rotación de muñeca.", o: "Potencia funcional de muñeca", s: 3, r: "12", p: "Aumentar peso y distancia", c: "Epifisitis en adolescentes" },
-            { n: "Farmer Walk con agarre", d: "Marcha cargando kettlebells o barras pesadas.", o: "Fuerza de agarre bajo fatiga", s: 3, r: "30m", p: "Carga mayor", c: "Síndrome canal de Guyon activo" },
-            { n: "Gesto Deportivo Específico", d: "Replicar el gesto técnico del deporte (raqueta, bate, remo) con carga progresiva.", o: "Transferencia funcional al deporte", s: 3, r: "10", p: "Velocidad y potencia completa", c: "Dolor >3 EVA en gesto" }
+            { n: "Press en Suelo sobre Nudillos", d: "Flexiones con muñeca en puño (sobre nudillos) o con barras paralelas.", o: "Carga progresiva en muñeca bajo peso corporal", s: 3, r: "10", p: "Flexiones convencionales sobre palmas", c: "Fractura de escafoides no consolidada" },
+            { n: "Agarre de Barra (Dead Hang)", d: "Colgarse de barra con agarre en pronación y supinación.", o: "Fuerza máxima de agarre", s: 3, r: "30s", p: "Añadir peso corporal con cinturón", c: "Inestabilidad escafolunar" },
+            { n: "Lanzamientos de Pelota Medicinal", d: "Lanzamiento al rebotador con rotación de muñeca.", o: "Potencia funcional de muñeca y antebrazo", s: 3, r: "12", p: "Aumentar peso y distancia", c: "Epifisitis en adolescentes" },
+            { n: "Farmer Walk con Agarre", d: "Marcha cargando kettlebells o barras pesadas.", o: "Fuerza de agarre bajo fatiga y locomoción", s: 3, r: "30m", p: "Carga mayor", c: "Síndrome canal de Guyon activo" },
+            { n: "Gesto Deportivo Específico", d: "Replicar el gesto técnico del deporte (raqueta, bate, remo) con carga progresiva.", o: "Transferencia funcional al deporte", s: 3, r: "10", p: "Velocidad y potencia completa", c: "Dolor >3 EVA en gesto" },
+            { n: "Dominadas Agarre Neutro", d: "Pull-up con agarre en paralelo (neutro) que reduce tensión en muñeca.", o: "Fuerza máxima con menor cizalla en muñeca", s: 3, r: "8", p: "Añadir lastre", c: "Artritis carpal activa" },
+            { n: "Wrist Roller", d: "Enrollar y desenrollar una cuerda con carga usando ambas manos.", o: "Resistencia muscular de flexores y extensores de muñeca", s: 3, r: "3 completos", p: "Mayor peso del disco", c: "Fractura de radio no consolidada" },
+            { n: "Lanzamiento de Jabalina/Técnica Específica", d: "Con tubo de foam o implemento ligero, reproducir el gesto de lanzamiento.", o: "Retorno al gesto deportivo de alta demanda", s: 3, r: "10", p: "Implemento de peso real", c: "Dolor en pronación-supinación brusca" }
         ]
     },
     "Cuello/Cervical": {
@@ -2627,22 +2781,39 @@
             { n: "Flexión Craneocervical Isométrica", d: "Asentir la cabeza (chin tuck) suavemente en decúbito supino.", o: "Activación de flexores profundos (LCCapitis)", s: 3, r: "10s", p: "Añadir carga manual suave", c: "Radiculopatía aguda con parestesias" },
             { n: "Movilidad Cervical Activa Asistida", d: "Rotar, flexionar y extender el cuello guiado por la mano.", o: "Recuperar ROM sin dolor", s: 2, r: "10", p: "Sin asistencia", c: "Inestabilidad atlanto-axoidea" },
             { n: "Retracción Cervical (Chin Tuck)", d: "Empujar el occipital hacia atrás sin inclinar la cabeza.", o: "Corrección postural y descompresión foraminal", s: 3, r: "15", p: "Con resistencia manual", c: "Dolor irradiado que aumenta con el gesto" },
-            { n: "Isométrico Cervical en Neutro", d: "Resistir movimiento lateral o rotacional con mano sobre sien.", o: "Activación estabilizadores sin movimiento", s: 3, r: "10s", p: "Más intensidad", c: "Fractura cervical sospecha" },
-            { n: "Estiramiento Suboccipital", d: "Manos entrelazadas detrás de la cabeza, tracción suave hacia el pecho.", o: "Liberación musculatura suboccipital", s: 3, r: "30s", p: "Rotación añadida", c: "Cefalea posicional aguda" }
+            { n: "Isométrico Cervical en Neutro", d: "Resistir movimiento lateral o rotacional con mano sobre sien.", o: "Activación estabilizadores sin movimiento", s: 3, r: "10s", p: "Más intensidad", c: "Fractura cervical sospechada" },
+            { n: "Estiramiento Suboccipital", d: "Manos entrelazadas detrás de la cabeza, tracción suave hacia el pecho.", o: "Liberación musculatura suboccipital", s: 3, r: "30s", p: "Rotación añadida", c: "Cefalea posicional aguda" },
+            { n: "Inclinación Lateral Activa Suave", d: "Inclinar la cabeza hacia el hombro en rango libre de dolor.", o: "Movilidad del raquis cervical medio", s: 3, r: "10 c/lado", p: "Añadir mano en la sien como resistencia suave", c: "Radiculopatía que empeora con inclinación" },
+            { n: "Estiramiento del Trapecio Superior", d: "Inclinar la cabeza al lado sano y deprimir el hombro del lado afecto.", o: "Elongación del trapecio superior y elevador de escápula", s: 3, r: "30s", p: "Mayor rango con apoyo de mano en la cabeza", c: "Dolor cervicobranquial agudo" },
+            { n: "Calor Húmedo en Zona Cervical", d: "Aplicar compresas húmedas calientes 15 minutos en cuello.", o: "Relajación muscular y reducción del tono", s: 1, r: "15 min", p: "Combinar con movilización suave post-calor", c: "Inflamación aguda o proceso febril" },
+            { n: "Rotación Cervical Activa", d: "Girar la cabeza suavemente a izquierda y derecha en rango libre de dolor.", o: "Recuperar la rotación cervical sin dolor", s: 3, r: "10 c/lado", p: "Con suave resistencia manual al final del rango", c: "Vértigo posicional paroxístico benigno (VPPB)" },
+            { n: "Flexión y Extensión Cervical Activa", d: "Llevar el mentón al pecho (flexión) y elevar la cabeza (extensión).", o: "Movilidad cervical en plano sagital", s: 3, r: "10", p: "Con resistencia manual en la frente u occipital", c: "Mielopatía cervical o fractura" },
+            { n: "Ejercicio de Ojos para Control Cefálico", d: "Fijar la mirada en un punto mientras se mueve lentamente la cabeza.", o: "Integración óculo-motora y control cervical", s: 3, r: "10 c/dirección", p: "Aumentar velocidad del movimiento", c: "VPPB sin tratar" },
+            { n: "Respiración Diafragmática", d: "Inspirar expandiendo el abdomen, espirar vaciándolo lentamente.", o: "Reducir la tensión de los escalenos y estabilizadores accesorios", s: 3, r: "10 respiraciones", p: "Combinada con chin tuck", c: "Ninguna absoluta" }
         ],
         "Fase 2": [
             { n: "Flexión-Rotación Cervical", d: "Flexionar el cuello al pecho y luego rotar izquierda-derecha.", o: "Movilidad C1-C2 diferenciada", s: 2, r: "10 c/u", p: "Velocidad progresiva", c: "Dolor radicular que aumenta" },
             { n: "Fortalecimiento Trapecio Inferior", d: "Boca abajo, elevar el brazo en Y por encima de la cabeza.", o: "Depresión escapular y postura", s: 3, r: "15", p: "Pesos en mano", c: "Dolor de hombro asociado activo" },
             { n: "Press Cervical Isométrico Progresivo", d: "Resistir con mano en frente, laterales y occipital con mayor intensidad.", o: "Hipertrofia estabilizadores cervicales", s: 3, r: "12s", p: "Theraband de mayor resistencia", c: "Hernia aguda C4-C5" },
             { n: "Deep Neck Flexor con Biofeedback", d: "Chin tuck sobre almohada con feedback de manómetro (20-22 mmHg).", o: "Control preciso de flexores profundos", s: 3, r: "10 repeticiones", p: "Incrementar presión objetivo", c: "Dificultad de aislamiento" },
-            { n: "Movilización SNAG Autoadministrada", d: "Presión del pulgar hacia arriba en la vértebra afecta mientras mueve en el sentido doloroso.", o: "Técnica de Mulligan autoadministrada", s: 3, r: "10", p: "Con banda de Mulligan", c: "Inestabilidad cervical" }
+            { n: "Movilización SNAG Autoadministrada", d: "Presión del pulgar hacia arriba en la vértebra afecta mientras mueve en el sentido doloroso.", o: "Técnica de Mulligan autoadministrada", s: 3, r: "10", p: "Con banda de Mulligan", c: "Inestabilidad cervical" },
+            { n: "Estiramiento en Apertura Torácica", d: "Tumbado sobre rodillo de foam en sentido transversal, abrir los brazos.", o: "Movilidad torácica y postura cervical", s: 3, r: "30s", p: "Añadir rodillo más firme", c: "Osteoporosis severa" },
+            { n: "Isométrico Cervical con Theraband", d: "Con banda elástica en la cabeza, resistir la tracción en flexión, extensión y laterales.", o: "Hipertrofia progresiva de estabilizadores cervicales", s: 3, r: "10s", p: "Banda más resistente", c: "Fractura cervical" },
+            { n: "Fortalecimiento Esternocleidomastoideo", d: "Isométrico con resistencia manual o banda en laterales de la cabeza.", o: "Fuerza del ECM para estabilidad", s: 3, r: "10s", p: "Mayor intensidad de resistencia", c: "Torticolis aguda severa" },
+            { n: "Estabilización Escapular con Theraband", d: "Con banda, realizar remo bilateral manteniendo columna cervical neutra.", o: "Fortalecer la base de apoyo del cuello", s: 3, r: "12", p: "Mayor carga y retracción escapular", c: "Dolor acromioclavicular activo" },
+            { n: "Ejercicio de Cuello con Pelota contra Pared", d: "Apoyar la cabeza lateralmente sobre una pelota en la pared y hacer isométrico.", o: "Resistencia lateral de estabilizadores cervicales", s: 3, r: "15s", p: "Mayor diámetro de pelota (más difícil)", c: "Hernia cervical activa" },
+            { n: "Control Motor Cervical en 4 Apoyos", d: "A gatas, mantener columna cervical neutra mientras se alternan extensiones de brazo.", o: "Estabilidad cervical bajo carga de la columna torácica", s: 3, r: "10 c/lado", p: "Añadir extensión de pierna simultánea", c: "Dolor que empeora en 4 apoyos" },
+            { n: "Estiramiento Escalenos", d: "Inclinar la cabeza opuesta y rotar hacia el mismo lado; añadir depresión del hombro.", o: "Elongación de escalenos y descompresión de primera costilla", s: 3, r: "30s", p: "Con depresión activa del hombro", c: "Costilla cervical no diagnosticada" }
         ],
         "Fase 3": [
             { n: "Carry con Control Cervical", d: "Farmer walk con carga asimétrica manteniendo columna cervical neutra.", o: "Estabilidad dinámica cervical bajo carga", s: 3, r: "30m", p: "Carga mayor", c: "Pérdida de postura con carga" },
             { n: "Turkish Get Up (Parte Cervical)", d: "Transición al suelo/de pie con control cervical y mano extendida.", o: "Integración funcional del raquis cervical", s: 3, r: "5 c/l", p: "Aumentar carga kettlebell", c: "Vértigo postural" },
             { n: "Rotación Cervical en Plank", d: "En posición de plancha, rotar la cabeza izquierda-derecha.", o: "Disociación cervical-torácica bajo carga axial", s: 3, r: "10 c/u", p: "Plank sobre manos", c: "Contractura aguda" },
-            { n: "Gesto técnico con carga cervical", d: "Reproducir el gesto deportivo específico (nadar, golpear, empujar) controlando la posición cervical.", o: "Transferencia al deporte", s: 3, r: "10", p: "Velocidad real", c: "Dolor >3 EVA en gesto" },
-            { n: "Sprint con Control de Postura", d: "Aceleración corta (10m) vigilando postura cervical.", o: "Retorno funcional con eficiencia neuromuscular", s: 5, r: "10m", p: "Velocidad máxima", c: "Radiculopatía no resuelta" }
+            { n: "Gesto Técnico con Carga Cervical", d: "Reproducir el gesto deportivo específico controlando la posición cervical.", o: "Transferencia al deporte", s: 3, r: "10", p: "Velocidad real", c: "Dolor >3 EVA en gesto" },
+            { n: "Sprint con Control de Postura Cervical", d: "Aceleración corta (10m) vigilando postura cervical.", o: "Retorno funcional con eficiencia neuromuscular", s: 5, r: "10m", p: "Velocidad máxima", c: "Radiculopatía no resuelta" },
+            { n: "Estabilización Cervical en Carrera", d: "Trotar 5-10min manteniendo la mirada horizontal y cabeza en posición neutra.", o: "Control cervical bajo carga aeróbica", s: 1, r: "10 min", p: "Aumentar velocidad progresivamente", c: "Dolor cervical que aumenta al correr" },
+            { n: "Patrón PNF Diagonal Cervical", d: "Movimiento diagonal de la cabeza (ej.: chin tuck + rotación + lateral) contra resistencia manual.", o: "Fuerza funcional en patrones multiplanares", s: 3, r: "10 c/diagonal", p: "Mayor resistencia manual", c: "Inestabilidad cervical" },
+            { n: "Headstand Asistido (Invertido)", d: "Parada de cabeza asistida contra la pared, progresión desde trípode.", o: "Fuerza máxima de musculatura cervical bajo carga de peso corporal", s: 3, r: "10s", p: "Mayor tiempo sin asistencia", c: "Hernia cervical, hipertensión, glaucoma" }
         ]
     },
     "Ingle/Pubis": {
@@ -2694,24 +2865,44 @@
     "Rodilla": {
         "Fase 1": [
             { n: "Isométrico Cuádriceps", d: "Contracción 10s con toalla bajo hueco poplíteo.", o: "Activar VMO y reducir inhibición", s: 3, r: "10 holds", p: "Sostener 15s", c: "Dolor >7 EVA" },
-            { n: "Heel Slides", d: "Deslizamiento talón en cadena cerrada.", o: "Recuperar ROM", s: 3, r: "15", p: "Rango activo-asistido", c: "Bloqueo mecánico" },
-            { n: "SLR (Straight Leg Raise)", d: "Elevación pierna recta.", o: "Fuerza base cadena anterior", s: 3, r: "10", p: "Pesas de tobillo 1kg", c: "Lag de extensión" },
-            { n: "Movilización de rótula", d: "Deslizamientos superior, inferior y medial.", o: "Mantener movilidad patelar", s: 1, r: "5 min", p: "N/A", c: "Post-op con grapas" },
-            { n: "Isométrico Isquios", d: "Presionar talón contra el suelo a 90°.", o: "Co-contracción muscular", s: 3, r: "10s", p: "Ángulos variables", c: "Quiste de Baker" }
+            { n: "Heel Slides (Deslizamiento Talón)", d: "Deslizamiento talón en cadena cerrada desde extensión.", o: "Recuperar ROM en flexión sin carga", s: 3, r: "15", p: "Rango activo-asistido con banda", c: "Bloqueo mecánico articular" },
+            { n: "SLR (Straight Leg Raise)", d: "Elevación pierna recta en decúbito supino.", o: "Fuerza base de cuádriceps e inhibición artrogénica", s: 3, r: "10", p: "Pesas de tobillo 1kg", c: "Lag de extensión activo" },
+            { n: "Movilización de Rótula", d: "Deslizamientos superior, inferior y medial de la rótula.", o: "Mantener movilidad patelar post-cirugía", s: 1, r: "5 min", p: "Mayor presión en dirección limitante", c: "Post-op con grapas recientes" },
+            { n: "Isométrico Isquios a 90°", d: "Presionar talón contra el suelo a 90° de flexión.", o: "Co-contracción isquio-cuádriceps", s: 3, r: "10s", p: "Ángulos variables (60°, 45°)", c: "Quiste de Baker inflamado" },
+            { n: "Extensión Terminal de Rodilla (TKE)", d: "De pie con banda en hueco poplíteo, extender la rodilla completamente.", o: "Activar VMO en cadena cerrada en rango final de extensión", s: 3, r: "15", p: "Mayor resistencia de banda", c: "Derrame articular agudo severo" },
+            { n: "Movilidad Pasiva Asistida con Bastón", d: "Usando un bastón bajo el tobillo, elevar y bajar la pierna para ganar extensión.", o: "Recuperar extensión completa de rodilla", s: 3, r: "5 min", p: "Carga gravitatoria adicional", c: "Fractura articular no consolidada" },
+            { n: "Isométrico Cuádriceps en Ángulos Múltiples", d: "Isométrico en extensión a 60°, 45° y 20° de flexión.", o: "Activación del cuádriceps en rangos funcionales", s: 3, r: "10s c/ángulo", p: "Añadir resistencia manual", c: "Lesión de LCP aguda" },
+            { n: "Contracción de Glúteo en Decúbito", d: "Apretar los glúteos sin mover la pelvis.", o: "Activar la cadena posterior sin carga articular", s: 3, r: "15s", p: "Combinar con puente glúteo", c: "No tiene contraindicaciones específicas" },
+            { n: "Crioterapia Post-Sesión", d: "Aplicar hielo cubierto en tela sobre la rodilla 15min.", o: "Control del edema y dolor post-ejercicio", s: 1, r: "15 min", p: "Combinar con compresión", c: "Herida abierta o trastorno vascular" },
+            { n: "Movilización en Cicloergómetro Sin Resistencia", d: "Pedaleo suave sin resistencia para ganar ROM sin carga.", o: "Recuperar ROM activo con poco impacto articular", s: 1, r: "10 min", p: "Añadir ligera resistencia", c: "Inmovilización sin autorización" },
+            { n: "Estimulación Eléctrica del VMO (NMES)", d: "Electroestimulación del vasto medial oblicuo acompañado de contracción voluntaria.", o: "Reactivación del cuádriceps inhibido", s: 1, r: "20 min", p: "Mayor intensidad de corriente", c: "Marcapasos, trombosis" }
         ],
         "Fase 2": [
-            { n: "Wall Sit 45°", d: "Sentadilla isométrica contra pared.", o: "Resistencia muscular sub-máxima", s: 4, r: "45s", p: "Aumentar a 90°", c: "Dolor femoropatelar" },
-            { n: "Step up Lateral", d: "Subida al escalón controlando valgo.", o: "Control motor y cadera", s: 3, r: "12", p: "Aumentar altura cajón", c: "Pérdida eje mecánico" },
-            { n: "Puente Glúteo Bipodal", d: "Elevación de pelvis.", o: "Fortalecer cadena posterior", s: 3, r: "15", p: "Unipodal", c: "Dolor lumbar" },
-            { n: "Prensa (Rango Corto)", d: "Empuje controlado en máquina.", o: "Hipertrofia inicial", s: 3, r: "12", p: "Carga progresiva", c: "Tendinitis reactiva" },
-            { n: "Propiocepción Bipodal", d: "Equilibrio en superficie inestable.", o: "Estabilidad articular", s: 3, r: "45s", p: "Ojos cerrados", c: "Vértigo" }
+            { n: "Wall Sit 45-60°", d: "Sentadilla isométrica contra pared.", o: "Resistencia muscular sub-máxima de cuádriceps", s: 4, r: "45s", p: "Aumentar a 90° de flexión", c: "Dolor femoropatelar severo" },
+            { n: "Step Up Lateral", d: "Subida al escalón controlando el valgo de rodilla.", o: "Control motor y activación de cadera", s: 3, r: "12", p: "Aumentar altura del cajón", c: "Pérdida del eje mecánico" },
+            { n: "Puente Glúteo Bipodal", d: "Elevación de pelvis en decúbito supino.", o: "Fortalecer cadena posterior sin carga axial", s: 3, r: "15", p: "Progresión a unipodal", c: "Dolor lumbar activo" },
+            { n: "Prensa en Rango Corto (0-60°)", d: "Empuje en máquina en rango seguro para el tendón rotuliano.", o: "Hipertrofia inicial de cuádriceps", s: 3, r: "12", p: "Carga progresiva semanal", c: "Tendinitis patelar reactiva" },
+            { n: "Propiocepción Bipodal en Foam", d: "Equilibrio sobre superficie inestable con ambas piernas.", o: "Estabilidad articular con carga moderada", s: 3, r: "45s", p: "Progresar a ojos cerrados", c: "Vértigo" },
+            { n: "Step Down Excéntrico", d: "De pie en un cajón, bajar lentamente solo con la pierna afecta.", o: "Fuerza excéntrica de cuádriceps y control patelofemoral", s: 3, r: "12", p: "Aumentar velocidad de bajada controlada", c: "Dolor patelofemoral severo" },
+            { n: "Sentadilla Parcial Bilateral (0-60°)", d: "Sentadilla en rango seguro hasta 60° de flexión.", o: "Fuerza funcional progresiva", s: 3, r: "12", p: "Añadir carga con mancuernas", c: "Lesión de menisco activa" },
+            { n: "Propiocepción Unipodal Ojos Abiertos", d: "Equilibrio en un solo pie sobre suelo firme.", o: "Estabilidad unilateral y control neuromuscular", s: 4, r: "30s", p: "Suelo inestable o foam pad", c: "Inestabilidad grave no controlada" },
+            { n: "Estiramiento de Cuádriceps en Decúbito Prono", d: "Boca abajo, llevar el talón al glúteo con ayuda de la mano.", o: "Flexibilidad del recto femoral", s: 3, r: "30s", p: "Mayor rango con la mano", c: "Lesión del LCA aguda" },
+            { n: "Prensa Unilateral (0-60°)", d: "Empuje unilateral en máquina en rango funcional.", o: "Fuerza unilateral y simetría de cuádriceps", s: 3, r: "10", p: "Mayor carga con progresión", c: "Tendinitis patelar reactiva" },
+            { n: "Isométrico de Cuádriceps en 30° de Flexión", d: "Con banda de resistencia, mantener la pierna a 30° de flexión.", o: "Fuerza isométrica sin movimiento articular", s: 3, r: "15s", p: "Mayor resistencia de banda", c: "Condromalacia avanzada con dolor" },
+            { n: "Marcha Lateral con Banda en Rodillas", d: "Pasos laterales con banda elástica resistiendo el valgo.", o: "Activación de abductores y control de rodilla", s: 3, r: "15 pasos c/lado", p: "Mayor tensión de banda o longitud", c: "Dolor patelofemoral severo" }
         ],
         "Fase 3": [
-            { n: "Split Squat Búlgara (Rodilla)", d: "Sentadilla con pie posterior elevado con control patelofemoral.", o: "Fuerza máxima y estabilidad de rodilla", s: 4, r: "8", p: "Carga axial", c: "Mala técnica" },
-            { n: "Box Jump (Landing)", d: "Salto y caída controlada.", o: "Pliometría y absorción", s: 3, r: "10", p: "Salto reactivo", c: "Inestabilidad articular" },
-            { n: "Peso Muerto Rumano (Rodilla)", d: "Bisagra de cadera con barra, énfasis en isquios.", o: "Fuerza cadena posterior isquios", s: 3, r: "10", p: "Barra olímpica", c: "Hernia activa" },
-            { n: "Sprint de Control", d: "Carrera lineal al 50%.", o: "Retorno deportivo", s: 5, r: "20m", p: "Cambios de dirección", c: "Inestabilidad mecánica" },
-            { n: "Nordic Curls", d: "Descenso excéntrico controlado.", o: "Prevención de lesiones", s: 3, r: "6", p: "Asistido con banda", c: "Desgarro reciente" }
+            { n: "Split Squat Búlgara (Rodilla)", d: "Sentadilla con pie posterior elevado con control patelofemoral.", o: "Fuerza máxima y estabilidad de rodilla", s: 4, r: "8", p: "Carga axial progresiva", c: "Mala técnica de valgo" },
+            { n: "Box Jump con Aterrizaje Controlado", d: "Salto y caída controlada sobre cajón.", o: "Pliometría y absorción de impacto", s: 3, r: "10", p: "Salto reactivo desde el suelo", c: "Inestabilidad articular no resuelta" },
+            { n: "Peso Muerto Rumano Unilateral (Rodilla)", d: "Bisagra de cadera unilateral con mancuerna, énfasis en isquios.", o: "Fuerza cadena posterior con estabilidad de rodilla", s: 3, r: "10", p: "Barra olímpica bilateral", c: "Hernia discal activa" },
+            { n: "Sprint de Control 50-80%", d: "Carrera lineal al 50-80% de velocidad máxima.", o: "Retorno deportivo progresivo", s: 5, r: "20m", p: "Cambios de dirección y 100%", c: "Inestabilidad mecánica residual" },
+            { n: "Nordic Hamstring Curl", d: "Descenso excéntrico controlado con pies sujetos.", o: "Prevención de lesiones de isquiotibiales", s: 3, r: "6", p: "Asistido con banda o mayor rango libre", c: "Desgarro reciente de isquios" },
+            { n: "Sentadilla Completa con Barra (0-90°+)", d: "Sentadilla con barra hasta profundidad total.", o: "Fuerza máxima funcional de cuádriceps, glúteos y columna", s: 4, r: "8", p: "Carga progresiva semanal", c: "Meniscopatía activa o lesión de LCA no resuelta" },
+            { n: "Leg Press Unilateral con Carga Máxima", d: "Prensa unilateral con carga máxima tolerable.", o: "Fuerza máxima y evaluación de asimetría (LSI)", s: 4, r: "8", p: "Medir y comparar LSI", c: "Tendinitis patelar reactiva" },
+            { n: "Hop Test Single Leg (Triple Hop)", d: "Tres saltos consecutivos en un pie; medir distancia máxima.", o: "Evaluación y entrenamiento de potencia unilateral", s: 3, r: "3 saltos", p: "Mayor distancia y variantes (cross-over)", c: "LSI cuádriceps <70%" },
+            { n: "Cambios de Dirección en T (T-Test)", d: "Carrera en T con giros a 45° y 90°, máxima velocidad.", o: "Agilidad multidireccional y estabilidad de rodilla", s: 4, r: "4 repeticiones", p: "Añadir balón u objetos reactivos", c: "Inestabilidad ligamentaria residual" },
+            { n: "Drop Jump + Salto Reactivo", d: "Caer desde cajón y saltar inmediatamente al aterrizar.", o: "Pliometría reactiva de alta intensidad", s: 3, r: "8", p: "Mayor altura del cajón", c: "Falta de control en el aterrizaje" },
+            { n: "Pivot + Gesto Deportivo", d: "Giro sobre un pie y aceleración, reproduciendo el gesto deportivo real.", o: "Retorno al deporte con carga específica", s: 3, r: "10", p: "Integración en partido de práctica", c: "Dolor en gesto >3 EVA" }
         ]
     }
 };
@@ -7082,6 +7273,144 @@ Generado por Jelian FT — Clinical Sport v136`;
             await save();
             renderHojaEjercicios();
         }
+        // ============================================================
+        // BIBLIOTECA DE EJERCICIOS — MODAL CON BÚSQUEDA Y SELECCIÓN
+        // ============================================================
+        let _ejLibSeleccionados = new Set();
+
+        function abrirBibliotecaEjercicios() {
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            const modal = document.getElementById('ej-lib-modal');
+            if (!modal) return;
+            _ejLibSeleccionados = new Set();
+            // Pre-seleccionar zona del paciente
+            const zonaSelect = document.getElementById('ejlib-zona');
+            if (p && p.zona && zonaSelect) {
+                const zonasMapeadas = {
+                    'Rodilla': 'Rodilla', 'Hombro': 'Hombro', 'Tobillo': 'Tobillo',
+                    'Espalda': 'Espalda', 'Cadera': 'Cadera', 'Ingle/Pubis': 'Ingle/Pubis',
+                    'Isquiotibiales': 'Isquiotibiales', 'Cuello/Cervical': 'Cuello/Cervical',
+                    'Muñeca/Mano': 'Muñeca/Mano'
+                };
+                const zonaPaciente = Object.keys(zonasMapeadas).find(k => (p.zona || '').toLowerCase().includes(k.toLowerCase())) || 'Rodilla';
+                zonaSelect.value = zonasMapeadas[zonaPaciente] || 'Rodilla';
+            }
+            modal.classList.remove('hidden');
+            renderBibliotecaEjercicios();
+        }
+
+        function cerrarBibliotecaEjercicios() {
+            const modal = document.getElementById('ej-lib-modal');
+            if (modal) modal.classList.add('hidden');
+            _ejLibSeleccionados = new Set();
+        }
+
+        function renderBibliotecaEjercicios() {
+            const zona = document.getElementById('ejlib-zona')?.value || 'Rodilla';
+            const fase = document.getElementById('ejlib-fase')?.value || 'todas';
+            const busqueda = (document.getElementById('ejlib-busqueda')?.value || '').toLowerCase().trim();
+            const lista = document.getElementById('ejlib-lista');
+            const countEl = document.getElementById('ejlib-count');
+            if (!lista) return;
+
+            const bibliotecaZona = BibliotecaClinicaIA[zona] || {};
+            const fases = fase === 'todas' ? ['Fase 1', 'Fase 2', 'Fase 3'] : [fase];
+
+            let html = '';
+            let total = 0;
+
+            fases.forEach(f => {
+                const ejercicios = (bibliotecaZona[f] || []).filter(ej => {
+                    if (!busqueda) return true;
+                    return (ej.n + ' ' + (ej.d || '') + ' ' + (ej.o || '')).toLowerCase().includes(busqueda);
+                });
+                if (ejercicios.length === 0) return;
+                total += ejercicios.length;
+
+                const faseColor = f === 'Fase 1' ? 'bg-rose-50 border-rose-200 text-rose-700' :
+                                  f === 'Fase 2' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                                  'bg-emerald-50 border-emerald-200 text-emerald-700';
+                const faseBadge = f === 'Fase 1' ? '🔴' : f === 'Fase 2' ? '🟡' : '🟢';
+
+                html += `<div class="mb-1"><span class="inline-block text-[10px] font-black px-3 py-1 rounded-full border ${faseColor} mb-2">${faseBadge} ${f}</span></div>`;
+                ejercicios.forEach((ej, idx) => {
+                    const key = f + '::' + ej.n;
+                    const checked = _ejLibSeleccionados.has(key) ? 'checked' : '';
+                    html += `
+                    <label class="flex items-start gap-3 p-3 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 cursor-pointer transition-all mb-2 group" onclick="toggleEjLibSeleccion('${escHtml(key)}', this)">
+                        <input type="checkbox" ${checked} class="mt-1 accent-indigo-600 flex-shrink-0 w-4 h-4" onclick="event.stopPropagation();toggleEjLibSeleccion('${escHtml(key)}', this.closest('label'))">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-bold text-slate-800 group-hover:text-indigo-800 leading-tight">${escHtml(ej.n)}</p>
+                            ${ej.d ? `<p class="text-xs text-slate-500 mt-0.5 leading-snug">${escHtml(ej.d)}</p>` : ''}
+                            <div class="flex gap-2 mt-1.5 flex-wrap">
+                                ${ej.o ? `<span class="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">🎯 ${escHtml(ej.o)}</span>` : ''}
+                                ${ej.s ? `<span class="text-[9px] font-black text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-full">${ej.s} series × ${escHtml(String(ej.r))}</span>` : ''}
+                                ${ej.p ? `<span class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">↑ ${escHtml(ej.p)}</span>` : ''}
+                                ${ej.c ? `<span class="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">⚠️ ${escHtml(ej.c)}</span>` : ''}
+                            </div>
+                        </div>
+                    </label>`;
+                });
+            });
+
+            if (total === 0) {
+                html = '<div class="text-center py-12 text-slate-400"><p class="text-4xl mb-3">🔍</p><p class="font-bold text-sm">No se encontraron ejercicios</p><p class="text-xs mt-1">Prueba con otra zona, fase o término de búsqueda</p></div>';
+            }
+
+            lista.innerHTML = html;
+            if (countEl) countEl.textContent = total > 0 ? `${total} ejercicio${total !== 1 ? 's' : ''} encontrado${total !== 1 ? 's' : ''}` : '';
+        }
+
+        function toggleEjLibSeleccion(key, labelEl) {
+            const cb = labelEl.querySelector('input[type="checkbox"]');
+            if (_ejLibSeleccionados.has(key)) {
+                _ejLibSeleccionados.delete(key);
+                if (cb) cb.checked = false;
+                labelEl.classList.remove('bg-indigo-50', 'border-indigo-300');
+            } else {
+                _ejLibSeleccionados.add(key);
+                if (cb) cb.checked = true;
+                labelEl.classList.add('bg-indigo-50', 'border-indigo-300');
+            }
+            // Update button count
+            const btn = document.querySelector('[onclick="agregarEjerciciosSeleccionados()"]');
+            if (btn) btn.textContent = _ejLibSeleccionados.size > 0
+                ? `✓ Agregar ${_ejLibSeleccionados.size} ejercicio${_ejLibSeleccionados.size !== 1 ? 's' : ''}`
+                : '✓ Agregar seleccionados';
+        }
+
+        async function agregarEjerciciosSeleccionados() {
+            if (_ejLibSeleccionados.size === 0) {
+                showToast('Selecciona al menos un ejercicio de la biblioteca.', true);
+                return;
+            }
+            const p = pacientes.find(x => String(x.id) === String(currentId));
+            if (!p) return;
+            if (!p.ejerciciosHoja) p.ejerciciosHoja = [];
+
+            const zona = document.getElementById('ejlib-zona')?.value || 'Rodilla';
+            const bibliotecaZona = BibliotecaClinicaIA[zona] || {};
+
+            _ejLibSeleccionados.forEach(key => {
+                const [fase, nombre] = key.split('::');
+                const ej = (bibliotecaZona[fase] || []).find(e => e.n === nombre);
+                if (!ej) return;
+                p.ejerciciosHoja.push({
+                    nombre: ej.n,
+                    series: ej.s || 3,
+                    reps: String(ej.r || '10'),
+                    carga: '',
+                    descanso: '60s',
+                    descripcion: ej.d || ''
+                });
+            });
+
+            await save();
+            renderHojaEjercicios();
+            cerrarBibliotecaEjercicios();
+            showToast(`✓ ${_ejLibSeleccionados.size} ejercicio(s) agregado(s) a la hoja.`);
+        }
+
         function imprimirHojaEjercicios() {
             const p = pacientes.find(x => String(x.id) === String(currentId));
             if (!p) return;
