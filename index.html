@@ -864,6 +864,11 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 005.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 Expedientes
             </button>
+            <button onclick="showSection('biblioteca-ejercicios')" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h8m-8 4h5m8-6l3 3-3 3"/></svg>
+                Biblioteca Ejercicios
+                <span class="ml-auto text-[8px] font-black bg-indigo-500 text-white px-2 py-0.5 rounded-full tracking-wide">NEW</span>
+            </button>
             <button onclick="showSection('biblioteca')" class="nav-btn w-full text-left p-4 flex items-center gap-4 font-semibold text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                 Protocolos
@@ -1074,6 +1079,98 @@
                 </div>
             </div>
             <div id="contenedor-biblioteca" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+        </section>
+
+        <!-- ===== SECCIÓN BIBLIOTECA DE EJERCICIOS ===== -->
+        <section id="biblioteca-ejercicios" class="hidden max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                <div>
+                    <span class="text-indigo-600 font-bold text-xs uppercase tracking-widest">Fisioterapia Deportiva</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-1">Biblioteca de Ejercicios</h2>
+                    <p class="text-slate-500 font-medium mt-1">Selecciona ejercicios y asígnalos a tus atletas</p>
+                </div>
+                <div class="flex gap-3 flex-wrap">
+                    <button onclick="bibEjLimpiarSeleccion()" class="bg-slate-100 text-slate-600 px-5 py-3 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all">Limpiar selección</button>
+                    <button onclick="bibEjAsignar()" id="bibej-btn-asignar" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 opacity-50 cursor-not-allowed" disabled>
+                        ✓ Asignar a Atleta <span id="bibej-count-badge" class="ml-1 bg-white/25 text-white text-[10px] font-black px-2 py-0.5 rounded-full hidden">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="glass-card p-6 rounded-[2rem] border border-slate-100 mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Zona corporal</label>
+                        <select id="bibej-zona" onchange="bibEjCambiarZona()" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold bg-slate-50 outline-none focus:border-indigo-500">
+                            <option value="Rodilla">🦵 Rodilla</option>
+                            <option value="Cadera">⚙️ Cadera</option>
+                            <option value="Hombro">💪 Hombro</option>
+                            <option value="Tobillo">🦶 Tobillo</option>
+                            <option value="Espalda">🦴 Espalda / Lumbar</option>
+                            <option value="Muñeca/Mano">🤲 Muñeca / Mano</option>
+                            <option value="Cuello/Cervical">🧠 Cuello / Cervical</option>
+                            <option value="Ingle/Pubis">🏃 Ingle / Pubis</option>
+                            <option value="Isquiotibiales">🦵 Isquiotibiales</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Lesión</label>
+                        <select id="bibej-lesion" onchange="renderBibEjPage()" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold bg-slate-50 outline-none focus:border-indigo-500">
+                            <option value="">— Todas —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Fase clínica</label>
+                        <select id="bibej-fase" onchange="renderBibEjPage()" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold bg-slate-50 outline-none focus:border-indigo-500">
+                            <option value="todas">Todas las fases</option>
+                            <option value="Fase 1">🔴 Fase 1 — Aguda / Inicial</option>
+                            <option value="Fase 2">🟡 Fase 2 — Fortalecimiento</option>
+                            <option value="Fase 3">🟢 Fase 3 — Funcional / Retorno</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Buscar ejercicio</label>
+                        <div class="relative">
+                            <input type="text" id="bibej-busqueda" oninput="renderBibEjPage()" placeholder="ej. Nordic, isométrico..." class="w-full border border-slate-200 rounded-xl px-3 py-2.5 pl-9 text-sm bg-slate-50 outline-none focus:border-indigo-500">
+                            <svg class="w-4 h-4 absolute left-3 top-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Asignar a atleta</label>
+                        <select id="bibej-paciente" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold bg-slate-50 outline-none focus:border-indigo-500">
+                            <option value="">— Selecciona un atleta —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
+                    <p class="text-xs text-slate-400" id="bibej-count-label">Cargando ejercicios...</p>
+                    <div class="flex gap-2">
+                        <button onclick="bibEjSeleccionarTodos()" class="text-xs font-black text-indigo-600 hover:text-indigo-800 px-3 py-1.5 rounded-xl border border-indigo-200 hover:bg-indigo-50 transition-all">Seleccionar todos</button>
+                        <button onclick="bibEjLimpiarSeleccion()" class="text-xs font-black text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all">Limpiar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de ejercicios -->
+            <div id="bibej-lista" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+
+            <!-- Modal asignar -->
+            <div id="bibej-modal-asignar" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300] hidden flex items-center justify-center p-4">
+                <div class="bg-white rounded-[2rem] w-full max-w-md shadow-2xl p-8">
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">🏃 Asignar Ejercicios</h3>
+                    <p class="text-sm text-slate-500 mb-6">Los ejercicios seleccionados se agregarán a la hoja del atleta.</p>
+                    <div class="mb-4">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Atleta destino</label>
+                        <select id="bibej-modal-pac" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold bg-slate-50 outline-none focus:border-indigo-500"></select>
+                    </div>
+                    <div class="bg-slate-50 rounded-2xl p-4 mb-6 max-h-40 overflow-y-auto custom-scrollbar" id="bibej-modal-resumen"></div>
+                    <div class="flex gap-3">
+                        <button onclick="bibEjConfirmarAsignar()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black text-sm hover:bg-indigo-700 transition-all">Confirmar Asignación</button>
+                        <button onclick="document.getElementById('bibej-modal-asignar').classList.add('hidden')" class="bg-slate-100 text-slate-700 px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-200">Cancelar</button>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section id="lista-pacientes" class="hidden max-w-7xl mx-auto">
@@ -6845,7 +6942,8 @@ Generado por Jelian FT — Clinical Sport v136`;
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             const sectionNavMap = {
                 'dashboard': 0, 'calendario': 1, 'lista-pacientes': 2,
-                'biblioteca': 3, 'plantillas': 4, 'reportes': 5, 'imagen-ia': 6, 'anatomia': 7, 'documentos': 8
+                'biblioteca-ejercicios': 3,
+                'biblioteca': 4, 'plantillas': 5, 'reportes': 6, 'imagen-ia': 7, 'anatomia': 8, 'documentos': 9
             };
             const navBtns = document.querySelectorAll('nav .nav-btn');
             if (sectionNavMap[id] !== undefined && navBtns[sectionNavMap[id]]) {
@@ -6853,6 +6951,7 @@ Generado por Jelian FT — Clinical Sport v136`;
             }
             if(id === 'dashboard') { updateDashboard(); }
             if(id === 'biblioteca') renderBiblioteca();
+            if(id === 'biblioteca-ejercicios') { bibEjCambiarZona(); }
             if(id === 'lista-pacientes') renderLista();
             if(id === 'calendario') { renderCalendario(); selDia(new Date().toISOString().split('T')[0]); if(calView==='semana') renderSemana(); }
             if(id === 'plantillas') renderPlantillas();
@@ -6860,6 +6959,346 @@ Generado por Jelian FT — Clinical Sport v136`;
             if(id === 'imagen-ia') setTimeout(() => { initImgTipoChips(); renderHistorialImg(); }, 50);
             if(id === 'anatomia') setTimeout(() => renderAnatomia('rodilla'), 50);
             if(id === 'documentos') { _poblarSelectPacientes('cons-paciente-sel'); _poblarSelectPacientes('ficha-paciente-sel'); llenarConsentimiento(); }
+        }
+
+        // ============================================================
+        // BIBLIOTECA DE EJERCICIOS — MÓDULO INDEPENDIENTE
+        // ============================================================
+        let _bibEjSeleccionados = new Set(); // Set de keys "zona::fase::nombre"
+
+        function bibEjCambiarZona() {
+            const zona = document.getElementById('bibej-zona')?.value || 'Rodilla';
+            const selLesion = document.getElementById('bibej-lesion');
+            if (selLesion && typeof MAPEO_ZONAS !== 'undefined') {
+                const lesiones = [...new Set(MAPEO_ZONAS[zona] || [])].sort((a, b) => a.localeCompare(b));
+                selLesion.innerHTML = '<option value="">— Todas las lesiones —</option>';
+                lesiones.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l; opt.textContent = l;
+                    selLesion.appendChild(opt);
+                });
+            }
+            renderBibEjPage();
+        }
+
+        function renderBibEjPage() {
+            const zona = document.getElementById('bibej-zona')?.value || 'Rodilla';
+            const faseSeleccionada = document.getElementById('bibej-fase')?.value || 'todas';
+            const lesionSeleccionada = (document.getElementById('bibej-lesion')?.value || '').trim();
+            const busqueda = (document.getElementById('bibej-busqueda')?.value || '').toLowerCase().trim();
+            const lista = document.getElementById('bibej-lista');
+            const countEl = document.getElementById('bibej-count-label');
+            if (!lista) return;
+
+            _bibEjPoblarPacientes();
+
+            // ── MODO LESIÓN: buscar en bibliotecaLesiones los ejercicios específicos ──
+            if (lesionSeleccionada) {
+                const lesionData = (typeof bibliotecaLesiones !== 'undefined')
+                    ? bibliotecaLesiones.find(l => l.n === lesionSeleccionada)
+                    : null;
+
+                if (lesionData && lesionData.fases && lesionData.fases.length > 0) {
+                    let html = '';
+                    let total = 0;
+
+                    // Mostrar protocolo resumido en banner
+                    const protocoloHtml = lesionData.p ? `
+                        <div class="col-span-3 mb-2 p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
+                            <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">📋 Protocolo clínico — ${escHtml(lesionSeleccionada)}</p>
+                            <p class="text-xs text-indigo-700 font-medium leading-relaxed whitespace-pre-line">${escHtml(lesionData.p)}</p>
+                        </div>` : '';
+
+                    // Filtrar fases según selector
+                    const fasesData = lesionData.fases.filter(faseObj => {
+                        if (faseSeleccionada === 'todas') return true;
+                        return faseObj.f.toLowerCase().includes(faseSeleccionada.toLowerCase());
+                    });
+
+                    fasesData.forEach(faseObj => {
+                        const fLabel = faseObj.f.includes('1') || faseObj.f.toLowerCase().includes('agud') || faseObj.f.toLowerCase().includes('control') ? 'Fase 1'
+                                     : faseObj.f.includes('2') || faseObj.f.toLowerCase().includes('subacu') || faseObj.f.toLowerCase().includes('fortale') ? 'Fase 2'
+                                     : 'Fase 3';
+                        const faseClasses = fLabel === 'Fase 1' ? 'bg-rose-50 border-rose-200 text-rose-700'
+                                          : fLabel === 'Fase 2' ? 'bg-amber-50 border-amber-200 text-amber-700'
+                                          : 'bg-emerald-50 border-emerald-200 text-emerald-700';
+                        const faseEmoji = fLabel === 'Fase 1' ? '🔴' : fLabel === 'Fase 2' ? '🟡' : '🟢';
+
+                        // Header de fase
+                        html += `<div class="col-span-3 mt-3 mb-1 flex items-center gap-2">
+                            <span class="text-[10px] font-black px-3 py-1 rounded-full border ${faseClasses}">${faseEmoji} ${escHtml(faseObj.f)}</span>
+                        </div>`;
+
+                        (faseObj.ejs || []).forEach(ejNombre => {
+                            if (busqueda && !ejNombre.toLowerCase().includes(busqueda)) return;
+                            total++;
+                            const key = zona + '::' + fLabel + '::' + ejNombre;
+                            const esSel = _bibEjSeleccionados.has(key);
+
+                            // Buscar datos extra en BibliotecaClinicaIA si existen
+                            let ejData = null;
+                            if (typeof BibliotecaClinicaIA !== 'undefined' && BibliotecaClinicaIA[zona]) {
+                                for (const f of ['Fase 1','Fase 2','Fase 3']) {
+                                    const found = (BibliotecaClinicaIA[zona][f] || []).find(e =>
+                                        e.n.toLowerCase() === ejNombre.toLowerCase() ||
+                                        ejNombre.toLowerCase().includes(e.n.toLowerCase()) ||
+                                        e.n.toLowerCase().includes(ejNombre.toLowerCase().split(':')[0].trim())
+                                    );
+                                    if (found) { ejData = found; break; }
+                                }
+                            }
+
+                            html += `
+                            <label onclick="bibEjToggle(${JSON.stringify(key)},this)"
+                                class="bibej-card flex flex-col gap-2 p-5 rounded-[1.5rem] border-2 cursor-pointer transition-all ${esSel ? 'border-indigo-400 bg-indigo-50 shadow-lg shadow-indigo-100' : 'border-slate-100 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'}">
+                                <div class="flex items-start gap-3">
+                                    <input type="checkbox" ${esSel ? 'checked' : ''} onclick="event.stopPropagation();bibEjToggle(${JSON.stringify(key)},this.closest('label'))"
+                                        class="mt-1 w-4 h-4 accent-indigo-600 flex-shrink-0">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-black text-slate-900 leading-tight">${escHtml(ejNombre.split(':')[0])}</p>
+                                        ${ejNombre.includes(':') ? `<p class="text-xs text-slate-500 mt-1 leading-snug">${escHtml(ejNombre.split(':').slice(1).join(':').trim())}</p>` : ''}
+                                        ${ejData && ejData.d ? `<p class="text-xs text-slate-400 mt-0.5 leading-snug italic">${escHtml(ejData.d)}</p>` : ''}
+                                    </div>
+                                    <span class="text-[9px] font-black px-2 py-1 rounded-full border flex-shrink-0 ${faseClasses}">${faseEmoji} ${fLabel}</span>
+                                </div>
+                                ${ejData ? `<div class="flex gap-2 flex-wrap pl-7">
+                                    ${ejData.o ? `<span class="text-[9px] font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">🎯 ${escHtml(ejData.o)}</span>` : ''}
+                                    ${ejData.s ? `<span class="text-[9px] font-black text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">📋 ${ejData.s} × ${escHtml(String(ejData.r))}</span>` : ''}
+                                    ${ejData.p ? `<span class="text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">↑ ${escHtml(ejData.p)}</span>` : ''}
+                                    ${ejData.c ? `<span class="text-[9px] font-black text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full">⚠️ ${escHtml(ejData.c)}</span>` : ''}
+                                </div>` : ''}
+                            </label>`;
+                        });
+                    });
+
+                    // Criterios RTS si existen
+                    const rtsHtml = lesionData.rts ? `
+                        <div class="col-span-3 mt-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                            <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">✅ Criterios de Retorno al Deporte (RTS)</p>
+                            <p class="text-xs text-emerald-700 font-medium leading-relaxed">${escHtml(lesionData.rts)}</p>
+                        </div>` : '';
+
+                    if (total === 0) {
+                        html = `<div class="col-span-3 text-center py-20 text-slate-400">
+                            <p class="text-5xl mb-4">🔍</p>
+                            <p class="font-bold text-base">No se encontraron ejercicios para esta fase</p>
+                            <p class="text-sm mt-1">Prueba seleccionando "Todas las fases"</p>
+                        </div>`;
+                        lista.innerHTML = html;
+                    } else {
+                        lista.innerHTML = protocoloHtml + html + rtsHtml;
+                    }
+                    if (countEl) countEl.textContent = total > 0 ? `${total} ejercicio${total !== 1 ? 's' : ''} para ${lesionSeleccionada}` : 'Sin resultados';
+                    _bibEjActualizarBoton();
+                    return;
+                }
+
+                // Si la lesión no está en bibliotecaLesiones, caer al modo normal con aviso
+                lista.innerHTML = `<div class="col-span-3 text-center py-16 text-slate-400">
+                    <p class="text-5xl mb-4">📂</p>
+                    <p class="font-bold text-base">Lesión sin protocolo específico aún</p>
+                    <p class="text-sm mt-1">Mostrando ejercicios generales de la zona <strong>${escHtml(zona)}</strong></p>
+                </div>`;
+                if (countEl) countEl.textContent = 'Protocolo no disponible';
+                _bibEjActualizarBoton();
+                return;
+            }
+
+            // ── MODO ZONA: sin lesión seleccionada, mostrar todos los ejercicios de BibliotecaClinicaIA ──
+            const bibliotecaZona = (typeof BibliotecaClinicaIA !== 'undefined') ? (BibliotecaClinicaIA[zona] || {}) : {};
+            const fases = faseSeleccionada === 'todas' ? ['Fase 1', 'Fase 2', 'Fase 3'] : [faseSeleccionada];
+
+            let html = '';
+            let total = 0;
+
+            fases.forEach(f => {
+                const ejercicios = (bibliotecaZona[f] || []).filter(ej => {
+                    if (!busqueda) return true;
+                    const texto = (ej.n + ' ' + (ej.d||'') + ' ' + (ej.o||'')).toLowerCase();
+                    return texto.includes(busqueda);
+                });
+                if (ejercicios.length === 0) return;
+                total += ejercicios.length;
+
+                const faseClasses = f === 'Fase 1' ? 'bg-rose-50 border-rose-200 text-rose-700' :
+                                    f === 'Fase 2' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                                                     'bg-emerald-50 border-emerald-200 text-emerald-700';
+                const faseEmoji = f === 'Fase 1' ? '🔴' : f === 'Fase 2' ? '🟡' : '🟢';
+
+                ejercicios.forEach(ej => {
+                    const key = zona + '::' + f + '::' + ej.n;
+                    const esSel = _bibEjSeleccionados.has(key);
+                    html += `
+                    <label onclick="bibEjToggle(${JSON.stringify(key)},this)"
+                        class="bibej-card flex flex-col gap-2 p-5 rounded-[1.5rem] border-2 cursor-pointer transition-all ${esSel ? 'border-indigo-400 bg-indigo-50 shadow-lg shadow-indigo-100' : 'border-slate-100 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'}">
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" ${esSel ? 'checked' : ''} onclick="event.stopPropagation();bibEjToggle(${JSON.stringify(key)},this.closest('label'))"
+                                class="mt-1 w-4 h-4 accent-indigo-600 flex-shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-black text-slate-900 leading-tight">${escHtml(ej.n)}</p>
+                                ${ej.d ? `<p class="text-xs text-slate-500 mt-1 leading-snug">${escHtml(ej.d)}</p>` : ''}
+                            </div>
+                            <span class="text-[9px] font-black px-2 py-1 rounded-full border flex-shrink-0 ${faseClasses}">${faseEmoji} ${f}</span>
+                        </div>
+                        <div class="flex gap-2 flex-wrap pl-7">
+                            ${ej.o ? `<span class="text-[9px] font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">🎯 ${escHtml(ej.o)}</span>` : ''}
+                            ${ej.s ? `<span class="text-[9px] font-black text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">📋 ${ej.s} × ${escHtml(String(ej.r))}</span>` : ''}
+                            ${ej.p ? `<span class="text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">↑ ${escHtml(ej.p)}</span>` : ''}
+                            ${ej.c ? `<span class="text-[9px] font-black text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full">⚠️ ${escHtml(ej.c)}</span>` : ''}
+                        </div>
+                    </label>`;
+                });
+            });
+
+            if (total === 0) {
+                html = `<div class="col-span-3 text-center py-20 text-slate-400">
+                    <p class="text-5xl mb-4">🔍</p>
+                    <p class="font-bold text-base">No se encontraron ejercicios</p>
+                    <p class="text-sm mt-1">Prueba con otra zona, lesión, fase o término de búsqueda</p>
+                </div>`;
+            }
+
+            lista.innerHTML = html;
+            if (countEl) countEl.textContent = total > 0 ? `${total} ejercicio${total !== 1 ? 's' : ''} encontrado${total !== 1 ? 's' : ''}` : 'Sin resultados';
+            _bibEjActualizarBoton();
+        }
+
+        function _bibEjPoblarPacientes() {
+            ['bibej-paciente', 'bibej-modal-pac'].forEach(id => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const prev = sel.value;
+                sel.innerHTML = '<option value="">— Selecciona un atleta —</option>';
+                (typeof pacientes !== 'undefined' ? pacientes : [])
+                    .filter(p => p.nombre)
+                    .sort((a,b) => a.nombre.localeCompare(b.nombre))
+                    .forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = p.nombre + (p.deporte ? ' · ' + p.deporte : '');
+                        sel.appendChild(opt);
+                    });
+                if (prev) sel.value = prev;
+            });
+        }
+
+        function bibEjToggle(key, labelEl) {
+            const cb = labelEl.querySelector('input[type="checkbox"]');
+            if (_bibEjSeleccionados.has(key)) {
+                _bibEjSeleccionados.delete(key);
+                if (cb) cb.checked = false;
+                labelEl.classList.remove('border-indigo-400', 'bg-indigo-50', 'shadow-lg', 'shadow-indigo-100');
+                labelEl.classList.add('border-slate-100', 'bg-white');
+            } else {
+                _bibEjSeleccionados.add(key);
+                if (cb) cb.checked = true;
+                labelEl.classList.add('border-indigo-400', 'bg-indigo-50', 'shadow-lg', 'shadow-indigo-100');
+                labelEl.classList.remove('border-slate-100', 'bg-white');
+            }
+            _bibEjActualizarBoton();
+        }
+
+        function _bibEjActualizarBoton() {
+            const n = _bibEjSeleccionados.size;
+            const btn = document.getElementById('bibej-btn-asignar');
+            const badge = document.getElementById('bibej-count-badge');
+            if (!btn) return;
+            if (n > 0) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (badge) { badge.textContent = n; badge.classList.remove('hidden'); }
+            } else {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                if (badge) badge.classList.add('hidden');
+            }
+        }
+
+        function bibEjSeleccionarTodos() {
+            const zona = document.getElementById('bibej-zona')?.value || 'Rodilla';
+            const faseSeleccionada = document.getElementById('bibej-fase')?.value || 'todas';
+            const lesionSeleccionada = (document.getElementById('bibej-lesion')?.value || '').trim();
+            const busqueda = (document.getElementById('bibej-busqueda')?.value || '').toLowerCase().trim();
+
+            if (lesionSeleccionada && typeof bibliotecaLesiones !== 'undefined') {
+                const lesionData = bibliotecaLesiones.find(l => l.n === lesionSeleccionada);
+                if (lesionData && lesionData.fases) {
+                    lesionData.fases.forEach(faseObj => {
+                        if (faseSeleccionada !== 'todas' && !faseObj.f.toLowerCase().includes(faseSeleccionada.toLowerCase())) return;
+                        const fLabel = faseObj.f.includes('1') || faseObj.f.toLowerCase().includes('agud') || faseObj.f.toLowerCase().includes('control') ? 'Fase 1'
+                                     : faseObj.f.includes('2') || faseObj.f.toLowerCase().includes('subacu') || faseObj.f.toLowerCase().includes('fortale') ? 'Fase 2'
+                                     : 'Fase 3';
+                        (faseObj.ejs || []).forEach(ejNombre => {
+                            if (!busqueda || ejNombre.toLowerCase().includes(busqueda))
+                                _bibEjSeleccionados.add(zona + '::' + fLabel + '::' + ejNombre);
+                        });
+                    });
+                    renderBibEjPage();
+                    return;
+                }
+            }
+
+            const bibliotecaZona = (typeof BibliotecaClinicaIA !== 'undefined') ? (BibliotecaClinicaIA[zona] || {}) : {};
+            const fases = faseSeleccionada === 'todas' ? ['Fase 1', 'Fase 2', 'Fase 3'] : [faseSeleccionada];
+            fases.forEach(f => {
+                (bibliotecaZona[f] || []).filter(ej =>
+                    !busqueda || (ej.n + ' ' + (ej.d||'') + ' ' + (ej.o||'')).toLowerCase().includes(busqueda)
+                ).forEach(ej => _bibEjSeleccionados.add(zona + '::' + f + '::' + ej.n));
+            });
+            renderBibEjPage();
+        }
+
+        function bibEjLimpiarSeleccion() {
+            _bibEjSeleccionados.clear();
+            renderBibEjPage();
+        }
+
+        function bibEjAsignar() {
+            if (_bibEjSeleccionados.size === 0) { showToast('Selecciona al menos un ejercicio.', true); return; }
+            _bibEjPoblarPacientes();
+            // Copiar valor del select rápido al modal
+            const pacSel = document.getElementById('bibej-paciente')?.value;
+            const modalPac = document.getElementById('bibej-modal-pac');
+            if (modalPac && pacSel) modalPac.value = pacSel;
+            // Mostrar resumen
+            const resEl = document.getElementById('bibej-modal-resumen');
+            if (resEl) {
+                resEl.innerHTML = Array.from(_bibEjSeleccionados).map(k => {
+                    const parts = k.split('::');
+                    return `<p class="text-xs font-semibold text-slate-700 py-0.5">• ${escHtml(parts[2])}</p>`;
+                }).join('');
+            }
+            document.getElementById('bibej-modal-asignar').classList.remove('hidden');
+        }
+
+        async function bibEjConfirmarAsignar() {
+            const pid = document.getElementById('bibej-modal-pac')?.value;
+            if (!pid) { showToast('Selecciona un atleta destino.', true); return; }
+            const p = (typeof pacientes !== 'undefined' ? pacientes : []).find(x => String(x.id) === String(pid));
+            if (!p) { showToast('Atleta no encontrado.', true); return; }
+            if (!p.ejerciciosHoja) p.ejerciciosHoja = [];
+
+            let agregados = 0;
+            _bibEjSeleccionados.forEach(key => {
+                const [zona, fase, nombre] = key.split('::');
+                const bibl = (typeof BibliotecaClinicaIA !== 'undefined') ? (BibliotecaClinicaIA[zona] || {}) : {};
+                const ej = (bibl[fase] || []).find(e => e.n === nombre);
+                if (!ej) return;
+                p.ejerciciosHoja.push({
+                    nombre: ej.n,
+                    series: ej.s || 3,
+                    reps: String(ej.r || '10'),
+                    carga: '',
+                    descanso: '60s',
+                    descripcion: ej.d || ''
+                });
+                agregados++;
+            });
+
+            await save();
+            document.getElementById('bibej-modal-asignar').classList.add('hidden');
+            bibEjLimpiarSeleccion();
+            showToast(`✅ ${agregados} ejercicio(s) asignados a ${p.nombre}.`);
         }
 
         // ============================================================
