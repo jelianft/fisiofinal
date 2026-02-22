@@ -1584,15 +1584,11 @@
                         <textarea id="s-notas" class="w-full bg-slate-50 p-6 rounded-2xl text-sm font-medium h-32 border-transparent focus:border-indigo-500 focus:bg-white outline-none mb-6" placeholder="Detalles del tratamiento..." oninput="marcarSesionPendiente()"></textarea>
                         
                         <div class="flex flex-col md:flex-row gap-4 mb-8">
-                            <button onclick="ejecutarMotorIA()" class="flex-1 bg-slate-900 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg">
-                                Generar Plan IA
-                            </button>
                             <button onclick="agregarSesion()" class="flex-1 bg-indigo-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all">
                                 Guardar Sesión
                             </button>
                         </div>
 
-                        <div id="display-plan-ia" class="hidden border-t border-slate-100 pt-8"></div>
                     </div>
 
                     <div id="sesiones-container" class="space-y-6"></div>
@@ -1748,7 +1744,7 @@
                             <button onclick="imprimirHojaEjercicios()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all">🖨 Imprimir Hoja</button>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4" id="ejercicios-personalizados-container">
-                            <p class="text-xs text-slate-400 italic col-span-2">Usa el Motor IA para generar ejercicios o agrégalos manualmente:</p>
+                            <p class="text-xs text-slate-400 italic col-span-2">Agrega ejercicios desde la biblioteca o manualmente:</p>
                         </div>
                         <div class="flex gap-2 flex-wrap">
                             <button onclick="agregarEjercicioManual()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-xs font-black hover:bg-slate-200 transition-all">+ Ejercicio Manual</button>
@@ -4649,39 +4645,6 @@ const MAPEO_ZONAS = {
       rts:"Puranen-Orava negativo · Carrera sin dolor · Sprint completo · Deporte sin restricción"}
 ]
 
-        // --- 3. MOTOROR AUTOMÁTICO DE DECISIÓN (The Engine) ---
-        const MotorClinico = {
-            configuracionCarga: {
-                aguda: { enfoque: "Analgesia y Control de Inflamación", contraccion: "Isometría Sub-máxima" },
-                subaguda: { enfoque: "Movilidad Activa y Resistencia Muscular", contraccion: "Isotónica Controlada" },
-                funcional: { enfoque: "Fuerza, Potencia y Gesto Motor", contraccion: "Excéntrica y Pliometría" }
-            },
-            generarPlan(paciente, evaActual) {
-                const zona = paciente.zona || "General";
-                let faseKey = "Fase 1";
-                let configKey = "aguda";
-
-                // Lógica de Progresión Automática basada en EVA
-                if (evaActual <= 3) {
-                    faseKey = "Fase 3";
-                    configKey = "funcional";
-                } else if (evaActual <= 6) {
-                    faseKey = "Fase 2";
-                    configKey = "subaguda";
-                }
-
-                // Selección inteligente de la biblioteca
-                let bibliotecaZona = BibliotecaClinicaIA[zona] || BibliotecaClinicaIA["Rodilla"]; // Fallback a Rodilla
-                let ejercicios = bibliotecaZona[faseKey] || [];
-                
-                return {
-                    fase: faseKey,
-                    metadata: this.configuracionCarga[configKey],
-                    ejercicios: ejercicios
-                };
-            }
-        };
-
         // --- 4. LÓGICA DE APLICACIÓN ---
         let pacientes = [];
         let currentId = null;
@@ -5200,9 +5163,6 @@ function renderPacientes() { renderLista(); }
                     <span class="text-[11px] font-black text-indigo-600">${v.r || '-'}</span>
                 </div>
             `).join('');
-            const planIAEl = document.getElementById('display-plan-ia');
-            planIAEl.classList.add('hidden');
-            planIAEl.style.display = '';
             // Establecer fecha de hoy por defecto
             document.getElementById('s-fecha').value = new Date().toISOString().split('T')[0];
             // Renderizar fotos del paciente
@@ -5221,62 +5181,6 @@ function renderPacientes() { renderLista(); }
             document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function ejecutarMotorIA() {
-            const eva = parseInt(document.getElementById('s-eva').value, 10);
-            if(isNaN(eva)) { showToast("❌ Ingresa un valor EVA primero.", true); return; }
-            
-            const p = pacientes.find(x => String(x.id) === String(currentId));
-            const plan = MotorClinico.generarPlan(p, eva);
-            
-            const display = document.getElementById('display-plan-ia');
-            display.classList.remove('hidden');
-            display.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1rem;';
-            display.innerHTML = `
-                <div class="md:col-span-2 bg-slate-900 p-6 rounded-3xl mb-4 text-white">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-indigo-400">Motor IA Generado: ${plan.fase}</p>
-                    <p class="text-sm font-bold mt-1">${plan.metadata.enfoque}</p>
-                    <p class="text-[10px] opacity-60 mt-2">Modalidad: ${plan.metadata.contraccion}</p>
-                    <button onclick="exportarPlanIAaHoja()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-indigo-500 transition-all">📋 Agregar a Hoja de Ejercicios</button>
-                </div>
-            ` + plan.ejercicios.map(ej => `
-                <div class="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm">
-                    <div class="flex justify-between items-start mb-2">
-                        <h5 class="text-xs font-black text-slate-800 uppercase italic">${ej.n}</h5>
-                        <span class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-[9px] font-black">${ej.s}x${ej.r}</span>
-                    </div>
-                    <p class="text-[10px] text-slate-500 leading-tight mb-4">${ej.d}</p>
-                    <div class="space-y-1 border-t pt-3">
-                        <p class="text-[8px] font-bold text-emerald-600 uppercase">● Obj: ${ej.o}</p>
-                        <p class="text-[8px] font-bold text-rose-500 uppercase">✖ Precaución: ${ej.c}</p>
-                        ${ej.p ? `<p class="text-[8px] font-bold text-amber-500 uppercase">↑ Progresión: ${ej.p}</p>` : ''}
-                    </div>
-                </div>
-            `).join('');
-
-            // Store plan for export
-            window._lastIAPlan = plan;
-        }
-
-        async function exportarPlanIAaHoja() {
-            const plan = window._lastIAPlan;
-            if (!plan) return;
-            const p = pacientes.find(x => String(x.id) === String(currentId));
-            if (!p) return;
-            if (!p.ejerciciosHoja) p.ejerciciosHoja = [];
-            plan.ejercicios.forEach(ej => {
-                p.ejerciciosHoja.push({
-                    nombre: ej.n,
-                    series: ej.s,
-                    reps: String(ej.r),
-                    carga: '',
-                    descanso: '60s',
-                    descripcion: ej.d
-                });
-            });
-            await save();
-            renderHojaEjercicios();
-            showToast(`✓ ${plan.ejercicios.length} ejercicios agregados a la hoja.`);
-        }
 
         async function agregarSesion() {
             const p = pacientes.find(x => String(x.id) === String(currentId));
@@ -7680,7 +7584,7 @@ Generado por Jelian FT — Clinical Sport v136`;
             const cont = document.getElementById('ejercicios-personalizados-container');
             if (!cont || !p) return;
             if (!p.ejerciciosHoja || p.ejerciciosHoja.length === 0) {
-                cont.innerHTML = '<p class="text-xs text-slate-400 italic col-span-2">Usa el Motor IA para generar ejercicios o agrégalos manualmente:</p>';
+                cont.innerHTML = '<p class="text-xs text-slate-400 italic col-span-2">Agrega ejercicios desde la biblioteca o manualmente:</p>';
                 return;
             }
             cont.innerHTML = p.ejerciciosHoja.map((ej, i) => `
